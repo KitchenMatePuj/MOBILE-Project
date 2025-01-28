@@ -8,7 +8,7 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
-          // Imagen de fondo
+          // Background image
           Container(
             width: double.infinity,
             height: MediaQuery.of(context).size.height,
@@ -19,7 +19,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
-          // Contenido principal
+          // Main content
           SingleChildScrollView(
             child: Center(
               child: Padding(
@@ -74,7 +74,7 @@ class HomeScreen extends StatelessWidget {
                     SizedBox(height: 80),
                     ElevatedButton(
                       onPressed: () {
-                        // Redirige a la pantalla de login
+                        // Redirects to the login screen
                         Navigator.pushNamed(context, '/login');
                       },
                       style: ElevatedButton.styleFrom(
