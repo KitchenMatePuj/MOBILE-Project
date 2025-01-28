@@ -6,7 +6,7 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard')),
+      appBar: AppBar(title: const Text('¡Bienvenido de Nuevo!'), backgroundColor: const Color(0xFF129575)),
       body: const Center(
         child: Text('Dashboard Screen'),
       ),
