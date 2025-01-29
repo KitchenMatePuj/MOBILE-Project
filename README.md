@@ -49,13 +49,14 @@ Before you begin, make sure you have the following tools installed on your machi
 
 ## APK Download
 
-You can download and install the latest version of the KitchenMate Mobile App directly on your Android device.
+You can download and install different versions of the KitchenMate Mobile App directly on your Android device. Below is a list of available APKs:
 
-  [Download KitchenMate APK](https://github.com/KitchenMatePuj/MOBILE-Project/releases/download/latest/app-release.apk)
+- [**Version BETA 1.0**](https://github.com/KitchenMatePuj/MOBILE-Project/releases/download/latest/KitchenMate_Beta1.apk)
 
-> **Note**: The APK file is located in the `build/app/outputs/flutter-apk/` folder and includes:
-> - `app-release.apk`: The application package to install on Android devices.
-> - `app-release.apk.sha1`: A hash file for verifying the integrity of the APK.
+> **Note**: 
+> - The APK file for each release includes:
+>   - `KitchenMate_BetaX.apk`: The application package to install on Android devices.
+> - For verifying the integrity of the APK, you can also download the `.sha1` hash file provided in the release.
 
 After downloading the APK, install it on your Android device by enabling "Unknown Sources" in your device settings if required.
 
