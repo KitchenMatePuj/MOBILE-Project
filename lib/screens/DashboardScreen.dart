@@ -117,24 +117,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         child: Row(
                           children: const [
                             RecipeCard(
-                              title: "Salchipapa Venezolana XXL",
-                              chef: "Laura_Bozzo",
+                              title: "Bueñuelos Paisa",
+                              chef: "Voldi_Feliz",
+                              duration: "25 mins",
+                              imageUrl: "assets/recipes/recipe4.jpg", // Actualizada la ruta
+                            ),
+                            SizedBox(width: 16),
+                            RecipeCard(
+                              title: "Cóctel de Naranja",
+                              chef: "Calypso66",
+                              duration: "10 mins",
+                              imageUrl: "assets/recipes/recipe5.jpg", // Actualizada la ruta
+                            ),
+                            SizedBox(width: 16),
+                            RecipeCard(
+                              title: "Mariscos Caleños",
+                              chef: "Dora_Explora",
                               duration: "35 mins",
-                              imageUrl: "assets/icons/recipe1.jpg", // Actualizada la ruta
-                            ),
-                            SizedBox(width: 16),
-                            RecipeCard(
-                              title: "Perro Caliente Colombiano",
-                              chef: "Tia_Piedad",
-                              duration: "15 mins",
-                              imageUrl: "assets/icons/recipe2.jpg", // Actualizada la ruta
-                            ),
-                            SizedBox(width: 16),
-                            RecipeCard(
-                              title: "Pasta Alfredo",
-                              chef: "Machis",
-                              duration: "30 mins",
-                              imageUrl: "assets/icons/recipe3.jpg", // Actualizada la ruta
+                              imageUrl: "assets/recipes/recipe6.jpg", // Actualizada la ruta
                             ),
                           ],
                         ),
@@ -154,24 +154,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         child: Row(
                           children: const [
                             RecipeCard(
-                              title: "Salchipapa Venezolana XXL",
-                              chef: "Laura_Bozzo",
-                              duration: "35 mins",
-                              imageUrl: "assets/icons/recipe1.jpg", // Actualizada la ruta
+                              title: "Paella Sencilla",
+                              chef: "Chilindrinita99",
+                              duration: "80 mins",
+                              imageUrl: "assets/recipes/recipe7.jpg", // Actualizada la ruta
                             ),
                             SizedBox(width: 16),
                             RecipeCard(
-                              title: "Perro Caliente Colombiano",
-                              chef: "Tia_Piedad",
-                              duration: "15 mins",
-                              imageUrl: "assets/icons/recipe2.jpg", // Actualizada la ruta
+                              title: "Pavo Relleno XXS",
+                              chef: "XxSportacusXx",
+                              duration: "125 mins",
+                              imageUrl: "assets/recipes/recipe8.jpg", // Actualizada la ruta
                             ),
                             SizedBox(width: 16),
                             RecipeCard(
-                              title: "Pasta Alfredo",
-                              chef: "Machis",
-                              duration: "30 mins",
-                              imageUrl: "assets/icons/recipe3.jpg", // Actualizada la ruta
+                              title: "Banana Split Casera",
+                              chef: "Rihannita",
+                              duration: "20 mins",
+                              imageUrl: "assets/recipes/recipe9.jpg", // Actualizada la ruta
                             ),
                           ],
                         ),
@@ -212,19 +212,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         title: "Salchipapa Venezolana XXL",
                         chef: "Laura_Bozzo",
                         duration: "35 mins",
-                        imageUrl: "assets/icons/recipe1.jpg", // Actualizada la ruta
+                        imageUrl: "assets/recipes/recipe1.jpg", // Actualizada la ruta
                       ),
                       RecipeCard(
                         title: "Perro Caliente Colombiano",
                         chef: "Tia_Piedad",
                         duration: "15 mins", 
-                        imageUrl: "assets/icons/recipe2.jpg", // Actualizada la ruta
+                        imageUrl: "assets/recipes/recipe2.jpg", // Actualizada la ruta
                       ),
                       RecipeCard(
                         title: "Pasta Alfredo",
                         chef: "Machis",
                         duration: "30 mins",
-                        imageUrl: "assets/icons/recipe3.jpg", // Actualizada la ruta
+                        imageUrl: "assets/recipes/recipe3.jpg", // Actualizada la ruta
                       ),
                       // Más RecipeCards...
                     ],
@@ -234,6 +234,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
         ),
+      ),
+    bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
+        selectedItemColor: const Color(0xFF129575),
+        unselectedItemColor: const Color.fromARGB(255, 83, 83, 83),
+        currentIndex: 0, // It is the 'selectedItemColor'
+        onTap: (int index) {
+          switch (index) {
+            case 0:
+              break;
+            case 1:
+              // Navegate to Search
+              Navigator.pushNamed(context, '/recipe_search');
+              break;
+            case 2:
+              // Navegate to Create
+              Navigator.pushNamed(context, '/create');
+              break;
+            case 3:
+              // Navegate to Shopping List
+              Navigator.pushNamed(context, '/shopping_list');
+              break;
+            case 4:
+              // Navegate to Profile
+              Navigator.pushNamed(context, '/profile');
+              break;
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Inicio',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.search),
+            label: 'Buscar',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.add),
+            label: 'Publicar',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.list),
+            label: 'Compras',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Perfil',
+          ),
+        ],
       ),
     );
   }
@@ -299,7 +350,7 @@ class RecipeCard extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 12,
-                      backgroundImage: AssetImage('assets/icons/chefs/$chef.jpg'),
+                      backgroundImage: AssetImage('assets/chefs/$chef.jpg'),
                     ),
                     const SizedBox(width: 8),
                     Text(chef),
@@ -396,7 +447,7 @@ class UserHeader extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               image: const DecorationImage(
-                image: AssetImage('assets/icons/chefs/profilePhoto.jpg'),
+                image: AssetImage('assets/chefs/profilePhoto.jpg'),
                 fit: BoxFit.cover,
               ),
             ),

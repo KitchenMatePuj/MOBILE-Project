@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class ForgotPasswordScreen extends StatelessWidget {
-  const ForgotPasswordScreen({super.key});
+class EmailForgotPassScreen extends StatelessWidget {
+  const EmailForgotPassScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -34,10 +34,8 @@ class ForgotPasswordScreen extends StatelessWidget {
                 color: Color(0xFF121212),
               ),
             ),
-            const Spacer(flex: 4),
+            const Spacer(flex: 2),
             _buildCodeInput(),
-            _buildNewPasswordInput(),
-            _buildConfirmNewPasswordInput(),
             _buildConfirmButton(context),
             const SizedBox(height: 30), // Espaciado adicional
             const Spacer(flex: 50),
@@ -63,13 +61,13 @@ class ForgotPasswordScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          "Escriba el código enviado a su correo",
+          "Escriba su Correo Electrónico para enviarle un código de recuperación",
           style: TextStyle(fontSize: 14, color: Color(0xFF121212)),
         ),
         const SizedBox(height: 5),
         TextField(
           decoration: InputDecoration(
-            hintText: "Ingrese el código por favor",
+            hintText: "Ingrese su correo electrónico por favor",
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
@@ -82,66 +80,6 @@ class ForgotPasswordScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 20), // Space between email field and next widget
-      ],
-    );
-  }
-
-  // Builds the email input field
-  Widget _buildNewPasswordInput() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Escriba una nueva contraseña",
-          style: TextStyle(fontSize: 14, color: Color(0xFF121212)),
-        ),
-        const SizedBox(height: 5),
-        TextField(
-          obscureText: true,
-          decoration: InputDecoration(
-            hintText: "Ingrese nueva Contraseña",
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(
-                color: Color(0xFFD9D9D9),
-                width: 1.5,
-              ),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-                vertical: 19, horizontal: 20),
-          ),
-        ),
-        const SizedBox(height: 20), // Space between email field and next widget
-      ],
-    );
-  }
-
-  // Builds the password input field
-  Widget _buildConfirmNewPasswordInput() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Vuelve a escribir la Contraseña",
-          style: TextStyle(fontSize: 14, color: Color(0xFF121212)),
-        ),
-        const SizedBox(height: 5),
-        TextField(
-          obscureText: true,
-          decoration: InputDecoration(
-            hintText: "Vuelva a Ingresar Nueva Contraseña",
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(
-                color: Color(0xFFD9D9D9),
-                width: 1.5,
-              ),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-                vertical: 19, horizontal: 20),
-          ),
-        ),
-        const SizedBox(height: 26), // Space between password field and next widget
       ],
     );
   }
@@ -159,13 +97,13 @@ class ForgotPasswordScreen extends StatelessWidget {
         ),
         onPressed: () {
           // Redirects to the main screen (Dashboard)
-          Navigator.pushNamed(context, '/dashboard');
+          Navigator.pushNamed(context, '/forgot_password');
         },
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              "Confirmar",
+              "Enviar Código",
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,

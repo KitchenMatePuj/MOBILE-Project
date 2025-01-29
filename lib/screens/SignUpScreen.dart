@@ -1,69 +1,107 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 
-class SignUpScreen extends StatelessWidget {
+class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
+
+  @override
+  _SignUpScreenState createState() => _SignUpScreenState();
+}
+
+class _SignUpScreenState extends State<SignUpScreen> {
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  bool _isPasswordValid = true;
+  bool _isConfirmPasswordValid = true;
+  bool _canContinue = false;
+  String? _passwordError;
+  String? _confirmPasswordError;
+
+  bool _validatePassword(String password) {
+    final hasMinLength = password.length > 8;
+    final hasNumber = RegExp(r'\d').hasMatch(password);
+    final hasSymbol = RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(password);
+    return hasMinLength && hasNumber && hasSymbol;
+  }
+
+  void _validateForm() {
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    setState(() {
+      _isPasswordValid = _validatePassword(password);
+      _passwordError = _isPasswordValid
+          ? null
+          : 'La contraseña debe tener más de 8 caracteres, un número\ny un símbolo.';
+
+      _isConfirmPasswordValid = password == confirmPassword;
+      _confirmPasswordError = _isConfirmPasswordValid
+          ? null
+          : 'Las contraseñas no coinciden.';
+
+      _canContinue = _isPasswordValid && _isConfirmPasswordValid;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Creación de Cuenta'),
-      backgroundColor: const Color(0xFF129575),), 
+      appBar: AppBar(
+        title: const Text('Creación de Cuenta'),
+        backgroundColor: const Color(0xFF129575),
+      ),
       body: Container(
-  decoration: BoxDecoration(
-    borderRadius: BorderRadius.circular(30),
-    color: Colors.white,
-  ),
-  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Ajuste del padding
-  margin: EdgeInsets.all(0), // Sin margen adicional
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start, // Alinea a la izquierda los elementos
-    children: [
-      const Spacer(flex: 4),
-      const Text(
-        "Crear una Cuenta",
-        style: TextStyle(
-          fontSize: 25,
-          fontWeight: FontWeight.bold,
-          color: Colors.black,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30),
+          color: Colors.white,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Spacer(flex: 4),
+            const Text(
+              "Crear una Cuenta",
+              style: TextStyle(
+                fontSize: 25,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              "Permítanos ayudarle con la creación de su cuenta, no le llevará mucho tiempo.",
+              style: TextStyle(
+                fontSize: 14,
+                color: Color(0xFF121212),
+              ),
+            ),
+            const Spacer(flex: 4),
+            _buildUsersNameInput(),
+            _buildEmailInput(),
+            _buildPasswordInput(),
+            _buildConfirmPasswordInput(),
+            _buildLoginButton(context),
+            const SizedBox(height: 30),
+            _buildSignUpWith(context),
+            _buildRegisterPrompt(context),
+            const Spacer(flex: 20),
+            Center(
+              child: Container(
+                width: 135,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF121212),
+                  borderRadius: BorderRadius.circular(100),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
-      const SizedBox(height: 8), // Espaciado adicional para claridad
-      const Text(
-        "Permítanos ayudarle con la creación de su cuenta, no le llevará mucho tiempo.",
-        style: TextStyle(
-          fontSize: 14,
-          color: Color(0xFF121212),
-        ),
-      ),
-      const Spacer(flex: 4),
-      _buildUsersNameInput(),
-      _buildEmailInput(),
-      _buildPasswordInput(),
-      _buildConfirmPasswordInput(),
-      _buildLoginButton(context),
-      const SizedBox(height: 30), // Espaciado adicional
-      _buildSignUpWith(context),
-      _buildRegisterPrompt(context),
-      const Spacer(flex: 20),
-      Center(
-        child: Container(
-          width: 135,
-          height: 5,
-          decoration: BoxDecoration(
-            color: const Color(0xFF121212),
-            borderRadius: BorderRadius.circular(100),
-          ),
-        ),
-      ),
-    ],
-  ),
-),
-
     );
   }
 
-  // Builds the user's full name input field
   Widget _buildUsersNameInput() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,7 +113,7 @@ class SignUpScreen extends StatelessWidget {
         const SizedBox(height: 5),
         TextField(
           decoration: InputDecoration(
-            hintText: "Excribe tu nombre completo",
+            hintText: "Escribe tu nombre completo",
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
@@ -83,29 +121,27 @@ class SignUpScreen extends StatelessWidget {
                 width: 1.5,
               ),
             ),
-            contentPadding: const EdgeInsets.symmetric(
-                vertical: 19, horizontal: 20),
+            contentPadding:
+                const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
           ),
         ),
-        const SizedBox(height: 15), // Space
+        const SizedBox(height: 15),
       ],
     );
   }
 
-  // Builds the User's Email input field
   Widget _buildEmailInput() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          "Correo Electronico",
+          "Correo Electrónico",
           style: TextStyle(fontSize: 14, color: Color(0xFF121212)),
         ),
         const SizedBox(height: 5),
         TextField(
-          obscureText: true,
           decoration: InputDecoration(
-            hintText: "Escribe tu correo electronico",
+            hintText: "Escribe tu correo electrónico",
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
@@ -113,16 +149,15 @@ class SignUpScreen extends StatelessWidget {
                 width: 1.5,
               ),
             ),
-            contentPadding: const EdgeInsets.symmetric(
-                vertical: 19, horizontal: 20),
+            contentPadding:
+                const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
           ),
         ),
-        const SizedBox(height: 15), // Space
+        const SizedBox(height: 15),
       ],
     );
   }
 
-  // Builds the password input field
   Widget _buildPasswordInput() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,9 +168,12 @@ class SignUpScreen extends StatelessWidget {
         ),
         const SizedBox(height: 5),
         TextField(
+          controller: _passwordController,
           obscureText: true,
+          onChanged: (value) => _validateForm(),
           decoration: InputDecoration(
             hintText: "Escribe tu contraseña",
+            errorText: _passwordError,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
@@ -143,16 +181,15 @@ class SignUpScreen extends StatelessWidget {
                 width: 1.5,
               ),
             ),
-            contentPadding: const EdgeInsets.symmetric(
-                vertical: 19, horizontal: 20),
+            contentPadding:
+                const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
           ),
         ),
-        const SizedBox(height: 15), // Space 
+        const SizedBox(height: 15),
       ],
     );
   }
 
-  // Builds the password's confirmation input field
   Widget _buildConfirmPasswordInput() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -163,9 +200,12 @@ class SignUpScreen extends StatelessWidget {
         ),
         const SizedBox(height: 5),
         TextField(
+          controller: _confirmPasswordController,
           obscureText: true,
+          onChanged: (value) => _validateForm(),
           decoration: InputDecoration(
             hintText: "Escribe nuevamente tu contraseña",
+            errorText: _confirmPasswordError,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
@@ -173,16 +213,15 @@ class SignUpScreen extends StatelessWidget {
                 width: 1.5,
               ),
             ),
-            contentPadding: const EdgeInsets.symmetric(
-                vertical: 19, horizontal: 20),
+            contentPadding:
+                const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
           ),
         ),
-        const SizedBox(height: 30), // Space
+        const SizedBox(height: 30),
       ],
     );
   }
 
-  // Builds the login button
   Widget _buildLoginButton(BuildContext context) {
     return Center(
       child: ElevatedButton(
@@ -191,16 +230,17 @@ class SignUpScreen extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
-          backgroundColor: const Color(0xFF129575), // Custom color
+          backgroundColor: const Color(0xFF129575),
         ),
-        onPressed: () {
-          // Redirects to the main screen (Dashboard)
-          Navigator.pushNamed(context, '/nutrition_form');
-        },
+        onPressed: _canContinue
+            ? () {
+                Navigator.pushNamed(context, '/nutrition_form');
+              }
+            : null,
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
+          children: const [
+            Text(
               "Continuar",
               style: TextStyle(
                 fontSize: 16,

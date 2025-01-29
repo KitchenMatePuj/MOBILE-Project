@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  _LoginScreenState createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  bool _isPasswordVisible = false;
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +108,7 @@ class LoginScreen extends StatelessWidget {
         ),
         const SizedBox(height: 5),
         TextField(
-          obscureText: true,
+          obscureText: !_isPasswordVisible,
           decoration: InputDecoration(
             hintText: "Ingrese Contraseña",
             border: OutlineInputBorder(
@@ -114,6 +121,17 @@ class LoginScreen extends StatelessWidget {
             contentPadding: const EdgeInsets.symmetric(
               vertical: 19,
               horizontal: 20,
+            ),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                color: Colors.grey,
+              ),
+              onPressed: () {
+                setState(() {
+                  _isPasswordVisible = !_isPasswordVisible;
+                });
+              },
             ),
           ),
         ),
@@ -128,7 +146,7 @@ class LoginScreen extends StatelessWidget {
         padding: const EdgeInsets.only(top: 20, bottom: 10),
         child: TextButton(
           onPressed: () {
-            Navigator.pushNamed(context, '/forgot_password');
+            Navigator.pushNamed(context, '/email_forgot_pass');
           },
           child: const Text(
             "¿Olvidaste tu contraseña?",

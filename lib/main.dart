@@ -7,6 +7,9 @@ import 'screens/NutritionFormScreen.dart';   // Route for the Nutrition Registra
 import 'screens/DashboardScreen.dart';        // Route for the main screen after logging in
 import 'screens/RecipeSearchScreen.dart';    // Route for the specific recipe search screen
 import 'screens/ProfileScreen.dart';         // Added the Profile screen route
+import 'screens/EmailForgotPassScreen.dart'; // Route for the Email Forgot Password screen
+import 'screens/ShoppingList.dart';         // Route for the Shopping List screen
+import 'screens/CreateRecipe.dart';         // Route for the Create Recipe screen
 
 void main() {
   runApp(const MyApp());
@@ -33,6 +36,9 @@ class MyApp extends StatelessWidget {
         '/dashboard': (context) => const DashboardScreen(),  // Main screen after logging in
         '/recipe_search': (context) => const RecipeSearchScreen(),  // Specific recipe search screen route
         '/profile': (context) => const ProfileScreen(),  // Added Profile screen route
+        '/email_forgot_pass': (context) => const EmailForgotPassScreen(), // Email Forgot Password screen route
+        '/shopping_list': (context) => const ShoppingList(), // Shopping List screen route
+        '/create': (context) => const CreateRecipe(), // Create Recipe screen route
       },
     );
   }

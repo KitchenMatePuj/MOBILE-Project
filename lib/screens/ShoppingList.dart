@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 
-class RecipeSearchScreen extends StatelessWidget {
-  const RecipeSearchScreen({super.key});
+class ShoppingList extends StatelessWidget {
+  const ShoppingList({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Recipe Search'),
+        title: const Text('Shopping List'),
         backgroundColor: const Color(0xFF129575),
       ),
       body: const Center(
-        child: Text('Recipe Search Screen'),
+        child: Text('Shopping List Screen'),
       ),
     bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
         selectedItemColor: const Color(0xFF129575),
         unselectedItemColor: const Color.fromARGB(255, 83, 83, 83),
-        currentIndex: 1, // It is the 'selectedItemColor'
+        currentIndex: 3, // It is the 'selectedItemColor'
         onTap: (int index) {
           switch (index) {
             case 0:
@@ -26,14 +26,14 @@ class RecipeSearchScreen extends StatelessWidget {
               Navigator.pushNamed(context, '/dashboard');
               break;
             case 1:
+              // Navegate to Search
+              Navigator.pushNamed(context, '/recipe_search');
               break;
             case 2:
               // Navegate to Create
               Navigator.pushNamed(context, '/create');
               break;
             case 3:
-              // Navegate to Shopping List
-              Navigator.pushNamed(context, '/shopping_list');
               break;
             case 4:
               // Navegate to Profile
