@@ -96,18 +96,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                // Featured Recipes section - First row with 3 horizontal SingleChildScrollViews
-
-
-
-
-
-
-
-
-
-
-                // Row with 3 images in a single row (3 images per row)
+                
+      
                 // First row with 3 SingleChildScrollView containing RecipeCards
                 Row(
                   children: [
@@ -117,24 +107,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         child: Row(
                           children: const [
                             RecipeCard(
-                              title: "Bueñuelos Paisa",
+                              title: "Buñuelos Paisa",
                               chef: "Voldi_Feliz",
                               duration: "25 mins",
-                              imageUrl: "assets/recipes/recipe4.jpg", // Actualizada la ruta
+                              imageUrl: "assets/recipes/recipe4.jpg", 
                             ),
                             SizedBox(width: 16),
                             RecipeCard(
                               title: "Cóctel de Naranja",
                               chef: "Calypso66",
                               duration: "10 mins",
-                              imageUrl: "assets/recipes/recipe5.jpg", // Actualizada la ruta
+                              imageUrl: "assets/recipes/recipe5.jpg",
                             ),
                             SizedBox(width: 16),
                             RecipeCard(
                               title: "Mariscos Caleños",
                               chef: "Dora_Explora",
                               duration: "35 mins",
-                              imageUrl: "assets/recipes/recipe6.jpg", // Actualizada la ruta
+                              imageUrl: "assets/recipes/recipe6.jpg", 
                             ),
                           ],
                         ),
@@ -142,7 +132,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 24),
 
                 // Second row with 3 SingleChildScrollView containing RecipeCards
@@ -157,21 +146,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               title: "Paella Sencilla",
                               chef: "Chilindrinita99",
                               duration: "80 mins",
-                              imageUrl: "assets/recipes/recipe7.jpg", // Actualizada la ruta
+                              imageUrl: "assets/recipes/recipe7.jpg", 
                             ),
                             SizedBox(width: 16),
                             RecipeCard(
                               title: "Pavo Relleno XXS",
                               chef: "XxSportacusXx",
                               duration: "125 mins",
-                              imageUrl: "assets/recipes/recipe8.jpg", // Actualizada la ruta
+                              imageUrl: "assets/recipes/recipe8.jpg",
                             ),
                             SizedBox(width: 16),
                             RecipeCard(
                               title: "Banana Split Casera",
                               chef: "Rihannita",
                               duration: "20 mins",
-                              imageUrl: "assets/recipes/recipe9.jpg", // Actualizada la ruta
+                              imageUrl: "assets/recipes/recipe9.jpg", 
                             ),
                           ],
                         ),
@@ -181,20 +170,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
 
 
-
-
-
-
-
-
-
-
-
-
-
-
                 const SizedBox(height: 24),
-                // Nuevas Recetas section
                 const Text(
                   'Recetas Añadidas Recientemente',
                   style: TextStyle(
@@ -212,21 +188,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         title: "Salchipapa Venezolana XXL",
                         chef: "Laura_Bozzo",
                         duration: "35 mins",
-                        imageUrl: "assets/recipes/recipe1.jpg", // Actualizada la ruta
+                        imageUrl: "assets/recipes/recipe1.jpg", 
                       ),
                       RecipeCard(
                         title: "Perro Caliente Colombiano",
                         chef: "Tia_Piedad",
                         duration: "15 mins", 
-                        imageUrl: "assets/recipes/recipe2.jpg", // Actualizada la ruta
+                        imageUrl: "assets/recipes/recipe2.jpg", 
                       ),
                       RecipeCard(
                         title: "Pasta Alfredo",
                         chef: "Machis",
                         duration: "30 mins",
-                        imageUrl: "assets/recipes/recipe3.jpg", // Actualizada la ruta
+                        imageUrl: "assets/recipes/recipe3.jpg",
                       ),
-                      // Más RecipeCards...
+                      // More RecipeCards...
                     ],
                   ),
                 ),
@@ -438,7 +414,6 @@ class UserHeader extends StatelessWidget {
         ),
         GestureDetector(
           onTap: () {
-            // Redirige a la pantalla de perfil
             Navigator.pushNamed(context, '/profile');
           },
           child: Container(
@@ -479,16 +454,15 @@ class SearchBar extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 8), // Espacio entre el TextField y el botón
+          const SizedBox(width: 8), // Space between the TextField and the button
           Container(
             decoration: BoxDecoration(
-              color: const Color(0xFF129575), // Color verde de fondo
+              color: const Color(0xFF129575), 
               borderRadius: BorderRadius.circular(12),
             ),
             child: IconButton(
-              icon: const Icon(Icons.filter_list, color: Colors.white), // Ícono de filtro
+              icon: const Icon(Icons.filter_list, color: Colors.white), // Filter's Icon 
               onPressed: () {
-                // Aquí va la acción para el botón, por ejemplo abrir un filtro o menú
                 print("Filtro activado");
               },
             ),

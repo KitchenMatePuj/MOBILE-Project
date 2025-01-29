@@ -10,17 +10,8 @@ class ProfileScreen extends StatelessWidget {
         title: const Text('Perfil del Usuario'),
         backgroundColor: const Color(0xFF129575),
       ),
-      body: const SingleChildScrollView(
-        child: Center(
-          child: Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Text(
-              'Aquí va el contenido del perfil del usuario.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16),
-            ),
-          ),
-        ),
+      body: const Center(
+        child: Text('Pendiente Perfil del Usuario'),
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,

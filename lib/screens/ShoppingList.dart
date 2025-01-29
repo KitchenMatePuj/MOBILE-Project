@@ -7,11 +7,11 @@ class ShoppingList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Shopping List'),
+        title: const Text('Lista de Compras'),
         backgroundColor: const Color(0xFF129575),
       ),
       body: const Center(
-        child: Text('Shopping List Screen'),
+        child: Text('Pendiente Lista de Compras'),
       ),
     bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
