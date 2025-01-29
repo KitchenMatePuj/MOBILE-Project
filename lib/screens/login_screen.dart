@@ -16,10 +16,9 @@ class LoginScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(30),
           color: Colors.white,
         ),
-        padding: const EdgeInsets.fromLTRB(30, 14, 13, 8),
-        margin: EdgeInsets.all(0),
+        padding: const EdgeInsets.symmetric(horizontal: 30), // Márgenes simétricos
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start, // Mantiene textos alineados a la izquierda
           children: [
             const Spacer(flex: 4),
             const Text(
@@ -42,9 +41,8 @@ class LoginScreen extends StatelessWidget {
             _buildPasswordInput(),
             _buildForgotPassword(context),
             _buildLoginButton(context),
-            // Adds space between the button and the message
-            const SizedBox(height: 30), 
-            _buildLoginWith(),
+            const SizedBox(height: 30),
+            _buildLoginWith(context),
             _buildRegisterPrompt(context),
             const Spacer(flex: 20),
             Center(
@@ -56,17 +54,16 @@ class LoginScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(100),
                 ),
               ),
-            )
+            ),
           ],
         ),
       ),
     );
   }
 
-  // Builds the email input field
   Widget _buildEmailInput() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start, // Textos a la izquierda
       children: [
         const Text(
           "Correo Electrónico",
@@ -84,18 +81,19 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
             contentPadding: const EdgeInsets.symmetric(
-                vertical: 19, horizontal: 20),
+              vertical: 19,
+              horizontal: 20,
+            ),
           ),
         ),
-        const SizedBox(height: 20), // Space between email field and next widget
+        const SizedBox(height: 20),
       ],
     );
   }
 
-  // Builds the password input field
   Widget _buildPasswordInput() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start, // Textos a la izquierda
       children: [
         const Text(
           "Contraseña",
@@ -114,22 +112,22 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
             contentPadding: const EdgeInsets.symmetric(
-                vertical: 19, horizontal: 20),
+              vertical: 19,
+              horizontal: 20,
+            ),
           ),
         ),
-        const SizedBox(height: 3), // Space between password field and next widget
+        const SizedBox(height: 3),
       ],
     );
   }
 
-  // Builds the "forgot password" text button
   Widget _buildForgotPassword(BuildContext context) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.only(top: 20, bottom: 10),
         child: TextButton(
           onPressed: () {
-            // Redirects to the "forgot password" screen
             Navigator.pushNamed(context, '/forgot_password');
           },
           child: const Text(
@@ -143,7 +141,6 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  // Builds the login button
   Widget _buildLoginButton(BuildContext context) {
     return Center(
       child: ElevatedButton(
@@ -152,10 +149,9 @@ class LoginScreen extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
-          backgroundColor: const Color(0xFF129575), // Custom color
+          backgroundColor: const Color(0xFF129575),
         ),
         onPressed: () {
-          // Redirects to the main screen (Dashboard)
           Navigator.pushNamed(context, '/dashboard');
         },
         child: Row(
@@ -170,10 +166,10 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 11),
-            Icon(  // Uses an Icon instead of an asset
-              Icons.arrow_forward,  // Forward arrow
-              size: 20,  // Icon size
-              color: Colors.white,  // Icon color (adjustable)
+            const Icon(
+              Icons.arrow_forward,
+              size: 20,
+              color: Colors.white,
             ),
           ],
         ),
@@ -181,63 +177,70 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  // Builds the "Login with" section
-  Widget _buildLoginWith() {
-    return Center(
-      child: Column(
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: const [
-              Flexible(
-                child: Divider(
-                  color: Color(0xFFD9D9D9),
-                  thickness: 1,
-                  endIndent: 12,
-                ),
+  Widget _buildLoginWith(BuildContext context) {
+  return Center(
+    child: Column(
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Flexible(
+              child: Divider(
+                color: Color(0xFFD9D9D9),
+                thickness: 1,
+                endIndent: 12,
               ),
-              Text(
-                "O inicia sesión mediante",
-                style: TextStyle(
-                  color: Color(0xFFD9D9D9),
-                  fontWeight: FontWeight.w500,
-                ),
+            ),
+            Text(
+              "O inicia sesión mediante",
+              style: TextStyle(
+                color: Color(0xFFD9D9D9),
+                fontWeight: FontWeight.w500,
               ),
-              Flexible(
-                child: Divider(
-                  color: Color(0xFFD9D9D9),
-                  thickness: 1,
-                  indent: 12,
-                ),
+            ),
+            Flexible(
+              child: Divider(
+                color: Color(0xFFD9D9D9),
+                thickness: 1,
+                indent: 12,
               ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Row(  // Row to display icons together
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Google Icon
-              Image.asset(
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(context, '/dashboard');
+              },
+              child: Image.asset(
                 'assets/icons/googleIcon.png',
                 width: 55,
                 fit: BoxFit.contain,
               ),
-              const SizedBox(width: 20),  // Space between the icons
-              // Facebook Icon
-              Image.asset(
-                'icons/facebookIcon.png', 
+            ),
+            const SizedBox(width: 20),
+            GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(context, '/dashboard');
+              },
+              child: Image.asset(
+                'assets/icons/facebookIcon.png',
                 width: 55,
                 fit: BoxFit.contain,
               ),
-            ],
-          ),
-          const SizedBox(height: 15), // Space between email field and next widget
-        ],
-      ),
-    );
-  }
+            ),
+          ],
+        ),
+        const SizedBox(height: 15),
+      ],
+    ),
+  );
+}
 
-  // Builds the register prompt text
+
   Widget _buildRegisterPrompt(BuildContext context) {
     return Center(
       child: RichText(
@@ -253,7 +256,6 @@ class LoginScreen extends StatelessWidget {
               style: const TextStyle(color: Color(0xFFFF9C00)),
               recognizer: TapGestureRecognizer()
                 ..onTap = () {
-                  // Redirects to the "create account" screen
                   Navigator.pushNamed(context, '/sign_up');
                 },
             ),

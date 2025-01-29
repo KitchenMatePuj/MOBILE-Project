@@ -1,8 +1,12 @@
 # KitchenMate Mobile App
 
+
+
 ## Project Overview
 
 KitchenMate is a mobile application designed to help users discover, share, and organize recipes. This repository contains the source code, resources, and documentation related to the development of the mobile client for the app.
+
+
 
 ## Features
 
@@ -12,13 +16,16 @@ KitchenMate is a mobile application designed to help users discover, share, and 
 - **Community Collaboration**: KitchenMate fosters a community where both beginners and experienced cooks can help each other, share tips, and improve their culinary skills together.
 - **User-Friendly Interface**: An intuitive and easy-to-use design to enhance the user experience.
 
+
+
 ## Tech Stack
 
 - **Language**: Dart
 - **Framework**: Flutter
-- **Backend**: Firebase (if applicable)
-- **Database**: Firestore / SQLite
-- **Other Tools**: [Add any other third-party libraries or tools you're using]
+- **Backend**: ...
+- **Database**: ...
+
+
 
 ## Installation
 
@@ -29,12 +36,30 @@ Before you begin, make sure you have the following tools installed on your machi
 - [Flutter SDK](https://flutter.dev/docs/get-started/install)
 - [Android Studio](https://developer.android.com/studio) or [VS Code](https://code.visualstudio.com/) with the Flutter and Dart extensions.
 
+
+
 ### Cloning the Repository
 
 1. Clone this repository to your local machine using Git:
 
    ```bash
    git clone https://github.com/your_username/KitchenMate.git](https://github.com/KitchenMatePuj/MOBILE-Project.git
+
+
+
+## APK Download
+
+You can download and install the latest version of the KitchenMate Mobile App directly on your Android device.
+
+  [Download KitchenMate APK](https://github.com/KitchenMatePuj/MOBILE-Project/releases/download/latest/app-release.apk)
+
+> **Note**: The APK file is located in the `build/app/outputs/flutter-apk/` folder and includes:
+> - `app-release.apk`: The application package to install on Android devices.
+> - `app-release.apk.sha1`: A hash file for verifying the integrity of the APK.
+
+After downloading the APK, install it on your Android device by enabling "Unknown Sources" in your device settings if required.
+
+
 
 ## Authors
 

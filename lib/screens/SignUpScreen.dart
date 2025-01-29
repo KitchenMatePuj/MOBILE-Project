@@ -10,55 +10,56 @@ class SignUpScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Creación de Cuenta'),
       backgroundColor: const Color(0xFF129575),), 
       body: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30),
-          color: Colors.white,
-        ),
-        padding: const EdgeInsets.fromLTRB(30, 14, 13, 8),
-        margin: EdgeInsets.all(0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Spacer(flex: 4),
-            const Text(
-              "Crear una Cuenta",
-              style: TextStyle(
-                fontSize: 25,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-            const Text(
-              "Permítanos ayudarle con la creación de su cuenta, no le llevará mucho tiempo.",
-              style: TextStyle(
-                fontSize: 14,
-                color: Color(0xFF121212),
-              ),
-            ),
-            const Spacer(flex: 4),
-            _buildUsersNameInput(),
-            _buildEmailInput(),
-            _buildPasswordInput(),
-            _buildConfirmPasswordInput(),
-            _buildLoginButton(context),
-            // Adds space between the button and the message
-            const SizedBox(height: 30), 
-            _buildSignUpWith(),
-            _buildRegisterPrompt(context),
-            const Spacer(flex: 20),
-            Center(
-              child: Container(
-                width: 135,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF121212),
-                  borderRadius: BorderRadius.circular(100),
-                ),
-              ),
-            )
-          ],
+  decoration: BoxDecoration(
+    borderRadius: BorderRadius.circular(30),
+    color: Colors.white,
+  ),
+  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Ajuste del padding
+  margin: EdgeInsets.all(0), // Sin margen adicional
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start, // Alinea a la izquierda los elementos
+    children: [
+      const Spacer(flex: 4),
+      const Text(
+        "Crear una Cuenta",
+        style: TextStyle(
+          fontSize: 25,
+          fontWeight: FontWeight.bold,
+          color: Colors.black,
         ),
       ),
+      const SizedBox(height: 8), // Espaciado adicional para claridad
+      const Text(
+        "Permítanos ayudarle con la creación de su cuenta, no le llevará mucho tiempo.",
+        style: TextStyle(
+          fontSize: 14,
+          color: Color(0xFF121212),
+        ),
+      ),
+      const Spacer(flex: 4),
+      _buildUsersNameInput(),
+      _buildEmailInput(),
+      _buildPasswordInput(),
+      _buildConfirmPasswordInput(),
+      _buildLoginButton(context),
+      const SizedBox(height: 30), // Espaciado adicional
+      _buildSignUpWith(context),
+      _buildRegisterPrompt(context),
+      const Spacer(flex: 20),
+      Center(
+        child: Container(
+          width: 135,
+          height: 5,
+          decoration: BoxDecoration(
+            color: const Color(0xFF121212),
+            borderRadius: BorderRadius.circular(100),
+          ),
+        ),
+      ),
+    ],
+  ),
+),
+
     );
   }
 
@@ -219,61 +220,72 @@ class SignUpScreen extends StatelessWidget {
     );
   }
 
-  // Builds the "Sign Up with" section
-  Widget _buildSignUpWith() {
-    return Center(
-      child: Column(
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: const [
-              Flexible(
-                child: Divider(
-                  color: Color(0xFFD9D9D9),
-                  thickness: 1,
-                  endIndent: 12,
-                ),
+ // Builds the "Sign Up with" section
+Widget _buildSignUpWith(BuildContext context) {
+  return Center(
+    child: Column(
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Flexible(
+              child: Divider(
+                color: Color(0xFFD9D9D9),
+                thickness: 1,
+                endIndent: 12,
               ),
-              Text(
-                "O crear cuenta mediante",
-                style: TextStyle(
-                  color: Color(0xFFD9D9D9),
-                  fontWeight: FontWeight.w500,
-                ),
+            ),
+            Text(
+              "O crear cuenta mediante",
+              style: TextStyle(
+                color: Color(0xFFD9D9D9),
+                fontWeight: FontWeight.w500,
               ),
-              Flexible(
-                child: Divider(
-                  color: Color(0xFFD9D9D9),
-                  thickness: 1,
-                  indent: 12,
-                ),
+            ),
+            Flexible(
+              child: Divider(
+                color: Color(0xFFD9D9D9),
+                thickness: 1,
+                indent: 12,
               ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Row(  // Row to display icons together
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Google Icon
-              Image.asset(
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        Row(  // Row to display icons together
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Google Icon with GestureDetector
+            GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(context, '/nutrition_form');
+              },
+              child: Image.asset(
                 'assets/icons/googleIcon.png',
                 width: 55,
                 fit: BoxFit.contain,
               ),
-              const SizedBox(width: 20),  // Space between the icons
-              // Facebook Icon
-              Image.asset(
-                'icons/facebookIcon.png', 
+            ),
+            const SizedBox(width: 20),  // Space between the icons
+            // Facebook Icon with GestureDetector
+            GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(context, '/nutrition_form');
+              },
+              child: Image.asset(
+                'assets/icons/facebookIcon.png', 
                 width: 55,
                 fit: BoxFit.contain,
               ),
-            ],
-          ),
-          const SizedBox(height: 15), // Space between email field and next widget
-        ],
-      ),
-    );
-  }
+            ),
+          ],
+        ),
+        const SizedBox(height: 15), // Space between email field and next widget
+      ],
+    ),
+  );
+}
+
 
   // Builds the register prompt text
   Widget _buildRegisterPrompt(BuildContext context) {

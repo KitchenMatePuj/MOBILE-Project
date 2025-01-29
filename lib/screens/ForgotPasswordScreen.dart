@@ -12,12 +12,12 @@ class ForgotPasswordScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(30),
           color: Colors.white,
         ),
-        padding: const EdgeInsets.fromLTRB(30, 14, 13, 8),
-        margin: EdgeInsets.all(0),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Ajuste del padding
+        margin: EdgeInsets.all(0), // Sin margen adicional
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Spacer(flex: 2),
+            const Spacer(flex: 4),
             const Text(
               "¿Olvidaste tu\nContraseña?,",
               style: TextStyle(
@@ -26,7 +26,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                 color: Colors.black,
               ),
             ),
-            const Spacer(flex: 1),
+            const SizedBox(height: 8), // Espaciado adicional para claridad
             const Text(
               "Restablecela rápidamente\nsin preocupaciones",
               style: TextStyle(
@@ -34,13 +34,12 @@ class ForgotPasswordScreen extends StatelessWidget {
                 color: Color(0xFF121212),
               ),
             ),
-            const Spacer(flex: 2),
+            const Spacer(flex: 4),
             _buildNewPasswordInput(),
             _buildConfirmNewPasswordInput(),
             _buildConfirmButton(context),
-            // Adds space between the button and the message
-            const SizedBox(height: 30), 
-            const Spacer(flex: 20),
+            const SizedBox(height: 30), // Espaciado adicional
+            const Spacer(flex: 50),
             Center(
               child: Container(
                 width: 135,
@@ -93,7 +92,7 @@ class ForgotPasswordScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          "Vuelve a escribir la Constraseña",
+          "Vuelve a escribir la Contraseña",
           style: TextStyle(fontSize: 14, color: Color(0xFF121212)),
         ),
         const SizedBox(height: 5),
@@ -155,4 +154,3 @@ class ForgotPasswordScreen extends StatelessWidget {
     );
   }
 }
-

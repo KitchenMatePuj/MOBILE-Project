@@ -8,7 +8,7 @@ class NutritionFormScreen extends StatefulWidget {
 }
 
 class _NutritionFormScreenState extends State<NutritionFormScreen> {
-  // Variables para guardar las opciones seleccionadas
+  // Variables to save the selected options
   String? selectedDiet;
   String? selectedAllergy;
   String? selectedIntolerance;
@@ -25,8 +25,8 @@ class _NutritionFormScreenState extends State<NutritionFormScreen> {
           borderRadius: BorderRadius.circular(30),
           color: Colors.white,
         ),
-        padding: const EdgeInsets.fromLTRB(30, 14, 13, 8),
-        margin: EdgeInsets.all(0),
+        padding: const EdgeInsets.fromLTRB(30, 14, 30, 8), 
+        margin: EdgeInsets.zero, 
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -103,7 +103,7 @@ class _NutritionFormScreenState extends State<NutritionFormScreen> {
                       "Omnívora",
                       "Keto",
                       "Paleo",
-                      "Otros"
+                      "No tengo preferencias"
                     ].map((String value) {
                       return DropdownMenuItem<String>(
                         value: value,
@@ -155,7 +155,7 @@ class _NutritionFormScreenState extends State<NutritionFormScreen> {
                       "Gluten",
                       "Lácteos",
                       "Mariscos",
-                      "Otros"
+                      "Ninguna"
                     ].map((String value) {
                       return DropdownMenuItem<String>(
                         value: value,
@@ -205,7 +205,7 @@ class _NutritionFormScreenState extends State<NutritionFormScreen> {
                     items: [
                       "Lactosa",
                       "Gluten",
-                      "Otros"
+                      "Ninguna"
                     ].map((String value) {
                       return DropdownMenuItem<String>(
                         value: value,
@@ -255,7 +255,7 @@ class _NutritionFormScreenState extends State<NutritionFormScreen> {
                     items: [
                       "Desayuno Diario",
                       "Comida Rápida Ocasional",
-                      "Otros"
+                      "Ninguno en específico"
                     ].map((String value) {
                       return DropdownMenuItem<String>(
                         value: value,
@@ -307,7 +307,7 @@ class _NutritionFormScreenState extends State<NutritionFormScreen> {
                       "Asiática",
                       "Mexicana",
                       "Italiana",
-                      "Otros"
+                      "Ninguna en específico"
                     ].map((String value) {
                       return DropdownMenuItem<String>(
                         value: value,
@@ -357,7 +357,7 @@ class _NutritionFormScreenState extends State<NutritionFormScreen> {
                     items: [
                       "Pérdida de Peso",
                       "Ganancia Muscular",
-                      "Otros"
+                      "Ninguno"
                     ].map((String value) {
                       return DropdownMenuItem<String>(
                         value: value,

@@ -14,7 +14,7 @@ class HomeScreen extends StatelessWidget {
             height: MediaQuery.of(context).size.height,
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/icons/backgroundLanding.png'),
+                image: AssetImage('assets/icons/backgroundLanding2.png'),
                 fit: BoxFit.cover,
               ),
             ),
