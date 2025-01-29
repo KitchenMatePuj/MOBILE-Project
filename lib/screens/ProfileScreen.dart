@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 
-class RecipeSearchScreen extends StatelessWidget {
-  const RecipeSearchScreen({super.key});
+class ProfileScreen extends StatelessWidget {
+  const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Recipe Search'),
+        title: const Text('Perfil del Usuario'),
         backgroundColor: const Color(0xFF129575),
       ),
       body: const Center(
-        child: Text('Recipe Search Screen'),
+        child: Text('Perfil del Usuario'),
       ),
     );
   }

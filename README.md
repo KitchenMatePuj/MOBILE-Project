@@ -64,6 +64,6 @@ After downloading the APK, install it on your Android device by enabling "Unknow
 ## Authors
 
 - **Miguel Angel Uribe Villada** (Mobile Frontend Developer) - [GitHub Profile](https://github.com/MiguelUribeVillada)
-- **Luisa Fernanda Quintero Ramirez** (Web Frontend Developer) - [GitHub Profile](https://github.com/Luquinra)
-- **Tomás Hentrigue Martinez** (Backend Developer) - [GitHub Profile](https://github.com/iTMG22)
+- **Luisa Fernanda Quintero Ramírez** (Web Frontend Developer) - [GitHub Profile](https://github.com/Luquinra)
+- **Tomás Henrique Martínez** (Backend Developer) - [GitHub Profile](https://github.com/iTMG22)
 - **Carlos De Silvestri** (Backend Developer) - [GitHub Profile](https://github.com/MrDesilvestri)

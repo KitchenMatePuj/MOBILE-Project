@@ -61,7 +61,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    SizedBox(height: 20),
+                    SizedBox(height: 10),  // Ajusté el margen entre KitchenMate y el siguiente texto
                     Text(
                       '¡Descubre el chef que llevas\ndentro!',
                       style: TextStyle(
@@ -69,7 +69,7 @@ class HomeScreen extends StatelessWidget {
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                       ),
-                      textAlign: TextAlign.center,
+                      textAlign: TextAlign.center,  // Esto asegura que el texto esté centrado
                     ),
                     SizedBox(height: 80),
                     ElevatedButton(

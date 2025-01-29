@@ -6,6 +6,7 @@ import 'screens/SignUpScreen.dart';          // Route for the Sign Up screen
 import 'screens/NutritionFormScreen.dart';   // Route for the Nutrition Registration screen
 import 'screens/DashboardScreen.dart';        // Route for the main screen after logging in
 import 'screens/RecipeSearchScreen.dart';    // Route for the specific recipe search screen
+import 'screens/ProfileScreen.dart';         // Added the Profile screen route
 
 void main() {
   runApp(const MyApp());
@@ -31,6 +32,7 @@ class MyApp extends StatelessWidget {
         '/nutrition_form': (context) => const NutritionFormScreen(),  // Nutrition Registration screen route
         '/dashboard': (context) => const DashboardScreen(),  // Main screen after logging in
         '/recipe_search': (context) => const RecipeSearchScreen(),  // Specific recipe search screen route
+        '/profile': (context) => const ProfileScreen(),  // Added Profile screen route
       },
     );
   }
