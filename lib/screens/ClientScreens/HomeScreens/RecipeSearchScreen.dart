@@ -8,6 +8,7 @@ class RecipeSearchScreen extends StatefulWidget {
 }
 
 class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
+  String selectedCategory = "Recomendado";
   // Comtroller for the search bar
   TextEditingController _searchController = TextEditingController();
   
@@ -26,6 +27,12 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
 
   // Filtered recipe list that updates with search
   List<Recipe> filteredRecipes = [];
+
+  void selectCategory(String category) {
+    setState(() {
+      selectedCategory = category;
+    });
+  }
 
   @override
   void initState() {
@@ -68,13 +75,72 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 16),
+                    // Categories section
+                    const SizedBox(height: 5),
                     SearchBar(controller: _searchController),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 15),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          CategoryChip(
+                            label: "Recomendado",
+                            isSelected: selectedCategory == "Recomendado",
+                            onTap: () => selectCategory("Recomendado"),
+                          ),
+                          CategoryChip(
+                            label: "India",
+                            isSelected: selectedCategory == "India",
+                            onTap: () => selectCategory("India"),
+                          ),
+                          CategoryChip(
+                            label: "Italiana",
+                            isSelected: selectedCategory == "Italiana",
+                            onTap: () => selectCategory("Italiana"),
+                          ),
+                          CategoryChip(
+                            label: "Asiatica",
+                            isSelected: selectedCategory == "Asiatica",
+                            onTap: () => selectCategory("Asiatica"),
+                          ),
+                          CategoryChip(
+                            label: "China",
+                            isSelected: selectedCategory == "China",
+                            onTap: () => selectCategory("China"),
+                          ),
+                          CategoryChip(
+                            label: "Frutas",
+                            isSelected: selectedCategory == "Frutas",
+                            onTap: () => selectCategory("Frutas"),
+                          ),
+                          CategoryChip(
+                            label: "Vegetales",
+                            isSelected: selectedCategory == "Vegetales",
+                            onTap: () => selectCategory("Vegetales"),
+                          ),
+                          CategoryChip(
+                            label: "Proteina",
+                            isSelected: selectedCategory == "Proteina",
+                            onTap: () => selectCategory("Proteina"),
+                          ),
+                          CategoryChip(
+                            label: "Cereales",
+                            isSelected: selectedCategory == "Cereales",
+                            onTap: () => selectCategory("Cereales"),
+                          ),
+                          CategoryChip(
+                            label: "Platos Locales",
+                            isSelected: selectedCategory == "Platos Locales",
+                            onTap: () => selectCategory("Platos Locales"),  
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 15),
                     const Text(
                       'Resultados de Búsqueda',
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 22,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -145,6 +211,45 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
             label: 'Perfil',
           ),
         ],
+      ),
+    );
+  }
+}
+
+class CategoryChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const CategoryChip({
+    Key? key,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(right: 16),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF129575) : Colors.transparent,
+          border: Border.all(
+            color: isSelected ? Colors.transparent : const Color(0xFF129575),
+          ),
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: isSelected ? Colors.white : const Color(0xFF129575),
+          ),
+        ),
       ),
     );
   }
@@ -261,12 +366,25 @@ class SearchBar extends StatelessWidget {
             child: TextField(
               controller: controller,
               decoration: InputDecoration(
-                hintText: 'Busca una receta...',
+                hintText: 'Busca Recetas o Chefs...',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
+            ),
+          ),
+          const SizedBox(width: 8), // Space between the TextField and the button
+          Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF129575), 
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.filter_list, color: Colors.white), // Filter's Icon 
+              onPressed: () {
+                print("Filtro activado");
+              },
             ),
           ),
         ],

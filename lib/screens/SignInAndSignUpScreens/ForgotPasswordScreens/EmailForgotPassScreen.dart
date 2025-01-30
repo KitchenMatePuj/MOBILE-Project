@@ -17,7 +17,7 @@ class EmailForgotPassScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Spacer(flex: 4),
+            const Spacer(flex: 2),
             const Text(
               "¿Olvidaste tu\nContraseña?,",
               style: TextStyle(

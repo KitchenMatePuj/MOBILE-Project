@@ -32,14 +32,14 @@ class _NutritionFormScreenState extends State<NutritionFormScreen> {
           children: [
             const Spacer(flex: 2),
             const Text(
-              "Personaliza tus\nrecomendaciones",
+              "Personaliza tus recomendaciones",
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: Colors.black,
               ),
             ),
-            const Spacer(flex: 6),
+            const Spacer(flex: 15),
             const Text(
               "Proporciona tu información nutricional para recibir recetas y consejos adaptados a tus necesidades",
               style: TextStyle(
