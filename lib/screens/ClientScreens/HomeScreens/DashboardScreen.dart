@@ -10,22 +10,22 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   // Lista de recetas principales
   final List<Recipe> allRecipes = [
-    Recipe(title: "Lasagna Original Italiana", chef: "kitchenMate", duration: "35 mins", imageUrl: "assets/recipes/recipe12.jpg"),
-    Recipe(title: "Torta de Patatas", chef: "kitchenMate", duration: "40 mins", imageUrl: "assets/recipes/recipe10.jpg"),
-    Recipe(title: "Desayuno: Arepa Colombo Venezolana con Huevo", chef: "kitchenMate", duration: "15 mins", imageUrl: "assets/recipes/recipe11.jpg"),
+    Recipe(title: "Lasagna Original Italiana", chef: "kitchenMate", duration: "35 mins", imageUrl: "assets/recipes/recipe12.jpg", rating: 4, filters: "Cena, Pasta, Italiana"),
+    Recipe(title: "Torta de Patatas", chef: "kitchenMate", duration: "40 mins", imageUrl: "assets/recipes/recipe10.jpg", rating: 5, filters: "Cena, Vegetariana, Española"),
+    Recipe(title: "Desayuno: Arepa Colombo Venezolana con Huevo", chef: "kitchenMate", duration: "15 mins", imageUrl: "assets/recipes/recipe11.jpg", rating: 4, filters: "Desayuno, Proteina, Colombiana, Venezolana"),
   ];
 
   // Lista de recetas añadidas recientemente
   final List<Recipe> newRecipes = [
-    Recipe(title: "Salchipapa Venezolana XXL", chef: "Laura_Bozzo", duration: "35 mins", imageUrl: "assets/recipes/recipe1.jpg"),
-    Recipe(title: "Perro Caliente Colombiano", chef: "Tia_Piedad", duration: "15 mins", imageUrl: "assets/recipes/recipe2.jpg"),
-    Recipe(title: "Pasta Alfredo", chef: "Machis", duration: "30 mins", imageUrl: "assets/recipes/recipe3.jpg"),
-    Recipe(title: "Buñuelos Paisa", chef: "Voldi_Feliz", duration: "25 mins", imageUrl: "assets/recipes/recipe4.jpg"),
-    Recipe(title: "Cóctel de Naranja", chef: "Calypso66", duration: "10 mins", imageUrl: "assets/recipes/recipe5.jpg"),
-    Recipe(title: "Mariscos Caleños", chef: "Dora_Explora", duration: "35 mins", imageUrl: "assets/recipes/recipe6.jpg"),
-    Recipe(title: "Paella Sencilla", chef: "Chilindrinita99", duration: "80 mins", imageUrl: "assets/recipes/recipe7.jpg"),
-    Recipe(title: "Pavo Relleno XXS", chef: "XxSportacusXx", duration: "125 mins", imageUrl: "assets/recipes/recipe8.jpg"),
-    Recipe(title: "Banana Split Casera", chef: "Rihannita", duration: "20 mins", imageUrl: "assets/recipes/recipe9.jpg"),
+    Recipe(title: "Pavo Relleno XXS", chef: "XxSportacusXx", duration: "125 mins", imageUrl: "assets/recipes/recipe8.jpg", rating: 4, filters: "Proteina, Cena, Navidad"),
+    Recipe(title: "Banana Split Casera", chef: "Rihannita", duration: "20 mins", imageUrl: "assets/recipes/recipe9.jpg", rating: 5, filters: "Frutas, Postre"),
+    Recipe(title: "Paella Sencilla", chef: "Chilindrinita99", duration: "80 mins", imageUrl: "assets/recipes/recipe7.jpg", rating: 3, filters: "Cena, Arroz, Mariscos"),
+    Recipe(title: "Buñuelos Paisa", chef: "Voldi_Feliz", duration: "25 mins", imageUrl: "assets/recipes/recipe4.jpg", rating: 4, filters: "Cereal, Desayuno, Colombiana"),
+    Recipe(title: "Mariscos Caleños", chef: "Dora_Explora", duration: "35 mins", imageUrl: "assets/recipes/recipe6.jpg", rating: 5, filters: "Cena, Mariscos, Colombiana"),
+    Recipe(title: "Cóctel de Naranja", chef: "Calypso66", duration: "10 mins", imageUrl: "assets/recipes/recipe5.jpg", rating: 4, filters: "Frutas, Bebida"),
+    Recipe(title: "Perro Caliente Colombiano", chef: "Tia_Piedad", duration: "15 mins", imageUrl: "assets/recipes/recipe2.jpg", rating: 3, filters: "Proteina, Almuerzo, Colombiana"),
+    Recipe(title: "Salchipapa Venezolana XXL", chef: "Laura_Bozzo", duration: "35 mins", imageUrl: "assets/recipes/recipe1.jpg", rating: 5, filters: "Proteina, Cena, Venezolana"),
+    Recipe(title: "Pasta Alfredo", chef: "Machis", duration: "30 mins", imageUrl: "assets/recipes/recipe3.jpg", rating: 4, filters: "Cena, Pasta, Italiana"),
   ];
 
   // Variable para almacenar el texto de la barra de búsqueda
@@ -38,6 +38,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         title: const Text(''),
         backgroundColor: const Color(0xFF129575),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushNamedAndRemoveUntil(
+              context, 
+              '/login', 
+              (Route<dynamic> route) => false, // Elimina todas las rutas previas
+            );
+          },
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -84,6 +94,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 chef: recipe.chef,
                                 duration: recipe.duration,
                                 imageUrl: recipe.imageUrl,
+                                rating: recipe.rating,
                               ),
                             ),
                           ))
@@ -111,6 +122,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 chef: recipe.chef,
                                 duration: recipe.duration,
                                 imageUrl: recipe.imageUrl,
+                                rating: recipe.rating,
                               ),
                             ))
                         .toList(),
@@ -188,7 +200,12 @@ class Recipe {
     required this.chef,
     required this.duration,
     required this.imageUrl,
+    this.rating,
+    this.filters,
   });
+
+  final int? rating;
+  final String? filters;
 }
 
 // RecipeCard widget
@@ -197,6 +214,7 @@ class RecipeCard extends StatelessWidget {
   final String chef;
   final String duration;
   final String imageUrl;
+  final int? rating;
 
   const RecipeCard({
     Key? key,
@@ -204,6 +222,7 @@ class RecipeCard extends StatelessWidget {
     required this.chef,
     required this.duration,
     required this.imageUrl,
+    this.rating,
   }) : super(key: key);
 
   @override
@@ -260,9 +279,23 @@ class RecipeCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  duration,
-                  style: const TextStyle(color: Colors.grey),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      duration,
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                    Row(
+                      children: List.generate(5, (index) {
+                        return Icon(
+                          index < (rating ?? 0) ? Icons.star : Icons.star_border,
+                          color: Colors.amber,
+                          size: 12,
+                        );
+                      }),
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -8,25 +8,32 @@ class RecipeSearchScreen extends StatefulWidget {
 }
 
 class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
-  String selectedCategory = "Recomendado";
+  
   // Comtroller for the search bar
   TextEditingController _searchController = TextEditingController();
   
   // Recipe's List
   List<Recipe> allRecipes = [
-    Recipe(title: "Pavo Relleno XXS", chef: "XxSportacusXx", duration: "125 mins", imageUrl: "assets/recipes/recipe8.jpg"),
-    Recipe(title: "Banana Split Casera", chef: "Rihannita", duration: "20 mins", imageUrl: "assets/recipes/recipe9.jpg"),
-    Recipe(title: "Paella Sencilla", chef: "Chilindrinita99", duration: "80 mins", imageUrl: "assets/recipes/recipe7.jpg"),
-    Recipe(title: "Buñuelos Paisa", chef: "Voldi_Feliz", duration: "25 mins", imageUrl: "assets/recipes/recipe4.jpg"),
-    Recipe(title: "Mariscos Caleños", chef: "Dora_Explora", duration: "35 mins", imageUrl: "assets/recipes/recipe6.jpg"),
-    Recipe(title: "Cóctel de Naranja", chef: "Calypso66", duration: "10 mins", imageUrl: "assets/recipes/recipe5.jpg"),
-    Recipe(title: "Perro Caliente Colombiano", chef: "Tia_Piedad", duration: "15 mins", imageUrl: "assets/recipes/recipe2.jpg"),
-    Recipe(title: "Salchipapa Venezolana XXL", chef: "Laura_Bozzo", duration: "35 mins", imageUrl: "assets/recipes/recipe1.jpg"),
-    Recipe(title: "Pasta Alfredo", chef: "Machis", duration: "30 mins", imageUrl: "assets/recipes/recipe3.jpg"),
+    Recipe(title: "Pavo Relleno XXS", chef: "XxSportacusXx", duration: "125 mins", imageUrl: "assets/recipes/recipe8.jpg", rating: 4, filters: "Proteina, Cena, Navidad"),
+    Recipe(title: "Banana Split Casera", chef: "Rihannita", duration: "20 mins", imageUrl: "assets/recipes/recipe9.jpg", rating: 5, filters: "Frutas, Postre"),
+    Recipe(title: "Paella Sencilla", chef: "Chilindrinita99", duration: "80 mins", imageUrl: "assets/recipes/recipe7.jpg", rating: 3, filters: "Cena, Arroz, Mariscos"),
+    Recipe(title: "Buñuelos Paisa", chef: "Voldi_Feliz", duration: "25 mins", imageUrl: "assets/recipes/recipe4.jpg", rating: 4, filters: "Cereal, Desayuno, Colombiana"),
+    Recipe(title: "Mariscos Caleños", chef: "Dora_Explora", duration: "35 mins", imageUrl: "assets/recipes/recipe6.jpg", rating: 5, filters: "Cena, Mariscos, Colombiana"),
+    Recipe(title: "Cóctel de Naranja", chef: "Calypso66", duration: "10 mins", imageUrl: "assets/recipes/recipe5.jpg", rating: 4, filters: "Frutas, Bebida"),
+    Recipe(title: "Perro Caliente Colombiano", chef: "Tia_Piedad", duration: "15 mins", imageUrl: "assets/recipes/recipe2.jpg", rating: 3, filters: "Proteina, Almuerzo, Colombiana"),
+    Recipe(title: "Salchipapa Venezolana XXL", chef: "Laura_Bozzo", duration: "35 mins", imageUrl: "assets/recipes/recipe1.jpg", rating: 5, filters: "Proteina, Cena, Venezolana"),
+    Recipe(title: "Pasta Alfredo", chef: "Machis", duration: "30 mins", imageUrl: "assets/recipes/recipe3.jpg", rating: 4, filters: "Cena, Pasta, Italiana"),
   ];
 
   // Filtered recipe list that updates with search
   List<Recipe> filteredRecipes = [];
+
+  // Variables de estado para los filtros seleccionados
+  String selectedDuration = "Todos";
+  String selectedRating = "Todas";
+  String selectedCategory = "Todos";
+  String selectedMealType = "Todos";
+  String selectedCuisine = "Todas";
 
   void selectCategory(String category) {
     setState(() {
@@ -57,14 +64,43 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
     });
   }
 
+  // Método para aplicar los filtros
+  void _applyFilters() {
+    setState(() {
+      filteredRecipes = allRecipes.where((recipe) {
+        bool matchesDuration = selectedDuration == "Todos" || _matchesDuration(recipe.duration);
+        bool matchesRating = selectedRating == "Todas" || recipe.rating == int.parse(selectedRating);
+        bool matchesCategory = selectedCategory == "Todos" || recipe.filters?.contains(selectedCategory) == true;
+        bool matchesMealType = selectedMealType == "Todos" || recipe.filters?.contains(selectedMealType) == true;
+        bool matchesCuisine = selectedCuisine == "Todas" || recipe.filters?.contains(selectedCuisine) == true;
+        return matchesDuration && matchesRating && matchesCategory && matchesMealType && matchesCuisine;
+      }).toList();
+    });
+  }
+
+  bool _matchesDuration(String duration) {
+    int durationInMinutes = int.parse(duration.split(' ')[0]);
+    switch (selectedDuration) {
+      case "0-15":
+        return durationInMinutes <= 15;
+      case "15-30":
+        return durationInMinutes > 15 && durationInMinutes <= 30;
+      case "30-60":
+        return durationInMinutes > 30 && durationInMinutes <= 60;
+      case "60-120":
+        return durationInMinutes > 60 && durationInMinutes <= 120;
+      case "+120":
+        return durationInMinutes > 120;
+      default:
+        return true;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Últimas Recetas Publicadas'),
-        backgroundColor: const Color(0xFF129575),
-      ),
+      appBar: AppBar(title: const Text('Recetas de la Comunidad'), backgroundColor: const Color(0xFF129575)),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -77,64 +113,23 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
                   children: [
                     // Categories section
                     const SizedBox(height: 5),
-                    SearchBar(controller: _searchController),
-                    const SizedBox(height: 15),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          CategoryChip(
-                            label: "Recomendado",
-                            isSelected: selectedCategory == "Recomendado",
-                            onTap: () => selectCategory("Recomendado"),
-                          ),
-                          CategoryChip(
-                            label: "India",
-                            isSelected: selectedCategory == "India",
-                            onTap: () => selectCategory("India"),
-                          ),
-                          CategoryChip(
-                            label: "Italiana",
-                            isSelected: selectedCategory == "Italiana",
-                            onTap: () => selectCategory("Italiana"),
-                          ),
-                          CategoryChip(
-                            label: "Asiatica",
-                            isSelected: selectedCategory == "Asiatica",
-                            onTap: () => selectCategory("Asiatica"),
-                          ),
-                          CategoryChip(
-                            label: "China",
-                            isSelected: selectedCategory == "China",
-                            onTap: () => selectCategory("China"),
-                          ),
-                          CategoryChip(
-                            label: "Frutas",
-                            isSelected: selectedCategory == "Frutas",
-                            onTap: () => selectCategory("Frutas"),
-                          ),
-                          CategoryChip(
-                            label: "Vegetales",
-                            isSelected: selectedCategory == "Vegetales",
-                            onTap: () => selectCategory("Vegetales"),
-                          ),
-                          CategoryChip(
-                            label: "Proteina",
-                            isSelected: selectedCategory == "Proteina",
-                            onTap: () => selectCategory("Proteina"),
-                          ),
-                          CategoryChip(
-                            label: "Cereales",
-                            isSelected: selectedCategory == "Cereales",
-                            onTap: () => selectCategory("Cereales"),
-                          ),
-                          CategoryChip(
-                            label: "Platos Locales",
-                            isSelected: selectedCategory == "Platos Locales",
-                            onTap: () => selectCategory("Platos Locales"),  
-                          ),
-                        ],
-                      ),
+                    SearchBar(
+                      controller: _searchController,
+                      selectedDuration: selectedDuration,
+                      selectedRating: selectedRating,
+                      selectedCategory: selectedCategory,
+                      selectedMealType: selectedMealType,
+                      selectedCuisine: selectedCuisine,
+                      onApplyFilters: _applyFilters,
+                      onUpdateFilters: (duration, rating, category, mealType, cuisine) {
+                        setState(() {
+                          selectedDuration = duration;
+                          selectedRating = rating;
+                          selectedCategory = category;
+                          selectedMealType = mealType;
+                          selectedCuisine = cuisine;
+                        });
+                      },
                     ),
                     const SizedBox(height: 15),
                     const Text(
@@ -155,6 +150,7 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
                           duration: recipe.duration,
                           imageUrl: recipe.imageUrl,
                           width: cardWidth,
+                          rating: recipe.rating,
                         );
                       }).toList(),
                     ),
@@ -255,6 +251,7 @@ class CategoryChip extends StatelessWidget {
   }
 }
 
+// Modelo de receta
 class Recipe {
   final String title;
   final String chef;
@@ -266,7 +263,12 @@ class Recipe {
     required this.chef,
     required this.duration,
     required this.imageUrl,
+    this.rating,
+    this.filters,
   });
+
+  final int? rating;
+  final String? filters;
 }
 
 class RecipeCard extends StatelessWidget {
@@ -275,6 +277,7 @@ class RecipeCard extends StatelessWidget {
   final String duration;
   final String imageUrl;
   final double width;
+  final int? rating;
 
   const RecipeCard({
     super.key,
@@ -283,6 +286,7 @@ class RecipeCard extends StatelessWidget {
     required this.duration,
     required this.imageUrl,
     required this.width,
+    this.rating,
   });
 
   @override
@@ -334,12 +338,26 @@ class RecipeCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    duration,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        duration,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      Row(
+                        children: List.generate(5, (index) {
+                          return Icon(
+                            index < (rating ?? 0) ? Icons.star : Icons.star_border,
+                            color: Colors.amber,
+                            size: 12,
+                          );
+                        }),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -353,8 +371,25 @@ class RecipeCard extends StatelessWidget {
 
 class SearchBar extends StatelessWidget {
   final TextEditingController controller;
+  final String selectedDuration;
+  final String selectedRating;
+  final String selectedCategory;
+  final String selectedMealType;
+  final String selectedCuisine;
+  final VoidCallback onApplyFilters;
+  final Function(String, String, String, String, String) onUpdateFilters;
 
-  const SearchBar({super.key, required this.controller});
+  const SearchBar({
+    super.key,
+    required this.controller,
+    required this.selectedDuration,
+    required this.selectedRating,
+    required this.selectedCategory,
+    required this.selectedMealType,
+    required this.selectedCuisine,
+    required this.onApplyFilters,
+    required this.onUpdateFilters,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -374,16 +409,176 @@ class SearchBar extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 8), // Space between the TextField and the button
+          const SizedBox(width: 8),
           Container(
             decoration: BoxDecoration(
-              color: const Color(0xFF129575), 
+              color: const Color(0xFF129575),
               borderRadius: BorderRadius.circular(12),
             ),
             child: IconButton(
-              icon: const Icon(Icons.filter_list, color: Colors.white), // Filter's Icon 
+              icon: const Icon(Icons.filter_list, color: Colors.white),
               onPressed: () {
-                print("Filtro activado");
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (BuildContext context) {
+                    String tempSelectedDuration = selectedDuration;
+                    String tempSelectedRating = selectedRating;
+                    String tempSelectedCategory = selectedCategory;
+                    String tempSelectedMealType = selectedMealType;
+                    String tempSelectedCuisine = selectedCuisine;
+
+                    return Padding(
+                      padding: EdgeInsets.only(
+                        top: kToolbarHeight + MediaQuery.of(context).padding.top,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(16),
+                            topRight: Radius.circular(16),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 10,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: StatefulBuilder(
+                          builder: (context, setState) {
+                            List<String> durationOptions = ["Todos", "0-15", "15-30", "30-60", "60-120", "+120"];
+                            List<String> ratingOptions = ["Todas", "1", "2", "3", "4", "5"];
+                            List<String> categoryOptions = ["Todos", "Vegetales", "Frutas", "Proteina", "Cereales", "Mariscos", "Arroz", "Pasta"];
+                            List<String> mealTypeOptions = ["Todos", "Desayuno", "Almuerzo", "Cena", "Postre", "Bebida"];
+                            List<String> cuisineOptions = ["Todas", "India", "Italiana", "Asiatica", "China", "Mexicana", "Francesa", "Mediterránea", "Japonesa", "Colombiana", "Venezolana"];
+
+                            Widget buildFilterOption(String title, List<String> options, String selectedValue, Function(String) onSelected, {bool showStar = false}) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    title,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 10,
+                                    children: options.map((option) {
+                                      bool isSelected = selectedValue == option;
+                                      return GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            if (isSelected) {
+                                              onSelected(""); // Deseleccionar si ya está seleccionado
+                                            } else {
+                                              onSelected(option);
+                                            }
+                                          });
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+                                          decoration: BoxDecoration(
+                                            color: isSelected ? const Color(0xFF129575) : Colors.white,
+                                            border: Border.all(color: const Color(0xFF129575)),
+                                            borderRadius: BorderRadius.circular(25),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                option,
+                                                style: TextStyle(
+                                                  color: isSelected ? Colors.white : const Color(0xFF129575),
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              if (showStar && option != "Todas") ...[
+                                                const SizedBox(width: 4),
+                                                Icon(
+                                                  Icons.star,
+                                                  color: isSelected ? Colors.white : const Color(0xFF129575),
+                                                  size: 20,
+                                                ),
+                                              ]
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                  const SizedBox(height: 20),
+                                ],
+                              );
+                            }
+
+                            return SingleChildScrollView(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Center(
+                                    child: Text(
+                                      "Filtros de Búsqueda",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 23,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  buildFilterOption("Duración en mins", durationOptions, tempSelectedDuration, (val) => tempSelectedDuration = val),
+                                  buildFilterOption("Calificación", ratingOptions, tempSelectedRating, (val) => tempSelectedRating = val, showStar: true),
+                                  buildFilterOption("Categoría", categoryOptions, tempSelectedCategory, (val) => tempSelectedCategory = val),
+                                  buildFilterOption("Tipo de Comida", mealTypeOptions, tempSelectedMealType, (val) => tempSelectedMealType = val),
+                                  buildFilterOption("Tipo de Cocina", cuisineOptions, tempSelectedCuisine, (val) => tempSelectedCuisine = val),
+                                  Center(
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF129575),
+                                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 80),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                        onUpdateFilters(
+                                          tempSelectedDuration,
+                                          tempSelectedRating,
+                                          tempSelectedCategory,
+                                          tempSelectedMealType,
+                                          tempSelectedCuisine,
+                                        );
+                                        onApplyFilters();
+                                      },
+                                      child: const Text(
+                                        "Filtrar",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                );
               },
             ),
           ),
