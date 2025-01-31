@@ -15,9 +15,21 @@ class ProfileScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30),
               child: Column(
-                children: const [
-                  ProfileStats(), // Estadísticas del usuario
-                  SizedBox(height: 16),
+                children: [
+                  const ProfileStats(), // Estadísticas del usuario
+                  const SizedBox(height:16),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                    'Miguel_Uribe',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                    ),
+                  ),
+                  SizedBox(height: 8),
                   ProfileBio(), // Biografía
                   SizedBox(height: 16),
                   ProfileTabs(), // Pestañas para publicaciones y guardados
@@ -72,19 +84,17 @@ class ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(5),
       decoration: const BoxDecoration(
         color: Color(0xFF129575),
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
         ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.settings, color: Colors.white),
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () {},
           ),
           const Text(
@@ -95,9 +105,58 @@ class ProfileHeader extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () {},
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.settings, color: Colors.white),
+            color: Colors.white,
+            onSelected: (String value) {
+              switch (value) {
+                case 'Editar Perfil':
+                  // Handle Edit Profile
+                  Navigator.pushNamed(context, '/edit_profile');
+                  break;
+                case 'Reportes':
+                  // Handle Reports
+                  Navigator.pushNamed(context, '/reports');
+                  break;
+                case 'Cerrar sesión':
+                  // Handle Logout
+                  Navigator.pushNamed(context, '/');
+                  break;
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return [
+                PopupMenuItem(
+                  value: 'Editar Perfil',
+                  child: Row(
+                    children: const [
+                      Icon(Icons.edit, color: Colors.black),
+                      SizedBox(width: 8),
+                      Text('Editar Perfil'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'Reportes',
+                  child: Row(
+                    children: const [
+                      Icon(Icons.report, color: Colors.black),
+                      SizedBox(width: 8),
+                      Text('Reportes'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'Cerrar sesión',
+                  child: Center(
+                    child: Text(
+                      'Cerrar sesión',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ),
+                ),
+              ];
+            },
           ),
         ],
       ),
@@ -113,29 +172,34 @@ class ProfileStats extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        _buildStatItem( '24', 'Recetas'),
-        _buildStatItem( '180', 'Seguidores'),
-        _buildStatItem( '75' , 'Siguiendo'),
+        CircleAvatar(
+          radius: 60,
+          backgroundImage: AssetImage('assets/chefs/profilePhoto.jpg'),
+        ),
+        const SizedBox(width: 2),
+        
+        _buildStatItem('Recetas', '24'),
+        _buildStatItem('Seguidores', '180'),
+        _buildStatItem('Siguiendo', '75'),
       ],
     );
   }
 
-  Widget _buildStatItem(String label, String count) {
+  Widget _buildStatItem(String count, String label) {
     return Column(
       children: [
         Text(
           count,
           style: const TextStyle(
-            fontSize: 18,
+            fontSize: 17,
             color: Colors.grey,
           ),
         ),
         Text(
           label,
           style: const TextStyle(
-            fontSize: 14,
+            fontSize: 21,
             fontWeight: FontWeight.bold,
-            
           ),
         ),
       ],
@@ -148,12 +212,14 @@ class ProfileBio extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Text(
-      'Amante de la cocina saludable y creador de contenido. Comparte recetas únicas y deliciosas.',
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontSize: 14,
-        color: Colors.grey,
+    return const Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        'Amante de la cocina saludable y creador de contenido. Comparte recetas únicas y deliciosas.',
+        style: TextStyle(
+          fontSize: 14,
+          color: Colors.grey,
+        ),
       ),
     );
   }
@@ -171,12 +237,15 @@ class _ProfileTabsState extends State<ProfileTabs> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _buildTab('Publicaciones', 0),
-        _buildTab('Guardados', 1),
-      ],
+    return Container(
+      margin: const EdgeInsets.only(top: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildTab('Publicaciones', 0),
+          _buildTab('Guardados', 1),
+        ],
+      ),
     );
   }
 

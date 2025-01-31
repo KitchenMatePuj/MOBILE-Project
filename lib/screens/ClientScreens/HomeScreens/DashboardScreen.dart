@@ -40,6 +40,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: const Color(0xFF129575),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
+          color: Colors.white,
           onPressed: () {
             Navigator.pushNamedAndRemoveUntil(
               context, 
@@ -69,7 +70,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       });
                     },
                     decoration: InputDecoration(
-                      hintText: 'Buscar receta...',
+                      hintText: 'Buscar receta',
                       fillColor: Colors.white,
                       prefixIcon: const Icon(Icons.search),
                       border: OutlineInputBorder(
