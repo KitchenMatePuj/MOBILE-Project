@@ -103,7 +103,12 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(title: const Text('Recetas de la Comunidad'), backgroundColor: const Color(0xFF129575)),
+      appBar: AppBar(
+        title: const Text('Recetas de la Comunidad'),
+        backgroundColor: const Color(0xFF129575),
+        foregroundColor: Colors.white,
+        automaticallyImplyLeading: false,
+      ),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {

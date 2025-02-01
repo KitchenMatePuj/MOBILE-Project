@@ -25,7 +25,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     Profile(name: "Tia_Piedad", description: "Cocinera de almuerzos rápidos y deliciosos.", imageUrl: "assets/chefs/Tia_Piedad.jpg"),
     Profile(name: "Machis", description: "Amante de la pasta y la cocina italiana.", imageUrl: "assets/chefs/Machis.jpg"),
     Profile(name: "Dora_Explora", description: "Chef de mariscos y cenas especiales.", imageUrl: "assets/chefs/Dora_Explora.jpg"),
-    Profile(name: "Chilindrinita99", description: "Expert en cocina española y mariscos.", imageUrl: "assets/chefs/Chilindrinita99.jpg"),
+    Profile(name: "Chilindrinita99", description: "Experta en cocina española y mariscos.", imageUrl: "assets/chefs/Chilindrinita99.jpg"),
   ];
 
   // Variable para almacenar el texto de la barra de búsqueda
@@ -448,7 +448,7 @@ class ProfileCard extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
                   ),
                   child: const Text('Seguir', style: TextStyle(fontSize: 12)),
                 ),

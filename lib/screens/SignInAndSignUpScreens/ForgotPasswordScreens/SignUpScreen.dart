@@ -91,6 +91,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 const SizedBox(height: 20),
                 _buildUsersNameInput(),
                 _buildEmailInput(),
+                _buildUsersAliasNameInput(),
                 _buildPasswordInput(),
                 _buildConfirmPasswordInput(),
                 _buildLoginButton(context),
@@ -111,7 +112,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          "Nombre Completo",
+          "Nombre Completo (privado)",
           style: TextStyle(fontSize: 14, color: Color(0xFF121212)),
         ),
         const SizedBox(height: 5),
@@ -146,6 +147,34 @@ class _SignUpScreenState extends State<SignUpScreen> {
         TextField(
           decoration: InputDecoration(
             hintText: "Escribe tu correo electrónico",
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(
+                color: Color(0xFFD9D9D9),
+                width: 1.5,
+              ),
+            ),
+            contentPadding:
+                const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
+          ),
+        ),
+        const SizedBox(height: 15),
+      ],
+    );
+  }
+
+    Widget _buildUsersAliasNameInput() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Nombre de Usuario (público)",
+          style: TextStyle(fontSize: 14, color: Color(0xFF121212)),
+        ),
+        const SizedBox(height: 5),
+        TextField(
+          decoration: InputDecoration(
+            hintText: "Escribe tu nombre de usuario",
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
@@ -357,4 +386,3 @@ Widget _buildSignUpWith(BuildContext context) {
     );
   }
 }
-
