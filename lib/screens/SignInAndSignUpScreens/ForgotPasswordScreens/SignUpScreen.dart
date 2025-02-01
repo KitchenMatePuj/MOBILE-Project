@@ -49,54 +49,58 @@ class _SignUpScreenState extends State<SignUpScreen> {
       appBar: AppBar(
         title: const Text('Creación de Cuenta'),
         backgroundColor: const Color(0xFF129575),
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30),
-          color: Colors.white,
+        foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+        Navigator.pop(context);
+          },
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Spacer(flex: 4),
-            const Text(
-              "Crear una Cuenta",
-              style: TextStyle(
-                fontSize: 25,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
+      ),
+      body: SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              color: Colors.white,
             ),
-            const SizedBox(height: 8),
-            const Text(
-              "Permítanos ayudarle con la creación de su cuenta, no le llevará mucho tiempo.",
-              style: TextStyle(
-                fontSize: 14,
-                color: Color(0xFF121212),
-              ),
-            ),
-            const Spacer(flex: 4),
-            _buildUsersNameInput(),
-            _buildEmailInput(),
-            _buildPasswordInput(),
-            _buildConfirmPasswordInput(),
-            _buildLoginButton(context),
-            const SizedBox(height: 30),
-            _buildSignUpWith(context),
-            _buildRegisterPrompt(context),
-            const Spacer(flex: 20),
-            Center(
-              child: Container(
-                width: 135,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF121212),
-                  borderRadius: BorderRadius.circular(100),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 20),
+                const Text(
+                  "Crear una Cuenta",
+                  style: TextStyle(
+                    fontSize: 25,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 8),
+                const Text(
+                  "Permítanos ayudarle con la creación de su cuenta, no le llevará mucho tiempo.",
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF121212),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _buildUsersNameInput(),
+                _buildEmailInput(),
+                _buildPasswordInput(),
+                _buildConfirmPasswordInput(),
+                _buildLoginButton(context),
+                const SizedBox(height: 30),
+                _buildSignUpWith(context),
+                _buildRegisterPrompt(context),
+                const SizedBox(height: 20),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

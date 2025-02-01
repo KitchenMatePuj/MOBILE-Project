@@ -15,17 +15,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     Recipe(title: "Desayuno: Arepa Colombo Venezolana con Huevo", chef: "kitchenMate", duration: "15 mins", imageUrl: "assets/recipes/recipe11.jpg", rating: 4, filters: "Desayuno, Proteina, Colombiana, Venezolana"),
   ];
 
-  // Lista de recetas añadidas recientemente
-  final List<Recipe> newRecipes = [
-    Recipe(title: "Pavo Relleno XXS", chef: "XxSportacusXx", duration: "125 mins", imageUrl: "assets/recipes/recipe8.jpg", rating: 4, filters: "Proteina, Cena, Navidad"),
-    Recipe(title: "Banana Split Casera", chef: "Rihannita", duration: "20 mins", imageUrl: "assets/recipes/recipe9.jpg", rating: 5, filters: "Frutas, Postre"),
-    Recipe(title: "Paella Sencilla", chef: "Chilindrinita99", duration: "80 mins", imageUrl: "assets/recipes/recipe7.jpg", rating: 3, filters: "Cena, Arroz, Mariscos"),
-    Recipe(title: "Buñuelos Paisa", chef: "Voldi_Feliz", duration: "25 mins", imageUrl: "assets/recipes/recipe4.jpg", rating: 4, filters: "Cereal, Desayuno, Colombiana"),
-    Recipe(title: "Mariscos Caleños", chef: "Dora_Explora", duration: "35 mins", imageUrl: "assets/recipes/recipe6.jpg", rating: 5, filters: "Cena, Mariscos, Colombiana"),
-    Recipe(title: "Cóctel de Naranja", chef: "Calypso66", duration: "10 mins", imageUrl: "assets/recipes/recipe5.jpg", rating: 4, filters: "Frutas, Bebida"),
-    Recipe(title: "Perro Caliente Colombiano", chef: "Tia_Piedad", duration: "15 mins", imageUrl: "assets/recipes/recipe2.jpg", rating: 3, filters: "Proteina, Almuerzo, Colombiana"),
-    Recipe(title: "Salchipapa Venezolana XXL", chef: "Laura_Bozzo", duration: "35 mins", imageUrl: "assets/recipes/recipe1.jpg", rating: 5, filters: "Proteina, Cena, Venezolana"),
-    Recipe(title: "Pasta Alfredo", chef: "Machis", duration: "30 mins", imageUrl: "assets/recipes/recipe3.jpg", rating: 4, filters: "Cena, Pasta, Italiana"),
+  // Lista de perfiles recomendados
+  final List<Profile> recommendedProfiles = [
+    Profile(name: "Laura_Bozzo", description: "Chef de comidas rápidas y cenas abundantes.", imageUrl: "assets/chefs/Laura_Bozzo.jpg"),
+    Profile(name: "Tia_Piedad", description: "Cocinera de almuerzos rápidos y deliciosos.", imageUrl: "assets/chefs/Tia_Piedad.jpg"),
+    Profile(name: "Machis", description: "Amante de la pasta y la cocina italiana.", imageUrl: "assets/chefs/Machis.jpg"),
+    Profile(name: "Dora_Explora", description: "Chef de mariscos y cenas especiales.", imageUrl: "assets/chefs/Dora_Explora.jpg"),
+    Profile(name: "Rihannita", description: "Amante de los postres y las frutas frescas.", imageUrl: "assets/chefs/Rihannita.jpg"),
+    Profile(name: "Chilindrinita99", description: "Expert en cocina española y mariscos.", imageUrl: "assets/chefs/Chilindrinita99.jpg"),
+    Profile(name: "Voldi_Feliz", description: "Cocinero de desayunos tradicionales colombianos.", imageUrl: "assets/chefs/Voldi_Feliz.jpg"),
+    Profile(name: "Calypso66", description: "Especialista en bebidas y cócteles refrescantes.", imageUrl: "assets/chefs/Calypso66.jpg"),
+    Profile(name: "XxSportacusXx", description: "Chef especializado en comidas proteicas y saludables.", imageUrl: "assets/chefs/XxSportacusXx.jpg"),
   ];
 
   // Variable para almacenar el texto de la barra de búsqueda
@@ -38,17 +38,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         title: const Text(''),
         backgroundColor: const Color(0xFF129575),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          color: Colors.white,
-          onPressed: () {
-            Navigator.pushNamedAndRemoveUntil(
-              context, 
-              '/login', 
-              (Route<dynamic> route) => false, // Elimina todas las rutas previas
-            );
-          },
-        ),
+        automaticallyImplyLeading: false,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -103,27 +93,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(height: 19),
                 const Text(
-                  'Últimas Recetas Publicadas',
+                  'Perfiles Recomendados',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 16),
-                // Lista horizontal de recetas añadidas recientemente (sin filtro de búsqueda)
+                // Lista horizontal de perfiles recomendados
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
-                    children: newRecipes
-                        .map((recipe) => Padding(
+                    children: recommendedProfiles
+                        .map((profile) => Padding(
                               padding: const EdgeInsets.only(right: 16),
-                              child: RecipeCard(
-                                title: recipe.title,
-                                chef: recipe.chef,
-                                duration: recipe.duration,
-                                imageUrl: recipe.imageUrl,
-                                rating: recipe.rating,
+                              child: ProfileCard(
+                                name: profile.name,
+                                description: profile.description,
+                                imageUrl: profile.imageUrl,
                               ),
                             ))
                         .toList(),
@@ -353,6 +341,101 @@ class UserHeader extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// Modelo de perfil
+class Profile {
+  final String name;
+  final String description;
+  final String imageUrl;
+
+  Profile({
+    required this.name,
+    required this.description,
+    required this.imageUrl,
+  });
+}
+
+// ProfileCard widget
+class ProfileCard extends StatelessWidget {
+  final String name;
+  final String description;
+  final String imageUrl;
+
+  const ProfileCard({
+    Key? key,
+    required this.name,
+    required this.description,
+    required this.imageUrl,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 160,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SizedBox(height: 8),
+          ClipOval(
+            child: Image.asset(
+              imageUrl,
+              height: 80,
+              width: 80,
+              fit: BoxFit.cover,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  description.length > 40 ? '${description.substring(0, 40)}...' : description,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 6),
+                ElevatedButton(
+                  onPressed: () {
+                    // Acción de seguir
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF129575),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  ),
+                  child: const Text('Seguir', style: TextStyle(fontSize: 12)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

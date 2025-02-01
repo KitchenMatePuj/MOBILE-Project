@@ -9,51 +9,54 @@ class ForgotPasswordScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Restaurar Contraseña'),
         backgroundColor: const Color(0xFF129575),
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30),
-          color: Colors.white,
+        foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+        Navigator.pop(context);
+          },
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Spacer(flex: 4),
-            const Text(
-              "¿Olvidaste tu\nContraseña?",
-              style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
+      ),
+      body: SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              color: Colors.white,
             ),
-            const SizedBox(height: 8),
-            const Text(
-              "Restablécela rápidamente\nsin preocupaciones",
-              style: TextStyle(
-                fontSize: 20,
-                color: Color(0xFF121212),
-              ),
-            ),
-            const Spacer(flex: 4),
-            _buildCodeInput(),
-            _buildNewPasswordInput(),
-            _buildConfirmNewPasswordInput(),
-            _buildConfirmButton(context),
-            const SizedBox(height: 30),
-            const Spacer(flex: 50),
-            Center(
-              child: Container(
-                width: 135,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF121212),
-                  borderRadius: BorderRadius.circular(100),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 10),
+                const Text(
+                  "¿Olvidaste tu\nContraseña?",
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
-              ),
-            )
-          ],
+                const SizedBox(height: 8),
+                const Text(
+                  "Restablécela rápidamente\nsin preocupaciones",
+                  style: TextStyle(
+                    fontSize: 20,
+                    color: Color(0xFF121212),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _buildCodeInput(),
+                _buildNewPasswordInput(),
+                _buildConfirmNewPasswordInput(),
+                _buildConfirmButton(context),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
         ),
       ),
     );

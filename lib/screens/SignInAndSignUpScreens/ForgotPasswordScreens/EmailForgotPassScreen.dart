@@ -6,7 +6,17 @@ class EmailForgotPassScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Restaurar Contraseña'), backgroundColor: const Color(0xFF129575)),
+      appBar: AppBar(
+        title: const Text('Restaurar Contraseña'),
+        backgroundColor: const Color(0xFF129575),
+        foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+        Navigator.pop(context);
+          },
+        ),
+      ),
       body: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
@@ -39,16 +49,6 @@ class EmailForgotPassScreen extends StatelessWidget {
             _buildConfirmButton(context),
             const SizedBox(height: 30), // Espaciado adicional
             const Spacer(flex: 50),
-            Center(
-              child: Container(
-                width: 135,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF121212),
-                  borderRadius: BorderRadius.circular(100),
-                ),
-              ),
-            )
           ],
         ),
       ),

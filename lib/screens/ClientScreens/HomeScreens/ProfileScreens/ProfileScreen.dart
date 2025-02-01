@@ -3,17 +3,83 @@ import 'package:flutter/material.dart';
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
+
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Mi Perfil',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: const Color(0xFF129575),
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.settings, color: Colors.white),
+            color: Colors.white,
+            onSelected: (String value) {
+              switch (value) {
+                case 'Editar Perfil':
+                  Navigator.pushNamed(context, '/edit_profile');
+                  break;
+                case 'Reportes':
+                  Navigator.pushNamed(context, '/reports');
+                  break;
+                case 'Cerrar sesión':
+                  Navigator.pushNamed(context, '/');
+                  break;
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return [
+                PopupMenuItem(
+                  value: 'Editar Perfil',
+                  child: Row(
+                    children: const [
+                      Icon(Icons.edit, color: Colors.black),
+                      SizedBox(width: 8),
+                      Text('Editar Perfil'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'Reportes',
+                  child: Row(
+                    children: const [
+                      Icon(Icons.report, color: Colors.black),
+                      SizedBox(width: 8),
+                      Text('Reportes'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'Cerrar sesión',
+                  child: Center(
+                    child: Text(
+                      'Cerrar sesión',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ),
+                ),
+              ];
+            },
+          ),
+        ],
+        automaticallyImplyLeading: false,
+      ),
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Column(
           children: [
-            const ProfileHeader(), // Encabezado estilizado
             const SizedBox(height: 16),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
+              padding: const EdgeInsets.symmetric(horizontal: 23),
               child: Column(
                 children: [
                   const ProfileStats(), // Estadísticas del usuario
@@ -79,49 +145,41 @@ class ProfileScreen extends StatelessWidget {
 
 // Componentes adicionales
 class ProfileHeader extends StatelessWidget {
-  const ProfileHeader({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(5),
       decoration: const BoxDecoration(
         color: Color(0xFF129575),
-        borderRadius: BorderRadius.only(
-        ),
+        borderRadius: BorderRadius.only(),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () {},
-          ),
-          const Text(
+            const Spacer(flex: 4),
+            const Text(
             'Mi Perfil',
             style: TextStyle(
               color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
-          ),
-          PopupMenuButton<String>(
+            ),
+            const Spacer(flex: 3),
+            PopupMenuButton<String>(
             icon: const Icon(Icons.settings, color: Colors.white),
             color: Colors.white,
             onSelected: (String value) {
               switch (value) {
-                case 'Editar Perfil':
-                  // Handle Edit Profile
-                  Navigator.pushNamed(context, '/edit_profile');
-                  break;
-                case 'Reportes':
-                  // Handle Reports
-                  Navigator.pushNamed(context, '/reports');
-                  break;
-                case 'Cerrar sesión':
-                  // Handle Logout
-                  Navigator.pushNamed(context, '/');
-                  break;
+              case 'Editar Perfil':
+              Navigator.pushNamed(context, '/edit_profile');
+              break;
+              case 'Reportes':
+              Navigator.pushNamed(context, '/reports');
+              break;
+              case 'Cerrar sesión':
+              Navigator.pushNamed(context, '/');
+              break;
               }
             },
             itemBuilder: (BuildContext context) {
@@ -173,7 +231,7 @@ class ProfileStats extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         CircleAvatar(
-          radius: 60,
+          radius: 45,
           backgroundImage: AssetImage('assets/chefs/profilePhoto.jpg'),
         ),
         const SizedBox(width: 2),
@@ -191,14 +249,14 @@ class ProfileStats extends StatelessWidget {
         Text(
           count,
           style: const TextStyle(
-            fontSize: 17,
+            fontSize: 14,
             color: Colors.grey,
           ),
         ),
         Text(
           label,
           style: const TextStyle(
-            fontSize: 21,
+            fontSize: 19,
             fontWeight: FontWeight.bold,
           ),
         ),

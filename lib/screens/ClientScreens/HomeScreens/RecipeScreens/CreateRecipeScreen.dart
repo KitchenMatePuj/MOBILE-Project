@@ -8,9 +8,9 @@ class CreateRecipe extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Creación de Receta'),
-        foregroundColor: Colors.white,
-        leading: const Icon(Icons.arrow_back, color: Colors.white),
         backgroundColor: const Color(0xFF129575),
+        foregroundColor: Colors.white,
+        automaticallyImplyLeading: false,
       ),
       body: const Center(
         child: Text('Pendiente Creación de Publicación de Receta'),

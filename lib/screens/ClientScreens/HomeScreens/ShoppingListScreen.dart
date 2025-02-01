@@ -10,7 +10,7 @@ class ShoppingList extends StatelessWidget {
         title: const Text('Lista de Compras'),
         backgroundColor: const Color(0xFF129575),
         foregroundColor: Colors.white,
-        leading: const Icon(Icons.arrow_back, color: Colors.white),
+        automaticallyImplyLeading: false,
       ),
       body: const Center(
         child: Text('Pendiente Lista de Compras'),
