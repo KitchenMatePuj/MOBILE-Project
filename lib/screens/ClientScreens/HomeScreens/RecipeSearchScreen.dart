@@ -8,7 +8,11 @@ class RecipeSearchScreen extends StatefulWidget {
 }
 
 class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
+  
+  // Comtroller for the search bar
   TextEditingController _searchController = TextEditingController();
+  
+  // Recipe's List
   List<Recipe> allRecipes = [
     Recipe(title: "Pavo Relleno XXS", chef: "XxSportacusXx", duration: "125 mins", imageUrl: "assets/recipes/recipe8.jpg", rating: 4, filters: "Proteina, Cena, Navidad"),
     Recipe(title: "Banana Split Casera", chef: "Rihannita", duration: "20 mins", imageUrl: "assets/recipes/recipe9.jpg", rating: 5, filters: "Frutas, Postre"),
@@ -20,13 +24,22 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
     Recipe(title: "Salchipapa Venezolana XXL", chef: "Laura_Bozzo", duration: "35 mins", imageUrl: "assets/recipes/recipe1.jpg", rating: 5, filters: "Proteina, Cena, Venezolana"),
     Recipe(title: "Pasta Alfredo", chef: "Machis", duration: "30 mins", imageUrl: "assets/recipes/recipe3.jpg", rating: 4, filters: "Cena, Pasta, Italiana"),
   ];
+
+  // Filtered recipe list that updates with search
   List<Recipe> filteredRecipes = [];
 
+  // Variables de estado para los filtros seleccionados
   String selectedDuration = "Todos";
   String selectedRating = "Todas";
   String selectedCategory = "Todos";
   String selectedMealType = "Todos";
   String selectedCuisine = "Todas";
+
+  void selectCategory(String category) {
+    setState(() {
+      selectedCategory = category;
+    });
+  }
 
   @override
   void initState() {
@@ -41,20 +54,28 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
     super.dispose();
   }
 
+  // Filter Recipes
   void _filterRecipes() {
     setState(() {
       String query = _searchController.text.toLowerCase();
       filteredRecipes = allRecipes.where((recipe) {
-        return _matchesQuery(recipe, query) &&
-               _matchesDuration(recipe.duration) &&
-               _matchesRating(recipe.rating) &&
-               _matchesFilters(recipe.filters);
+        return recipe.title.toLowerCase().contains(query) || recipe.chef.toLowerCase().contains(query);
       }).toList();
     });
   }
 
-  bool _matchesQuery(Recipe recipe, String query) {
-    return recipe.title.toLowerCase().contains(query) || recipe.chef.toLowerCase().contains(query);
+  // Método para aplicar los filtros
+  void _applyFilters() {
+    setState(() {
+      filteredRecipes = allRecipes.where((recipe) {
+        bool matchesDuration = selectedDuration == "Todos" || _matchesDuration(recipe.duration);
+        bool matchesRating = selectedRating == "Todas" || recipe.rating == int.parse(selectedRating);
+        bool matchesCategory = selectedCategory == "Todos" || recipe.filters?.contains(selectedCategory) == true;
+        bool matchesMealType = selectedMealType == "Todos" || recipe.filters?.contains(selectedMealType) == true;
+        bool matchesCuisine = selectedCuisine == "Todas" || recipe.filters?.contains(selectedCuisine) == true;
+        return matchesDuration && matchesRating && matchesCategory && matchesMealType && matchesCuisine;
+      }).toList();
+    });
   }
 
   bool _matchesDuration(String duration) {
@@ -75,30 +96,14 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
     }
   }
 
-  bool _matchesRating(int? rating) {
-    return selectedRating == "Todas" || rating == int.parse(selectedRating);
-  }
-
-  bool _matchesFilters(String? filters) {
-    return (selectedCategory == "Todos" || filters?.contains(selectedCategory) == true) &&
-           (selectedMealType == "Todos" || filters?.contains(selectedMealType) == true) &&
-           (selectedCuisine == "Todas" || filters?.contains(selectedCuisine) == true);
-  }
-
-  void _applyFilters() {
-    _filterRecipes();
-  }
+  // Recetas que se van a mostrar.
+  int _recipesToShow = 8;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Recetas de la Comunidad'),
-        backgroundColor: const Color(0xFF129575),
-        foregroundColor: Colors.white,
-        automaticallyImplyLeading: false,
-      ),
+      appBar: AppBar(title: const Text('Recetas de la Comunidad'), backgroundColor: const Color(0xFF129575)),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -109,6 +114,7 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Categories section
                     const SizedBox(height: 5),
                     SearchBar(
                       controller: _searchController,
@@ -140,7 +146,7 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
                     Wrap(
                       spacing: 16,
                       runSpacing: 16,
-                      children: filteredRecipes.map((recipe) {
+                      children: filteredRecipes.take(_recipesToShow).map((recipe) {
                         return RecipeCard(
                           title: recipe.title,
                           chef: recipe.chef,
@@ -151,6 +157,24 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
                         );
                       }).toList(),
                     ),
+                    const SizedBox(height: 4),
+                    if (_recipesToShow < filteredRecipes.length)
+                      Center(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF129575),
+                        ),
+                        onPressed: () {
+                        setState(() {
+                          _recipesToShow += 4;
+                        });
+                        },
+                        child: const Text(
+                        'Cargar más',
+                        style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      ),
                   ],
                 ),
               ),
@@ -248,6 +272,7 @@ class CategoryChip extends StatelessWidget {
   }
 }
 
+// Modelo de receta
 class Recipe {
   final String title;
   final String chef;
@@ -473,7 +498,11 @@ class SearchBar extends StatelessWidget {
                                       return GestureDetector(
                                         onTap: () {
                                           setState(() {
-                                            onSelected(option);
+                                            if (isSelected) {
+                                              onSelected(""); // Deseleccionar si ya está seleccionado
+                                            } else {
+                                              onSelected(option);
+                                            }
                                           });
                                         },
                                         child: Container(

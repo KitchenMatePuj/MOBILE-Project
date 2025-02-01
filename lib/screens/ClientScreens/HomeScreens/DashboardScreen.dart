@@ -11,7 +11,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // Lista de recetas principales
   final List<Recipe> allRecipes = [
     Recipe(title: "Lasagna Original Italiana", chef: "kitchenMate", duration: "35 mins", imageUrl: "assets/recipes/recipe12.jpg", rating: 4, filters: "Cena, Pasta, Italiana"),
+    Recipe(title: "Pavo Relleno XXS", chef: "XxSportacusXx", duration: "125 mins", imageUrl: "assets/recipes/recipe8.jpg", rating: 4, filters: "Proteina, Cena, Navidad"),
+    Recipe(title: "Banana Split Casera", chef: "Rihannita", duration: "20 mins", imageUrl: "assets/recipes/recipe9.jpg", rating: 5, filters: "Frutas, Postre"),
     Recipe(title: "Torta de Patatas", chef: "kitchenMate", duration: "40 mins", imageUrl: "assets/recipes/recipe10.jpg", rating: 5, filters: "Cena, Vegetariana, Española"),
+    Recipe(title: "Buñuelos Paisa", chef: "Voldi_Feliz", duration: "25 mins", imageUrl: "assets/recipes/recipe4.jpg", rating: 4, filters: "Cereal, Desayuno, Colombiana"),
+    Recipe(title: "Cóctel de Naranja", chef: "Calypso66", duration: "10 mins", imageUrl: "assets/recipes/recipe5.jpg", rating: 4, filters: "Frutas, Bebida"),
     Recipe(title: "Desayuno: Arepa Colombo Venezolana con Huevo", chef: "kitchenMate", duration: "15 mins", imageUrl: "assets/recipes/recipe11.jpg", rating: 4, filters: "Desayuno, Proteina, Colombiana, Venezolana"),
   ];
 
@@ -21,15 +25,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     Profile(name: "Tia_Piedad", description: "Cocinera de almuerzos rápidos y deliciosos.", imageUrl: "assets/chefs/Tia_Piedad.jpg"),
     Profile(name: "Machis", description: "Amante de la pasta y la cocina italiana.", imageUrl: "assets/chefs/Machis.jpg"),
     Profile(name: "Dora_Explora", description: "Chef de mariscos y cenas especiales.", imageUrl: "assets/chefs/Dora_Explora.jpg"),
-    Profile(name: "Rihannita", description: "Amante de los postres y las frutas frescas.", imageUrl: "assets/chefs/Rihannita.jpg"),
     Profile(name: "Chilindrinita99", description: "Expert en cocina española y mariscos.", imageUrl: "assets/chefs/Chilindrinita99.jpg"),
-    Profile(name: "Voldi_Feliz", description: "Cocinero de desayunos tradicionales colombianos.", imageUrl: "assets/chefs/Voldi_Feliz.jpg"),
-    Profile(name: "Calypso66", description: "Especialista en bebidas y cócteles refrescantes.", imageUrl: "assets/chefs/Calypso66.jpg"),
-    Profile(name: "XxSportacusXx", description: "Chef especializado en comidas proteicas y saludables.", imageUrl: "assets/chefs/XxSportacusXx.jpg"),
   ];
 
   // Variable para almacenar el texto de la barra de búsqueda
   String query = '';
+
+  // Recetas que se van a Mostrar
+  int _recipesToShow = 6;
 
   @override
   Widget build(BuildContext context) {
@@ -76,6 +79,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Column(
                   children: allRecipes
                       .where((recipe) => recipe.title.toLowerCase().contains(query.toLowerCase()))
+                      .take(_recipesToShow)
                       .map((recipe) => Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                             child: SizedBox(
@@ -91,6 +95,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ))
                       .toList(),
                 ),
+                if (_recipesToShow < allRecipes.length)
+                  Center(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF129575),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _recipesToShow += 4;
+                        });
+                      },
+                      child: const Text(
+                        'Cargar más',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 19),
                 const Text(
                   'Perfiles Recomendados',
