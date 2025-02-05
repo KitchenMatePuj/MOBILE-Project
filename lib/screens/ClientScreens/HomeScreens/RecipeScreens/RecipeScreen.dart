@@ -1,29 +1,341 @@
 import 'package:flutter/material.dart';
 
-class Recipescreen extends StatelessWidget {
-  const Recipescreen({super.key});
+class Profile {
+  final String name;
+  final String imageUrl;
+
+  Profile({required this.name, required this.imageUrl});
+}
+
+class Recipe {
+  final String title;
+  final String chef;
+  final String duration;
+  final String imageRecipeUrl;
+  final int rating;
+  final String filters;
+  final int reviews;
+  final int totalPortions;
+  final List<Ingredient> ingredients;
+  final List<String> steps;
+
+  Recipe({
+    required this.title,
+    required this.chef,
+    required this.duration,
+    required this.imageRecipeUrl,
+    required this.rating,
+    required this.filters,
+    required this.reviews,
+    this.totalPortions = 1,
+    this.ingredients = const [],
+    this.steps = const [],
+  });
+}
+
+class Ingredient {
+  final String name;
+  final String quantity;
+  final String unit;
+
+  Ingredient({
+    required this.name,
+    required this.quantity,
+    required this.unit,
+  });
+}
+
+class RecipeScreen extends StatefulWidget {
+  const RecipeScreen({super.key});
+
+  @override
+  _CreateRecipeState createState() => _CreateRecipeState();
+}
+
+class _CreateRecipeState extends State<RecipeScreen> {
+  int selectedIndex = 0;
+  bool isSaved = false;
+
+  final List<Profile> recommendedProfiles = [
+    Profile(name: "Laura_Bozzo", imageUrl: "assets/chefs/Laura_Bozzo.jpg"),
+  ];
+
+  final List<Recipe> principalRecipe = [
+    Recipe(
+      title: "Salchipapa Venezolana XXL",
+      chef: "Laura_Bozzo",
+      duration: "35",
+      imageRecipeUrl: "assets/recipes/recipe1.jpg",
+      rating: 5,
+      filters: "Proteina, Cena, Venezolana",
+      reviews: 75,
+      totalPortions: 4,
+      ingredients: [
+        Ingredient(name: "Salchichas", quantity: "1/2", unit: "kg"),
+        Ingredient(name: "Papas", quantity: "1/2", unit: "kg"),
+        Ingredient(name: "Aceite", quantity: "1/2", unit: "taza"),
+        Ingredient(name: "Cebolla picada", quantity: "1/2", unit: "taza"),
+        Ingredient(name: "Tomate picado", quantity: "1/2", unit: "taza"),
+        Ingredient(name: "Ají amarillo molido", quantity: "1/2", unit: "taza"),
+        Ingredient(name: "Ají panca molido", quantity: "1/2", unit: "taza"),
+        Ingredient(name: "Culantro picado", quantity: "1/2", unit: "taza"),
+        Ingredient(name: "Arvejas", quantity: "1/2", unit: "taza"),
+        Ingredient(name: "Zanahoria rallada", quantity: "1/2", unit: "taza"),
+        Ingredient(name: "Choclo desgranado", quantity: "1/2", unit: "taza"),
+        Ingredient(name: "Perejil picado", quantity: "1/2", unit: "taza"),
+        Ingredient(name: "Cebolla china picada", quantity: "1/2", unit: "taza"),
+        Ingredient(name: "Ajo molido", quantity: "1/2", unit: "taza"),
+        Ingredient(name: "Vinagre", quantity: "1/2", unit: "taza"),
+        Ingredient(name: "Sillao", quantity: "1/2", unit: "taza"),
+        Ingredient(name: "Kétchup", quantity: "1/2", unit: "taza"),
+        Ingredient(name: "Mostaza", quantity: "1/2", unit: "taza"),
+        Ingredient(name: "Mayonesa", quantity: "1/2", unit: "taza"),
+        Ingredient(name: "Paprika", quantity: "1/2", unit: "taza"),
+        Ingredient(name: "Pimienta", quantity: "1/2", unit: "taza"),
+        Ingredient(name: "Sal", quantity: "1/2", unit: "taza"),
+        Ingredient(name: "Azúcar", quantity: "1/2", unit: "taza"),
+        Ingredient(name: "Comino", quantity: "1/2", unit: "taza"),
+        Ingredient(name: "Orégano", quantity: "1/2", unit: "taza"),
+      ],
+      steps: [
+        "Cocinar las salchichas en agua hirviendo por 10 minutos.",
+        "Pelar las papas y cortarlas en bastones.",
+        "Freír las papas en aceite caliente hasta que estén doradas.",
+        "En una sartén con aceite caliente, sofreír la cebolla, el tomate, el ají amarillo, el ají panca, el culantro, las arvejas, la zanahoria, el choclo, el perejil, la cebolla china y el ajo.",
+        "Agregar el vinagre, el sillao, el kétchup, la mostaza, la mayonesa, la paprika, la pimienta, la sal, el azúcar, el comino y el orégano.",
+        "Incorporar las salchichas y las papas a la mezcla.",
+        "Servir caliente y disfrutar.",
+      ],
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Receta'),
+        backgroundColor: const Color(0xFF129575),
         foregroundColor: Colors.white,
+        automaticallyImplyLeading: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pushNamed(context, '/profile'),
+          onPressed: () => Navigator.pop(context),
         ),
-        backgroundColor: const Color(0xFF129575),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.report, color: Colors.white),
+            onPressed: () {
+              // Acción para el icono de reportes
+            },
+          ),
+        ],
       ),
-      body: const Center(
-        child: Text('Pendiente Receta'),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Imagen de la receta
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10.0),
+                    child: ColorFiltered(
+                      colorFilter: ColorFilter.mode(
+                        Colors.black.withOpacity(0.3),
+                        BlendMode.darken,
+                      ),
+                      child: Image.asset(
+                        principalRecipe[0].imageRecipeUrl,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: 150,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 8,
+                    left: 8,
+                    child: Row(
+                      children: [
+                        const Icon(Icons.access_time, color: Colors.white),
+                        const SizedBox(width: 4),
+                        Text(
+                          "${principalRecipe[0].duration} min",
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 8,
+                    right: 8,
+                    child: IconButton(
+                      icon: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withOpacity(0.5), // White color with opacity
+                          border: Border.all(color: Colors.black), // Add black border
+                        ),
+                        padding: const EdgeInsets.all(3.0), // Increase padding to make the circle larger
+                        child: Icon(Icons.bookmark, color: isSaved ? Colors.yellow : Colors.white),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          isSaved = !isSaved;
+                        });
+                      },
+                    ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: const Color.fromARGB(255, 238, 228, 173).withOpacity(0.5), // White color with opacity
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.star, color: Colors.yellow),
+                          const SizedBox(width: 4),
+                          Text(
+                            principalRecipe[0].rating.toString(),
+                            style: const TextStyle(color: Colors.black), // Changed text color to black for better contrast
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // Fila 1: Nombre de la receta y número de reseñas
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    principalRecipe[0].title,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    "${principalRecipe[0].reviews} reseñas",
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // Fila 2: Foto de perfil, nombre del chef y botones
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundImage: AssetImage(recommendedProfiles[0].imageUrl),
+                        radius: 20,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        recommendedProfiles[0].name,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF129575),
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text("Seguir"),
+                      ),
+                      const SizedBox(width: 5),
+                      ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF129575),
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text("+ Lista de\nCompras"),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // Fila 3: Ingredientes y Procedimiento
+              Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildTab('Ingredientes', 0),
+                      _buildTab('Procedimiento', 1),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+
+                  // New Row with portion and steps information
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.restaurant, color: Colors.grey),
+                          SizedBox(width: 4),
+                          Text(
+                            '${principalRecipe[0].totalPortions} Porción',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        '${principalRecipe[0].steps.length} Pasos',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+
+              // Mostrar contenido según la pestaña seleccionada
+              Expanded(
+                child: selectedIndex == 0
+                    ? ListView.builder(
+                        itemCount: principalRecipe[0].ingredients.length,
+                        itemBuilder: (context, index) {
+                          final ingredient = principalRecipe[0].ingredients[index];
+                          return IngredientCard(ingredient: ingredient);
+                        },
+                      )
+                    : ListView.builder(
+                        itemCount: principalRecipe[0].steps.length,
+                        itemBuilder: (context, index) {
+                          final step = principalRecipe[0].steps[index];
+                          return StepCard(step: step, stepNumber: index + 1);
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xFF129575),
+        selectedItemColor: const Color.fromARGB(255, 83, 83, 83),
         unselectedItemColor: const Color.fromARGB(255, 83, 83, 83),
-        onTap: (index) {
+        onTap: (int index) {
           switch (index) {
             case 0:
               Navigator.pushNamed(context, '/dashboard');
@@ -49,6 +361,97 @@ class Recipescreen extends StatelessWidget {
           BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Compras'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTab(String label, int index) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedIndex = index;
+        });
+      },
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: selectedIndex == index ? const Color(0xFF129575) : Colors.grey,
+            ),
+          ),
+          if (selectedIndex == index)
+            Container(
+              margin: const EdgeInsets.only(top: 4),
+              height: 2,
+              width: 60,
+              color: const Color(0xFF129575),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class IngredientCard extends StatelessWidget {
+  final Ingredient ingredient;
+
+  const IngredientCard({required this.ingredient});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Colors.grey[200],
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              ingredient.name,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+            ),
+            Text(
+              "${ingredient.quantity} ${ingredient.unit}",
+              style: const TextStyle(fontSize: 16, color:Color.fromARGB(255, 51, 50, 50)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class StepCard extends StatelessWidget {
+  final String step;
+  final int stepNumber;
+
+  const StepCard({required this.step, required this.stepNumber});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Colors.grey[200],
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Paso $stepNumber",
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              step,
+              style: const TextStyle(fontSize: 16, color: Color.fromARGB(255, 51, 50, 50)),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -10,9 +10,10 @@ import 'screens/ClientScreens/HomeScreens/ProfileScreens/ProfileScreen.dart';   
 import 'screens/SignInAndSignUpScreens/ForgotPasswordScreens/EmailForgotPassScreen.dart'; // Route for the Email Forgot Password screen
 import 'screens/ClientScreens/HomeScreens/ShoppingListScreen.dart';         // Route for the Shopping List screen
 import 'screens/ClientScreens/HomeScreens/RecipeScreens/CreateRecipeScreen.dart';         // Route for the Create Recipe screen
+import 'screens/ClientScreens/HomeScreens/RecipeScreens/RecipeScreen.dart';        // Route for the Recipe screen
 import 'screens/ClientScreens/HomeScreens/ProfileScreens/EditProfileScreen.dart'; // Route for the Edit Profile screen
 import 'screens/ClientScreens/HomeScreens/ProfileScreens/ReportScreen.dart';    // Route for the Reports screen
-//import 'screens/ClientScreens/HomeScreens/RecipeScreens/Recipe';
+
 
 void main() {
   runApp(const MyApp());
@@ -42,6 +43,7 @@ class MyApp extends StatelessWidget {
         '/email_forgot_pass': (context) => const EmailForgotPassScreen(), // Email Forgot Password screen route
         '/shopping_list': (context) => const ShoppingList(), // Shopping List screen route
         '/create': (context) => const CreateRecipe(), // Create Recipe screen route
+        '/recipe': (context) => const RecipeScreen(), // Recipe screen route
         '/edit_profile': (context) => const Editprofile(), // Edit Profile screen route
         '/reports': (context) => const Reports(), // Reports screen route
       },

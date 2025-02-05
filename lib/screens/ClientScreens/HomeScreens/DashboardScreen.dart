@@ -84,12 +84,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                             child: SizedBox(
                               width: double.infinity,
-                              child: RecipeCard(
-                                title: recipe.title,
-                                chef: recipe.chef,
-                                duration: recipe.duration,
-                                imageUrl: recipe.imageUrl,
-                                rating: recipe.rating,
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.pushNamed(context, '/recipe');
+                                },
+                                child: RecipeCard(
+                                  title: recipe.title,
+                                  chef: recipe.chef,
+                                  duration: recipe.duration,
+                                  imageUrl: recipe.imageUrl,
+                                  rating: recipe.rating,
+                                ),
                               ),
                             ),
                           ))
@@ -112,14 +117,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                   ),
-                const SizedBox(height: 19),
+                /*const SizedBox(height: 19),
                 const Text(
                   'Perfiles Recomendados',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                   ),
-                ),
+                ),*/
                 const SizedBox(height: 16),
                 // Lista horizontal de perfiles recomendados
                 SingleChildScrollView(
@@ -407,7 +412,7 @@ class ProfileCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
+      /*child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const SizedBox(height: 8),
@@ -456,7 +461,7 @@ class ProfileCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
+      ),*/
     );
   }
 }

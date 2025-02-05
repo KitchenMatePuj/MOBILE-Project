@@ -317,78 +317,83 @@ class RecipeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      child: Card(
-        color: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(context, '/recipe');
+      },
+      child: SizedBox(
+        width: width,
+        child: Card(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+                child: Image.asset(
+                  imageUrl,
+                  width: double.infinity,
+                  height: 100,
+                  fit: BoxFit.cover,
+                ),
               ),
-              child: Image.asset(
-                imageUrl,
-                width: double.infinity,
-                height: 100,
-                fit: BoxFit.cover,
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
+              Container(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Chef: $chef',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color.fromARGB(255, 82, 82, 82),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Chef: $chef',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color.fromARGB(255, 82, 82, 82),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        duration,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          duration,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
                         ),
-                      ),
-                      Row(
-                        children: List.generate(5, (index) {
-                          return Icon(
-                            index < (rating ?? 0) ? Icons.star : Icons.star_border,
-                            color: Colors.amber,
-                            size: 12,
-                          );
-                        }),
-                      ),
-                    ],
-                  ),
-                ],
+                        Row(
+                          children: List.generate(5, (index) {
+                            return Icon(
+                              index < (rating ?? 0) ? Icons.star : Icons.star_border,
+                              color: Colors.amber,
+                              size: 12,
+                            );
+                          }),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
