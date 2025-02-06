@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter/services.dart'; // Import the services package for input formatters
 
 // Default lists for ingredients and units
 const List<String> defaultIngredients = ['Otro', 'Tomate', 'Cebolla', 'Ajo', 'Pimienta', 'Sal', 'Azúcar', 'Aceite', 'Vinagre', 'Leche', 'Huevos', 'Harina', 'Arroz', 'Pasta', 'Carne', 'Pollo', 'Pescado', 'Mariscos', 'Verduras', 'Frutas', 'Queso', 'Yogurt', 'Mantequilla', 'Pan', 'Cereal', 'Galletas', 'Chocolate', 'Café', 'Té', 'Agua', 'Vino', 'Cerveza', 'Ron', 'Whisky', 'Vodka', 'Ginebra', 'Brandy', 'Coñac', 'Licor'];
@@ -92,50 +93,60 @@ class _CreateRecipeState extends State<CreateRecipe> {
                           final result = await showDialog<String>(
                             context: context,
                             builder: (BuildContext context) {
-                              return AlertDialog(
-                                backgroundColor: Colors.white,
-                                title: Center(
-                                  child: Text(
-                                    'Tiempo Estimado',
-                                    style: TextStyle(
-                                      color: Color(0xFF129575),
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ),
-                                content: TextField(
-                                  controller: timeController,
-                                  keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(hintText: "Ingrese el tiempo en minutos"),
-                                ),
-                                actions: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                    children: [
-                                      ElevatedButton(
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color.fromARGB(255, 238, 99, 89),
-                                          foregroundColor: Colors.white,
+                              return StatefulBuilder(
+                                builder: (context, setState) {
+                                  return AlertDialog(
+                                    backgroundColor: Colors.white,
+                                    title: Center(
+                                      child: Text(
+                                        'Tiempo Estimado',
+                                        style: TextStyle(
+                                          color: Color(0xFF129575),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
                                         ),
-                                        child: const Text('Cancelar'),
                                       ),
-                                      ElevatedButton(
-                                        onPressed: () {
-                                          Navigator.pop(context, timeController.text);
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Color(0xFF129575),
-                                          foregroundColor: Colors.white,
-                                        ),
-                                        child: const Text('Aceptar'),
+                                    ),
+                                    content: TextField(
+                                      controller: timeController,
+                                      keyboardType: TextInputType.number,
+                                      inputFormatters: [FilteringTextInputFormatter.digitsOnly], // PRIMERA RESTRICCIÓN
+                                      decoration: const InputDecoration(hintText: "Ingrese el tiempo en minutos"),
+                                      onChanged: (value) {
+                                        setState(() {});
+                                      },
+                                    ),
+                                    actions: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color.fromARGB(255, 238, 99, 89),
+                                              foregroundColor: Colors.white,
+                                            ),
+                                            child: const Text('Cancelar'),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed: timeController.text.isNotEmpty
+                                                ? () {
+                                                    Navigator.pop(context, timeController.text);
+                                                  }
+                                                : null,
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Color(0xFF129575),
+                                              foregroundColor: Colors.white,
+                                            ),
+                                            child: const Text('Aceptar'),
+                                          ),
+                                        ],
                                       ),
                                     ],
-                                  ),
-                                ],
+                                  );
+                                },
                               );
                             },
                           );
@@ -262,50 +273,60 @@ class _CreateRecipeState extends State<CreateRecipe> {
                         final result = await showDialog<String>(
                           context: context,
                           builder: (BuildContext context) {
-                            return AlertDialog(
-                              backgroundColor: Colors.white,
-                              title: Center(
-                                child: Text(
-                                  'Porciones Estimadas',
-                                  style: TextStyle(
-                                    color: Color(0xFF129575),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ),
-                              content: TextField(
-                                controller: portionsController,
-                                keyboardType: TextInputType.number,
-                                decoration: const InputDecoration(hintText: "Ingrese el número de porciones"),
-                              ),
-                              actions: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color.fromARGB(255, 238, 99, 89),
-                                        foregroundColor: Colors.white,
+                            return StatefulBuilder(
+                              builder: (context, setState) {
+                                return AlertDialog(
+                                  backgroundColor: Colors.white,
+                                  title: Center(
+                                    child: Text(
+                                      'Porciones Estimadas',
+                                      style: TextStyle(
+                                        color: Color(0xFF129575),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
                                       ),
-                                      child: const Text('Cancelar'),
                                     ),
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        Navigator.pop(context, portionsController.text);
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Color(0xFF129575),
-                                        foregroundColor: Colors.white,
-                                      ),
-                                      child: const Text('Aceptar'),
+                                  ),
+                                  content: TextField(
+                                    controller: portionsController,
+                                    keyboardType: TextInputType.number,
+                                    inputFormatters: [FilteringTextInputFormatter.digitsOnly], // SEGUNDA RESTRICCIÓN
+                                    decoration: const InputDecoration(hintText: "Ingrese el número de porciones"),
+                                    onChanged: (value) {
+                                      setState(() {});
+                                    },
+                                  ),
+                                  actions: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color.fromARGB(255, 238, 99, 89),
+                                            foregroundColor: Colors.white,
+                                          ),
+                                          child: const Text('Cancelar'),
+                                        ),
+                                        ElevatedButton(
+                                          onPressed: portionsController.text.isNotEmpty
+                                              ? () {
+                                                  Navigator.pop(context, portionsController.text);
+                                                }
+                                              : null,
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Color(0xFF129575),
+                                            foregroundColor: Colors.white,
+                                          ),
+                                          child: const Text('Aceptar'),
+                                        ),
+                                      ],
                                     ),
                                   ],
-                                ),
-                              ],
+                                );
+                              },
                             );
                           },
                         );
@@ -563,7 +584,9 @@ class IngredientCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                   Text(
-                    "Cantidad ",
+                    ingredient.quantity.isEmpty && ingredient.unit.isEmpty
+                      ? "Cantidad"
+                      : "${ingredient.quantity} ${ingredient.unit}",
                     style: TextStyle(color: Colors.grey[800]),
                   ),
                   const SizedBox(width: 4),
@@ -572,15 +595,6 @@ class IngredientCard extends StatelessWidget {
                 ),
                 ),
               ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "${ingredient.quantity} ${ingredient.unit}",
-                  style: const TextStyle(fontSize: 16, color: Color.fromARGB(255, 51, 50, 50)),
-                ),
               ],
             ),
           ],
@@ -652,82 +666,94 @@ class IngredientCard extends StatelessWidget {
     showDialog<String>(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          title: Center(
-            child: Text(
-              'Cantidad',
-              style: TextStyle(
-                color: Color(0xFF129575),
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: quantityController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(hintText: "Ingrese la cantidad"),
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: ingredient.unit.isEmpty ? null : ingredient.unit,
-                items: defaultUnits.map((String unit) {
-                  return DropdownMenuItem<String>(
-                    value: unit,
-                    child: Container(
-                      color: Colors.white,
-                      child: Text(unit),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  if (value == 'Otro') {
-                    _showCustomUnitDialog(context, ingredient);
-                  } else {
-                    ingredient.unit = value!;
-                  }
-                },
-                decoration: const InputDecoration(hintText: "Seleccione una unidad"),
-                dropdownColor: Colors.white,
-              ),
-            ],
-          ),
-          actions: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 238, 99, 89),
-                    foregroundColor: Colors.white,
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              title: Center(
+                child: Text(
+                  'Cantidad',
+                  style: TextStyle(
+                    color: Color(0xFF129575),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
-                  child: const Text('Cancelar'),
                 ),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context, quantityController.text);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF129575),
-                    foregroundColor: Colors.white,
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: quantityController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly], // TERCERA RESTRICCIÓN
+                    decoration: const InputDecoration(hintText: "Ingrese la cantidad"),
+                    onChanged: (value) {
+                      setState(() {});
+                    },
                   ),
-                  child: const Text('Aceptar'),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    value: ingredient.unit.isEmpty ? null : ingredient.unit,
+                    items: defaultUnits.map((String unit) {
+                      return DropdownMenuItem<String>(
+                        value: unit,
+                        child: Container(
+                          color: Colors.white,
+                          child: Text(unit),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      if (value == 'Otro') {
+                        _showCustomUnitDialog(context, ingredient);
+                      } else {
+                        ingredient.unit = value!;
+                        setState(() {});
+                      }
+                    },
+                    decoration: const InputDecoration(hintText: "Seleccione una unidad"),
+                    dropdownColor: Colors.white,
+                  ),
+                ],
+              ),
+              actions: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 238, 99, 89),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Cancelar'),
+                    ),
+                    ElevatedButton(
+                      onPressed: quantityController.text.isNotEmpty && ingredient.unit.isNotEmpty
+                          ? () {
+                              Navigator.pop(context, quantityController.text);
+                            }
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF129575),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Aceptar'),
+                    ),
+                  ],
                 ),
               ],
-            ),
-          ],
+            );
+          },
         );
       },
     ).then((result) {
       if (result != null && result.isNotEmpty) {
         ingredient.quantity = result;
+        (context as Element).markNeedsBuild();
       }
     });
   }
@@ -806,55 +832,64 @@ class StepCard extends StatelessWidget {
         final result = await showDialog<String>(
           context: context,
           builder: (BuildContext context) {
-            return AlertDialog(
-              backgroundColor: Colors.white,
-              title: Center(
+            return StatefulBuilder(
+              builder: (context, setState) {
+              return AlertDialog(
+                backgroundColor: Colors.white,
+                title: Center(
                 child: Text(
                   'Editar Paso $stepNumber',
                   style: TextStyle(
-                    color: Color(0xFF129575),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                  color: Color(0xFF129575),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
                   ),
                 ),
-              ),
-              content: TextField(
+                ),
+                content: TextField(
                 controller: stepController,
                 keyboardType: TextInputType.text,
-                decoration: const InputDecoration(hintText: "Describa este paso por favor"),
+                decoration: const InputDecoration(hintText: "Describa este paso por favor."),
                 onTap: () {
                   if (stepController.text == "Describa este paso por favor.") {
-                    stepController.clear();
+                  stepController.clear();
                   }
                 },
-              ),
-              actions: [
+                onChanged: (value) {
+                  setState(() {});
+                },
+                ),
+                actions: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 238, 99, 89),
-                        foregroundColor: Colors.white,
-                      ),
-                      child: const Text('Cancelar'),
+                  ElevatedButton(
+                    onPressed: () {
+                    Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 238, 99, 89),
+                    foregroundColor: Colors.white,
                     ),
-                    ElevatedButton(
-                      onPressed: () {
+                    child: const Text('Cancelar'),
+                  ),
+                  ElevatedButton(
+                    onPressed: stepController.text.isNotEmpty && stepController.text != "Describa este paso por favor."
+                      ? () {
                         Navigator.pop(context, stepController.text);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF129575),
-                        foregroundColor: Colors.white,
-                      ),
-                      child: const Text('Aceptar'),
+                      }
+                      : null,
+                    style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF129575),
+                    foregroundColor: Colors.white,
                     ),
+                    child: const Text('Aceptar'),
+                  ),
                   ],
                 ),
-              ],
+                ],
+              );
+              },
             );
           },
         );
@@ -871,27 +906,33 @@ class StepCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Paso $stepNumber",
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
-                    onPressed: onDelete,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
+          Row(
+            children: [
               Text(
-                step,
-                style: const TextStyle(fontSize: 16, color: Color.fromARGB(255, 51, 50, 50)),
+            "Paso $stepNumber",
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
               ),
+              const SizedBox(width: 4),
+              const Icon(Icons.edit, color: Colors.black, size: 16),
             ],
+          ),
+          IconButton(
+            icon: Icon(Icons.delete, color: Colors.red),
+            onPressed: onDelete,
+          ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            step,
+            style: const TextStyle(fontSize: 16, color: Color.fromARGB(255, 51, 50, 50)),
+          ),
+        ],
           ),
         ),
       ),
