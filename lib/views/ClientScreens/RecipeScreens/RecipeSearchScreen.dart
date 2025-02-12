@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '/controllers/recipe_controller.dart';
+import '/models/recipe_model.dart';
 
 class RecipeSearchScreen extends StatefulWidget {
   const RecipeSearchScreen({super.key});
@@ -8,43 +10,21 @@ class RecipeSearchScreen extends StatefulWidget {
 }
 
 class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
-  
-  // Comtroller for the search bar
+  late RecipeController _recipeController;
   TextEditingController _searchController = TextEditingController();
-  
-  // Recipe's List
-  List<Recipe> allRecipes = [
-    Recipe(title: "Pavo Relleno XXS", chef: "XxSportacusXx", duration: "125 mins", imageUrl: "assets/recipes/recipe8.jpg", rating: 4, filters: "Proteina, Cena, Navidad"),
-    Recipe(title: "Banana Split Casera", chef: "Rihannita", duration: "20 mins", imageUrl: "assets/recipes/recipe9.jpg", rating: 5, filters: "Frutas, Postre"),
-    Recipe(title: "Paella Sencilla", chef: "Chilindrinita99", duration: "80 mins", imageUrl: "assets/recipes/recipe7.jpg", rating: 3, filters: "Cena, Arroz, Mariscos"),
-    Recipe(title: "Buñuelos Paisa", chef: "Voldi_Feliz", duration: "25 mins", imageUrl: "assets/recipes/recipe4.jpg", rating: 4, filters: "Cereal, Desayuno, Colombiana"),
-    Recipe(title: "Mariscos Caleños", chef: "Dora_Explora", duration: "35 mins", imageUrl: "assets/recipes/recipe6.jpg", rating: 5, filters: "Cena, Mariscos, Colombiana"),
-    Recipe(title: "Cóctel de Naranja", chef: "Calypso66", duration: "10 mins", imageUrl: "assets/recipes/recipe5.jpg", rating: 4, filters: "Frutas, Bebida"),
-    Recipe(title: "Perro Caliente Colombiano", chef: "Tia_Piedad", duration: "15 mins", imageUrl: "assets/recipes/recipe2.jpg", rating: 3, filters: "Proteina, Almuerzo, Colombiana"),
-    Recipe(title: "Salchipapa Venezolana XXL", chef: "Laura_Bozzo", duration: "35 mins", imageUrl: "assets/recipes/recipe1.jpg", rating: 5, filters: "Proteina, Cena, Venezolana"),
-    Recipe(title: "Pasta Alfredo", chef: "Machis", duration: "30 mins", imageUrl: "assets/recipes/recipe3.jpg", rating: 4, filters: "Cena, Pasta, Italiana"),
-  ];
-
-  // Filtered recipe list that updates with search
   List<Recipe> filteredRecipes = [];
-
-  // Variables de estado para los filtros seleccionados
   String selectedDuration = "Todos";
   String selectedRating = "Todas";
   String selectedCategory = "Todos";
   String selectedMealType = "Todos";
   String selectedCuisine = "Todas";
-
-  void selectCategory(String category) {
-    setState(() {
-      selectedCategory = category;
-    });
-  }
+  int _recipesToShow = 8;
 
   @override
   void initState() {
     super.initState();
-    filteredRecipes = allRecipes;
+    _recipeController = RecipeController();
+    filteredRecipes = _recipeController.allRecipes2;
     _searchController.addListener(_filterRecipes);
   }
 
@@ -54,20 +34,18 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
     super.dispose();
   }
 
-  // Filter Recipes
   void _filterRecipes() {
     setState(() {
       String query = _searchController.text.toLowerCase();
-      filteredRecipes = allRecipes.where((recipe) {
+      filteredRecipes = _recipeController.allRecipes.where((recipe) {
         return recipe.title.toLowerCase().contains(query) || recipe.chef.toLowerCase().contains(query);
       }).toList();
     });
   }
 
-  // Método para aplicar los filtros
   void _applyFilters() {
     setState(() {
-      filteredRecipes = allRecipes.where((recipe) {
+      filteredRecipes = _recipeController.allRecipes.where((recipe) {
         bool matchesDuration = selectedDuration == "Todos" || _matchesDuration(recipe.duration);
         bool matchesRating = selectedRating == "Todas" || recipe.rating == int.parse(selectedRating);
         bool matchesCategory = selectedCategory == "Todos" || recipe.filters?.contains(selectedCategory) == true;
@@ -96,9 +74,6 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
     }
   }
 
-  // Recetas que se van a mostrar.
-  int _recipesToShow = 8;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -119,7 +94,6 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Categories section
                     const SizedBox(height: 5),
                     SearchBar(
                       controller: _searchController,
@@ -165,20 +139,20 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
                     const SizedBox(height: 4),
                     if (_recipesToShow < filteredRecipes.length)
                       Center(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF129575),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF129575),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _recipesToShow += 4;
+                            });
+                          },
+                          child: const Text(
+                            'Cargar más',
+                            style: TextStyle(color: Colors.white),
+                          ),
                         ),
-                        onPressed: () {
-                        setState(() {
-                          _recipesToShow += 4;
-                        });
-                        },
-                        child: const Text(
-                        'Cargar más',
-                        style: TextStyle(color: Colors.white),
-                        ),
-                      ),
                       ),
                   ],
                 ),
@@ -236,65 +210,6 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
       ),
     );
   }
-}
-
-class CategoryChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const CategoryChip({
-    Key? key,
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(right: 16),
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF129575) : Colors.transparent,
-          border: Border.all(
-            color: isSelected ? Colors.transparent : const Color(0xFF129575),
-          ),
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: isSelected ? Colors.white : const Color(0xFF129575),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Modelo de receta
-class Recipe {
-  final String title;
-  final String chef;
-  final String duration;
-  final String imageUrl;
-
-  Recipe({
-    required this.title,
-    required this.chef,
-    required this.duration,
-    required this.imageUrl,
-    this.rating,
-    this.filters,
-  });
-
-  final int? rating;
-  final String? filters;
 }
 
 class RecipeCard extends StatelessWidget {

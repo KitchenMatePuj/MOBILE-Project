@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import '/controllers/login_controller.dart';
+import '/models/user_model.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -10,16 +12,25 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
+  bool _isLoading = false;
+  String _errorMessage = '';
+
   @override
   Widget build(BuildContext context) {
+    final userModel = UserModel(fullName: '', email: '123', alias: '', password: '123');
+    final loginController = LoginController(userModel: userModel);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Iniciar Sesión'),
         backgroundColor: const Color(0xFF129575),
         foregroundColor: Colors.white,
         automaticallyImplyLeading: false,
-      ),body: SingleChildScrollView(
+      ),
+      body: SingleChildScrollView(
         child: ConstrainedBox(
           constraints: BoxConstraints(
             minHeight: MediaQuery.of(context).size.height,
@@ -53,7 +64,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 _buildEmailInput(),
                 _buildPasswordInput(),
                 _buildForgotPassword(context),
-                _buildLoginButton(context),
+                _buildLoginButton(context, loginController),
+                if (_isLoading) CircularProgressIndicator(),
+                // Removed duplicate error message
                 const SizedBox(height: 30),
                 _buildLoginWith(context),
                 _buildRegisterPrompt(context),
@@ -76,6 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 5),
         TextField(
+          controller: _emailController,
           decoration: InputDecoration(
             hintText: "Ingrese Correo Electrónico",
             border: OutlineInputBorder(
@@ -106,6 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 5),
         TextField(
+          controller: _passwordController,
           obscureText: !_isPasswordVisible,
           decoration: InputDecoration(
             hintText: "Ingrese Contraseña",
@@ -157,105 +172,134 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildLoginButton(BuildContext context) {
+  Widget _buildLoginButton(BuildContext context, LoginController loginController) {
     return Center(
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 85),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+      child: Column(
+        children: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 85),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              backgroundColor: const Color(0xFF129575),
+            ),
+            onPressed: () async {
+              setState(() {
+                _isLoading = true;
+                _errorMessage = '';
+              });
+
+              final bool success = await loginController.login(
+                _emailController.text,
+                _passwordController.text,
+              );
+
+              setState(() {
+                _isLoading = false;
+                if (success) {
+                  Navigator.pushNamed(context, '/dashboard');
+                } else {
+                  _errorMessage = 'Correo o contraseña incorrectos';
+                }
+              });
+            },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Text(
+                  "Iniciar Sesión",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(width: 11),
+                Icon(
+                  Icons.arrow_forward,
+                  size: 20,
+                  color: Colors.white,
+                ),
+              ],
+            ),
           ),
-          backgroundColor: const Color(0xFF129575),
-        ),
-        onPressed: () {
-          Navigator.pushNamed(context, '/dashboard');
-        },
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              "Iniciar Sesión",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+          if (_errorMessage.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Text(
+                _errorMessage,
+                style: const TextStyle(color: Colors.red),
+                textAlign: TextAlign.center,
               ),
             ),
-            const SizedBox(width: 11),
-            const Icon(
-              Icons.arrow_forward,
-              size: 20,
-              color: Colors.white,
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildLoginWith(BuildContext context) {
-  return Center(
-    child: Column(
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            Flexible(
-              child: Divider(
-                color: Color(0xFFD9D9D9),
-                thickness: 1,
-                endIndent: 12,
+    return Center(
+      child: Column(
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Flexible(
+                child: Divider(
+                  color: Color(0xFFD9D9D9),
+                  thickness: 1,
+                  endIndent: 12,
+                ),
               ),
-            ),
-            Text(
-              "O inicia sesión mediante",
-              style: TextStyle(
-                color: Color(0xFFD9D9D9),
-                fontWeight: FontWeight.w500,
+              Text(
+                "O inicia sesión mediante",
+                style: TextStyle(
+                  color: Color(0xFFD9D9D9),
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
-            Flexible(
-              child: Divider(
-                color: Color(0xFFD9D9D9),
-                thickness: 1,
-                indent: 12,
+              Flexible(
+                child: Divider(
+                  color: Color(0xFFD9D9D9),
+                  thickness: 1,
+                  indent: 12,
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, '/dashboard');
-              },
-              child: Image.asset(
-                'assets/icons/googleIcon.png',
-                width: 55,
-                fit: BoxFit.contain,
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, '/dashboard');
+                },
+                child: Image.asset(
+                  'assets/icons/googleIcon.png',
+                  width: 55,
+                  fit: BoxFit.contain,
+                ),
               ),
-            ),
-            const SizedBox(width: 20),
-            GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, '/dashboard');
-              },
-              child: Image.asset(
-                'assets/icons/facebookIcon.png',
-                width: 55,
-                fit: BoxFit.contain,
+              const SizedBox(width: 20),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, '/dashboard');
+                },
+                child: Image.asset(
+                  'assets/icons/facebookIcon.png',
+                  width: 55,
+                  fit: BoxFit.contain,
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 15),
-      ],
-    ),
-  );
-}
-
+            ],
+          ),
+          const SizedBox(height: 15),
+        ],
+      ),
+    );
+  }
 
   Widget _buildRegisterPrompt(BuildContext context) {
     return Center(

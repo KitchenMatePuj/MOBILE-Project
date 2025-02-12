@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import '/controllers/recipe_controller.dart';
+import '/controllers/profile_controller.dart';
+import '/models/recipe_model.dart';
+import '/models/profile_model.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -8,34 +12,23 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  // Lista de recetas principales
-  final List<Recipe> allRecipes = [
-    Recipe(title: "Lasagna Original Italiana", chef: "kitchenMate", duration: "35 mins", imageUrl: "assets/recipes/recipe12.jpg", rating: 4, filters: "Cena, Pasta, Italiana"),
-    Recipe(title: "Pavo Relleno XXS", chef: "XxSportacusXx", duration: "125 mins", imageUrl: "assets/recipes/recipe8.jpg", rating: 4, filters: "Proteina, Cena, Navidad"),
-    Recipe(title: "Banana Split Casera", chef: "Rihannita", duration: "20 mins", imageUrl: "assets/recipes/recipe9.jpg", rating: 5, filters: "Frutas, Postre"),
-    Recipe(title: "Torta de Patatas", chef: "kitchenMate", duration: "40 mins", imageUrl: "assets/recipes/recipe10.jpg", rating: 5, filters: "Cena, Vegetariana, Española"),
-    Recipe(title: "Buñuelos Paisa", chef: "Voldi_Feliz", duration: "25 mins", imageUrl: "assets/recipes/recipe4.jpg", rating: 4, filters: "Cereal, Desayuno, Colombiana"),
-    Recipe(title: "Cóctel de Naranja", chef: "Calypso66", duration: "10 mins", imageUrl: "assets/recipes/recipe5.jpg", rating: 4, filters: "Frutas, Bebida"),
-    Recipe(title: "Desayuno: Arepa Colombo Venezolana con Huevo", chef: "kitchenMate", duration: "15 mins", imageUrl: "assets/recipes/recipe11.jpg", rating: 4, filters: "Desayuno, Proteina, Colombiana, Venezolana"),
-  ];
-
-  // Lista de perfiles recomendados
-  final List<Profile> recommendedProfiles = [
-    Profile(name: "Laura_Bozzo", description: "Chef de comidas rápidas y cenas abundantes.", imageUrl: "assets/chefs/Laura_Bozzo.jpg"),
-    Profile(name: "Tia_Piedad", description: "Cocinera de almuerzos rápidos y deliciosos.", imageUrl: "assets/chefs/Tia_Piedad.jpg"),
-    Profile(name: "Machis", description: "Amante de la pasta y la cocina italiana.", imageUrl: "assets/chefs/Machis.jpg"),
-    Profile(name: "Dora_Explora", description: "Chef de mariscos y cenas especiales.", imageUrl: "assets/chefs/Dora_Explora.jpg"),
-    Profile(name: "Chilindrinita99", description: "Experta en cocina española y mariscos.", imageUrl: "assets/chefs/Chilindrinita99.jpg"),
-  ];
-
-  // Variable para almacenar el texto de la barra de búsqueda
+  late RecipeController _recipeController;
+  late ProfileController _profileController;
   String query = '';
-
-  // Recetas que se van a Mostrar
   int _recipesToShow = 6;
 
   @override
+  void initState() {
+    super.initState();
+    _recipeController = RecipeController();
+    _profileController = ProfileController();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final filteredRecipes = _recipeController.getFilteredRecipes(query, _recipesToShow);
+    final recommendedProfiles = _profileController.recommendedProfiles;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -50,10 +43,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // UserHeader section
                 const UserHeader(),
                 const SizedBox(height: 10),
-                // Barra de búsqueda
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: TextField(
@@ -75,32 +66,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 const SizedBox(height: 7),
-                // Lista vertical de recetas principales
                 Column(
-                  children: allRecipes
-                      .where((recipe) => recipe.title.toLowerCase().contains(query.toLowerCase()))
-                      .take(_recipesToShow)
-                      .map((recipe) => Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: GestureDetector(
-                                onTap: () {
-                                  Navigator.pushNamed(context, '/recipe');
-                                },
-                                child: RecipeCard(
-                                  title: recipe.title,
-                                  chef: recipe.chef,
-                                  duration: recipe.duration,
-                                  imageUrl: recipe.imageUrl,
-                                  rating: recipe.rating,
-                                ),
-                              ),
+                  children: filteredRecipes.map((recipe) => Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.pushNamed(context, '/recipe');
+                            },
+                            child: RecipeCard(
+                              title: recipe.title,
+                              chef: recipe.chef,
+                              duration: recipe.duration,
+                              imageUrl: recipe.imageUrl,
+                              rating: recipe.rating,
                             ),
-                          ))
-                      .toList(),
+                          ),
+                        ),
+                      )).toList(),
                 ),
-                if (_recipesToShow < allRecipes.length)
+                if (_recipesToShow < _recipeController.allRecipes.length)
                   Center(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
@@ -117,30 +103,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                   ),
-                /*const SizedBox(height: 19),
-                const Text(
-                  'Perfiles Recomendados',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),*/
                 const SizedBox(height: 16),
-                // Lista horizontal de perfiles recomendados
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
-                    children: recommendedProfiles
-                        .map((profile) => Padding(
-                              padding: const EdgeInsets.only(right: 16),
-                              child: ProfileCard(
-                                name: profile.name,
-                                description: profile.description,
-                                imageUrl: profile.imageUrl,
-                              ),
-                            ))
-                        .toList(),
+                    children: recommendedProfiles.map((profile) => Padding(
+                          padding: const EdgeInsets.only(right: 16),
+                          child: ProfileCard(
+                            name: profile.name,
+                            description: profile.description,
+                            imageUrl: profile.imageUrl,
+                          ),
+                        )).toList(),
                   ),
                 ),
               ],
@@ -153,25 +128,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: Colors.white,
         selectedItemColor: const Color(0xFF129575),
         unselectedItemColor: const Color.fromARGB(255, 83, 83, 83),
-        currentIndex: 0, // It is the 'selectedItemColor'
+        currentIndex: 0,
         onTap: (int index) {
           switch (index) {
             case 0:
               break;
             case 1:
-              // Navegar a Buscar
               Navigator.pushNamed(context, '/recipe_search');
               break;
             case 2:
-              // Navegar a Crear
               Navigator.pushNamed(context, '/create');
               break;
             case 3:
-              // Navegar a Lista de Compras
               Navigator.pushNamed(context, '/shopping_list');
               break;
             case 4:
-              // Navegar a Perfil
               Navigator.pushNamed(context, '/profile');
               break;
           }
@@ -203,27 +174,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-// Modelo de receta
-class Recipe {
-  final String title;
-  final String chef;
-  final String duration;
-  final String imageUrl;
-
-  Recipe({
-    required this.title,
-    required this.chef,
-    required this.duration,
-    required this.imageUrl,
-    this.rating,
-    this.filters,
-  });
-
-  final int? rating;
-  final String? filters;
-}
-
-// RecipeCard widget
 class RecipeCard extends StatelessWidget {
   final String title;
   final String chef;
@@ -321,7 +271,6 @@ class RecipeCard extends StatelessWidget {
   }
 }
 
-// UserHeader widget
 class UserHeader extends StatelessWidget {
   const UserHeader({Key? key}) : super(key: key);
 
@@ -345,7 +294,7 @@ class UserHeader extends StatelessWidget {
               '¿Qué deseas cocinar hoy?',
               style: TextStyle(
                 fontSize: 16,
-                color: const Color.fromARGB(255, 83, 83, 83),
+                color: Color.fromARGB(255, 83, 83, 83),
               ),
             ),
           ],
@@ -371,20 +320,6 @@ class UserHeader extends StatelessWidget {
   }
 }
 
-// Modelo de perfil
-class Profile {
-  final String name;
-  final String description;
-  final String imageUrl;
-
-  Profile({
-    required this.name,
-    required this.description,
-    required this.imageUrl,
-  });
-}
-
-// ProfileCard widget
 class ProfileCard extends StatelessWidget {
   final String name;
   final String description;
@@ -412,56 +347,6 @@ class ProfileCard extends StatelessWidget {
           ),
         ],
       ),
-      /*child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const SizedBox(height: 8),
-          ClipOval(
-            child: Image.asset(
-              imageUrl,
-              height: 80,
-              width: 80,
-              fit: BoxFit.cover,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(6),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  description.length > 40 ? '${description.substring(0, 40)}...' : description,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 6),
-                ElevatedButton(
-                  onPressed: () {
-                    // Acción de seguir
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF129575),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
-                  ),
-                  child: const Text('Seguir', style: TextStyle(fontSize: 12)),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),*/
     );
   }
 }

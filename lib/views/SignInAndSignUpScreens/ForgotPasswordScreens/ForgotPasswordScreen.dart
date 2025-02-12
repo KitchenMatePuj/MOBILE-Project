@@ -1,7 +1,42 @@
 import 'package:flutter/material.dart';
+import '/controllers/password_reset_controller.dart';
+import '/models/password_reset_model.dart';
 
-class ForgotPasswordScreen extends StatelessWidget {
+class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
+
+  @override
+  _ForgotPasswordScreenState createState() => _ForgotPasswordScreenState();
+}
+
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+  final _codeController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  String? _passwordError;
+  String? _confirmPasswordError;
+  bool _canResetPassword = false;
+
+  late PasswordResetController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    final model = PasswordResetModel();
+    _controller = PasswordResetController(model: model);
+  }
+
+  void _validateForm() {
+    final code = _codeController.text;
+    final newPassword = _newPasswordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    setState(() {
+      _passwordError = _controller.validatePassword(newPassword);
+      _confirmPasswordError = _controller.validateConfirmPassword(newPassword, confirmPassword);
+      _canResetPassword = _controller.canResetPassword(code, newPassword, confirmPassword);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +48,7 @@ class ForgotPasswordScreen extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-        Navigator.pop(context);
+            Navigator.pop(context);
           },
         ),
       ),
@@ -84,9 +119,11 @@ class ForgotPasswordScreen extends StatelessWidget {
         ),
         const SizedBox(height: 5),
         TextField(
+          controller: isPassword ? (label.contains("Vuelve") ? _confirmPasswordController : _newPasswordController) : _codeController,
           obscureText: isPassword,
           decoration: InputDecoration(
             hintText: hint,
+            errorText: isPassword ? (label.contains("Vuelve") ? _confirmPasswordError : _passwordError) : null,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
@@ -96,6 +133,7 @@ class ForgotPasswordScreen extends StatelessWidget {
             ),
             contentPadding: const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
           ),
+          onChanged: (value) => _validateForm(),
         ),
         const SizedBox(height: 20),
       ],
@@ -112,9 +150,11 @@ class ForgotPasswordScreen extends StatelessWidget {
           ),
           backgroundColor: const Color(0xFF129575),
         ),
-        onPressed: () {
-          _showSuccessDialog(context);
-        },
+        onPressed: _canResetPassword
+            ? () {
+                _showSuccessDialog(context);
+              }
+            : null,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -167,8 +207,8 @@ class ForgotPasswordScreen extends StatelessWidget {
                   ),
                 ),
                 onPressed: () {
-                  Navigator.of(context).pop(); // Cierra el diálogo
-                  Navigator.pushNamed(context, '/login'); // Redirige a la pantalla de login
+                  Navigator.of(context).pop();
+                  Navigator.pushNamed(context, '/login');
                 },
                 child: const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),

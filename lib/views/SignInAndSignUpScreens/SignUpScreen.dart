@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import '../../controllers/signup_controller.dart';
+import '../../models/user_model.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -9,37 +11,46 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
+  final _fullNameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _aliasController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isPasswordValid = true;
   bool _isConfirmPasswordValid = true;
+  bool _isEmailValid = true;
   bool _canContinue = false;
   String? _passwordError;
   String? _confirmPasswordError;
+  String? _emailError;
 
-  bool _validatePassword(String password) {
-    final hasMinLength = password.length > 8;
-    final hasNumber = RegExp(r'\d').hasMatch(password);
-    final hasSymbol = RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(password);
-    return hasMinLength && hasNumber && hasSymbol;
+  late SignUpController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    final userModel = UserModel(fullName: '', email: '', alias: '', password: '');
+    _controller = SignUpController(userModel: userModel);
   }
 
   void _validateForm() {
+    final fullName = _fullNameController.text;
+    final email = _emailController.text;
+    final alias = _aliasController.text;
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
 
     setState(() {
-      _isPasswordValid = _validatePassword(password);
-      _passwordError = _isPasswordValid
-          ? null
-          : 'La contraseña debe tener más de 8 caracteres, un número\ny un símbolo.';
+      _emailError = _controller.validateEmail(email);
+      _isEmailValid = _emailError == null;
 
-      _isConfirmPasswordValid = password == confirmPassword;
-      _confirmPasswordError = _isConfirmPasswordValid
-          ? null
-          : 'Las contraseñas no coinciden.';
+      _passwordError = _controller.validatePassword(password);
+      _isPasswordValid = _passwordError == null;
 
-      _canContinue = _isPasswordValid && _isConfirmPasswordValid;
+      _confirmPasswordError = _controller.validateConfirmPassword(password, confirmPassword);
+      _isConfirmPasswordValid = _confirmPasswordError == null;
+
+      _canContinue = _controller.canContinue(fullName, email, alias, password, confirmPassword);
     });
   }
 
@@ -53,7 +64,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-        Navigator.pop(context);
+            Navigator.pop(context);
           },
         ),
       ),
@@ -117,6 +128,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ),
         const SizedBox(height: 5),
         TextField(
+          controller: _fullNameController,
           decoration: InputDecoration(
             hintText: "Escribe tu nombre completo",
             border: OutlineInputBorder(
@@ -126,9 +138,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 width: 1.5,
               ),
             ),
-            contentPadding:
-                const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
+            contentPadding: const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
           ),
+          onChanged: (value) => _validateForm(),
         ),
         const SizedBox(height: 15),
       ],
@@ -145,8 +157,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ),
         const SizedBox(height: 5),
         TextField(
+          controller: _emailController,
           decoration: InputDecoration(
             hintText: "Escribe tu correo electrónico",
+            errorText: _emailError,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
@@ -154,16 +168,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 width: 1.5,
               ),
             ),
-            contentPadding:
-                const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
+            contentPadding: const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
           ),
+          onChanged: (value) => _validateForm(),
         ),
         const SizedBox(height: 15),
       ],
     );
   }
 
-    Widget _buildUsersAliasNameInput() {
+  Widget _buildUsersAliasNameInput() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -173,6 +187,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ),
         const SizedBox(height: 5),
         TextField(
+          controller: _aliasController,
           decoration: InputDecoration(
             hintText: "Escribe tu nombre de usuario",
             border: OutlineInputBorder(
@@ -182,9 +197,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 width: 1.5,
               ),
             ),
-            contentPadding:
-                const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
+            contentPadding: const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
           ),
+          onChanged: (value) => _validateForm(),
         ),
         const SizedBox(height: 15),
       ],
@@ -214,8 +229,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 width: 1.5,
               ),
             ),
-            contentPadding:
-                const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
+            contentPadding: const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
           ),
         ),
         const SizedBox(height: 15),
@@ -246,8 +260,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 width: 1.5,
               ),
             ),
-            contentPadding:
-                const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
+            contentPadding: const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
           ),
         ),
         const SizedBox(height: 30),
@@ -281,7 +294,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 color: Colors.white,
               ),
             ),
-            const SizedBox(width: 11),
+            SizedBox(width: 11),
             Icon(  // Uses an Icon instead of an asset
               Icons.arrow_forward,  // Forward arrow
               size: 20,  // Icon size
@@ -293,72 +306,71 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
- // Builds the "Sign Up with" section
-Widget _buildSignUpWith(BuildContext context) {
-  return Center(
-    child: Column(
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            Flexible(
-              child: Divider(
-                color: Color(0xFFD9D9D9),
-                thickness: 1,
-                endIndent: 12,
+  // Builds the "Sign Up with" section
+  Widget _buildSignUpWith(BuildContext context) {
+    return Center(
+      child: Column(
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Flexible(
+                child: Divider(
+                  color: Color(0xFFD9D9D9),
+                  thickness: 1,
+                  endIndent: 12,
+                ),
               ),
-            ),
-            Text(
-              "O crear cuenta mediante",
-              style: TextStyle(
-                color: Color(0xFFD9D9D9),
-                fontWeight: FontWeight.w500,
+              Text(
+                "O crear cuenta mediante",
+                style: TextStyle(
+                  color: Color(0xFFD9D9D9),
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
-            Flexible(
-              child: Divider(
-                color: Color(0xFFD9D9D9),
-                thickness: 1,
-                indent: 12,
+              Flexible(
+                child: Divider(
+                  color: Color(0xFFD9D9D9),
+                  thickness: 1,
+                  indent: 12,
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        Row(  // Row to display icons together
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Google Icon with GestureDetector
-            GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, '/nutrition_form');
-              },
-              child: Image.asset(
-                'assets/icons/googleIcon.png',
-                width: 55,
-                fit: BoxFit.contain,
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(  // Row to display icons together
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Google Icon with GestureDetector
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, '/nutrition_form');
+                },
+                child: Image.asset(
+                  'assets/icons/googleIcon.png',
+                  width: 55,
+                  fit: BoxFit.contain,
+                ),
               ),
-            ),
-            const SizedBox(width: 20),  // Space between the icons
-            // Facebook Icon with GestureDetector
-            GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, '/nutrition_form');
-              },
-              child: Image.asset(
-                'assets/icons/facebookIcon.png', 
-                width: 55,
-                fit: BoxFit.contain,
+              const SizedBox(width: 20),  // Space between the icons
+              // Facebook Icon with GestureDetector
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, '/nutrition_form');
+                },
+                child: Image.asset(
+                  'assets/icons/facebookIcon.png', 
+                  width: 55,
+                  fit: BoxFit.contain,
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 15), // Space between email field and next widget
-      ],
-    ),
-  );
-}
-
+            ],
+          ),
+          const SizedBox(height: 15), // Space between email field and next widget
+        ],
+      ),
+    );
+  }
 
   // Builds the register prompt text
   Widget _buildRegisterPrompt(BuildContext context) {

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '/controllers/nutrition_controller.dart';
+import '/models/nutrition_model.dart';
 
 class NutritionFormScreen extends StatefulWidget {
   const NutritionFormScreen({super.key});
@@ -8,42 +10,19 @@ class NutritionFormScreen extends StatefulWidget {
 }
 
 class _NutritionFormScreenState extends State<NutritionFormScreen> {
-  // Lista de preguntas y opciones
-  final List<Map<String, dynamic>> questions = [
-    {
-      "question": "¿Qué tipo de dieta sigues?",
-      "options": ["Vegetariana", "Vegana", "Omnívora", "Keto", "Paleo", "No tengo preferencias"],
-      "selected": null,
-    },
-    {
-      "question": "¿Tienes alguna alergia alimenticia?",
-      "options": ["Frutos Secos", "Gluten", "Lácteos", "Mariscos", "Ninguna"],
-      "selected": null,
-    },
-    {
-      "question": "¿Tienes alguna intolerancia alimentaria?",
-      "options": ["Lactosa", "Gluten", "Ninguna"],
-      "selected": null,
-    },
-    {
-      "question": "¿Cuáles son tus hábitos alimenticios?",
-      "options": ["Desayuno Diario", "Comida rápida Ocasional", "Balanceado", "Ninguno en específico"],
-      "selected": null,
-    },
-    {
-      "question": "¿Qué tipo de cocina prefieres?",
-      "options": ["Meditarránea", "Asiática", "Mexicana", "Italiana", "Ninguna en específico"],
-      "selected": null,
-    },
-    {
-      "question": "¿Cuáles son tus objetivos de salud?",
-      "options": ["Pérdida peso", "Ganancia Muscular", "Mantenerme saludable", "Ninguno en específico"],
-      "selected": null,
-    },
-  ];
+  late NutritionController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    final model = NutritionModel();
+    _controller = NutritionController(model: model);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final questions = _controller.getQuestions();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Formulario de Nutrición'),
@@ -52,7 +31,7 @@ class _NutritionFormScreenState extends State<NutritionFormScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-        Navigator.pop(context);
+            Navigator.pop(context);
           },
         ),
       ),
@@ -90,20 +69,20 @@ class _NutritionFormScreenState extends State<NutritionFormScreen> {
     );
   }
 
-  Widget _buildDropdown(Map<String, dynamic> questionData) {
+  Widget _buildDropdown(NutritionQuestion question) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          questionData["question"],
+          question.question,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF121212)),
         ),
         const SizedBox(height: 5),
         DropdownButtonFormField<String>(
-          value: questionData["selected"],
+          value: question.selected,
           hint: const Text("Selecciona una opción"),
           isExpanded: true,
-          items: (questionData["options"] as List<String>).map((option) {
+          items: question.options.map((option) {
             return DropdownMenuItem<String>(
               value: option,
               child: Text(option),
@@ -111,7 +90,7 @@ class _NutritionFormScreenState extends State<NutritionFormScreen> {
           }).toList(),
           onChanged: (value) {
             setState(() {
-              questionData["selected"] = value;
+              _controller.updateSelectedOption(question, value);
             });
           },
           dropdownColor: Colors.white,

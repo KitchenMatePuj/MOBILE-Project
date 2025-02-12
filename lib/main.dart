@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
-import 'screens/SignInAndSignUpScreens/ForgotPasswordScreens/HomeScreen.dart';
-import 'screens/SignInAndSignUpScreens/ForgotPasswordScreens/LoginScreen.dart';
-import 'screens/SignInAndSignUpScreens/ForgotPasswordScreens/ForgotPasswordScreen.dart';  // Route for the Forgot Password screen
-import 'screens/SignInAndSignUpScreens/ForgotPasswordScreens/SignUpScreen.dart';          // Route for the Sign Up screen
-import 'screens/SignInAndSignUpScreens/ForgotPasswordScreens/NutritionFormScreen.dart';   // Route for the Nutrition Registration screen
-import 'screens/ClientScreens/HomeScreens/DashboardScreen.dart';        // Route for the main screen after logging in
-import 'screens/ClientScreens/HomeScreens/RecipeSearchScreen.dart';    // Route for the specific recipe search screen
-import 'screens/ClientScreens/HomeScreens/ProfileScreens/ProfileScreen.dart';         // Added the Profile screen route
-import 'screens/SignInAndSignUpScreens/ForgotPasswordScreens/EmailForgotPassScreen.dart'; // Route for the Email Forgot Password screen
-import 'screens/ClientScreens/HomeScreens/ShoppingListScreen.dart';         // Route for the Shopping List screen
-import 'screens/ClientScreens/HomeScreens/RecipeScreens/CreateRecipeScreen.dart';         // Route for the Create Recipe screen
-import 'screens/ClientScreens/HomeScreens/RecipeScreens/RecipeScreen.dart';        // Route for the Recipe screen
-import 'screens/ClientScreens/HomeScreens/ProfileScreens/EditProfileScreen.dart'; // Route for the Edit Profile screen
-import 'screens/ClientScreens/HomeScreens/ProfileScreens/ReportScreen.dart';    // Route for the Reports screen
+import 'views/SignInAndSignUpScreens/HomeScreen.dart';
+import 'views/SignInAndSignUpScreens/LoginScreen.dart';
+import 'views/SignInAndSignUpScreens/ForgotPasswordScreens/ForgotPasswordScreen.dart';  // Route for the Forgot Password screen
+import 'views/SignInAndSignUpScreens/SignUpScreen.dart';          // Route for the Sign Up screen
+import 'views/SignInAndSignUpScreens/NutritionFormScreen.dart';   // Route for the Nutrition Registration screen
+import 'views/ClientScreens/DashboardScreen.dart';        // Route for the main screen after logging in
+import 'views/ClientScreens/RecipeScreens/RecipeSearchScreen.dart';    // Route for the specific recipe search screen
+import 'views/ClientScreens/ProfileScreens/ProfileScreen.dart';         // Added the Profile screen route
+import 'views/SignInAndSignUpScreens/ForgotPasswordScreens/EmailForgotPassScreen.dart'; // Route for the Email Forgot Password screen
+import 'views/ClientScreens/ShoppingListScreen.dart';         // Route for the Shopping List screen
+import 'views/ClientScreens/RecipeScreens/CreateRecipeScreen.dart';         // Route for the Create Recipe screen
+import 'views/ClientScreens/RecipeScreens/RecipeScreen.dart';        // Route for the Recipe screen
+import 'views/ClientScreens/ProfileScreens/EditProfileScreen.dart'; // Route for the Edit Profile screen
+import 'views/ClientScreens/ProfileScreens/ReportScreen.dart';    // Route for the Reports screen
 
 
 void main() {

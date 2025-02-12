@@ -1,7 +1,36 @@
 import 'package:flutter/material.dart';
+import '/controllers/password_reset_controller.dart';
+import '/models/password_reset_model.dart';
 
-class EmailForgotPassScreen extends StatelessWidget {
+class EmailForgotPassScreen extends StatefulWidget {
   const EmailForgotPassScreen({super.key});
+
+  @override
+  _EmailForgotPassScreenState createState() => _EmailForgotPassScreenState();
+}
+
+class _EmailForgotPassScreenState extends State<EmailForgotPassScreen> {
+  final _emailController = TextEditingController();
+  String? _emailError;
+  bool _canSendCode = false;
+
+  late PasswordResetController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    final model = PasswordResetModel();
+    _controller = PasswordResetController(model: model);
+  }
+
+  void _validateEmail() {
+    final email = _emailController.text;
+
+    setState(() {
+      _emailError = _controller.validateEmail(email);
+      _canSendCode = _controller.canSendCode(email);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +42,7 @@ class EmailForgotPassScreen extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-        Navigator.pop(context);
+            Navigator.pop(context);
           },
         ),
       ),
@@ -22,8 +51,8 @@ class EmailForgotPassScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(30),
           color: Colors.white,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Ajuste del padding
-        margin: EdgeInsets.all(0), // Sin margen adicional
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        margin: EdgeInsets.all(0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -36,7 +65,7 @@ class EmailForgotPassScreen extends StatelessWidget {
                 color: Colors.black,
               ),
             ),
-            const SizedBox(height: 8), // Espaciado adicional para claridad
+            const SizedBox(height: 8),
             const Text(
               "Restablecela rápidamente\nsin preocupaciones",
               style: TextStyle(
@@ -45,9 +74,9 @@ class EmailForgotPassScreen extends StatelessWidget {
               ),
             ),
             const Spacer(flex: 2),
-            _buildCodeInput(),
+            _buildEmailInput(),
             _buildConfirmButton(context),
-            const SizedBox(height: 30), // Espaciado adicional
+            const SizedBox(height: 30),
             const Spacer(flex: 50),
           ],
         ),
@@ -55,8 +84,7 @@ class EmailForgotPassScreen extends StatelessWidget {
     );
   }
 
-  // Builds the code input field
-  Widget _buildCodeInput() {
+  Widget _buildEmailInput() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -66,8 +94,10 @@ class EmailForgotPassScreen extends StatelessWidget {
         ),
         const SizedBox(height: 5),
         TextField(
+          controller: _emailController,
           decoration: InputDecoration(
             hintText: "Ingrese su correo electrónico por favor",
+            errorText: _emailError,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
@@ -75,16 +105,15 @@ class EmailForgotPassScreen extends StatelessWidget {
                 width: 1.5,
               ),
             ),
-            contentPadding: const EdgeInsets.symmetric(
-                vertical: 19, horizontal: 20),
+            contentPadding: const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
           ),
+          onChanged: (value) => _validateEmail(),
         ),
-        const SizedBox(height: 20), // Space between email field and next widget
+        const SizedBox(height: 20),
       ],
     );
   }
 
-  // Builds the login button
   Widget _buildConfirmButton(BuildContext context) {
     return Center(
       child: ElevatedButton(
@@ -93,12 +122,13 @@ class EmailForgotPassScreen extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
-          backgroundColor: const Color(0xFF129575), // Custom color
+          backgroundColor: const Color(0xFF129575),
         ),
-        onPressed: () {
-          // Redirects to the main screen (Dashboard)
-          Navigator.pushNamed(context, '/forgot_password');
-        },
+        onPressed: _canSendCode
+            ? () {
+                Navigator.pushNamed(context, '/forgot_password');
+              }
+            : null,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -111,10 +141,10 @@ class EmailForgotPassScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 11),
-            Icon(  // Uses an Icon instead of an asset
-              Icons.arrow_forward,  // Forward arrow
-              size: 20,  // Icon size
-              color: Colors.white,  // Icon color (adjustable)
+            const Icon(
+              Icons.arrow_forward,
+              size: 20,
+              color: Colors.white,
             ),
           ],
         ),
