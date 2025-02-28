@@ -24,7 +24,7 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
   void initState() {
     super.initState();
     _recipeController = RecipeController();
-    filteredRecipes = _recipeController.allRecipes2;
+    filteredRecipes = _recipeController.allRecipes;
     _searchController.addListener(_filterRecipes);
   }
 
@@ -37,7 +37,7 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
   void _filterRecipes() {
     setState(() {
       String query = _searchController.text.toLowerCase();
-      filteredRecipes = _recipeController.allRecipes2.where((recipe) {
+      filteredRecipes = _recipeController.allRecipes.where((recipe) {
         return recipe.title.toLowerCase().contains(query) || recipe.chef.toLowerCase().contains(query);
       }).toList();
     });
@@ -45,7 +45,7 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
 
   void _applyFilters() {
     setState(() {
-      filteredRecipes = _recipeController.allRecipes2.where((recipe) {
+      filteredRecipes = _recipeController.allRecipes.where((recipe) {
         bool matchesDuration = selectedDuration == "Todos" || _matchesDuration(recipe.duration);
         bool matchesRating = selectedRating == "Todas" || recipe.rating == int.parse(selectedRating);
         bool matchesCategory = selectedCategory == "Todos" || recipe.hashtags?.contains(selectedCategory) == true;
@@ -133,6 +133,7 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
                           imageUrl: recipe.imageUrl,
                           width: cardWidth,
                           rating: recipe.rating,
+                          recipeId: recipe.recipeId, // Añadido el campo recipeId
                         );
                       }).toList(),
                     ),
@@ -219,6 +220,7 @@ class RecipeCard extends StatelessWidget {
   final String imageUrl;
   final double width;
   final int? rating;
+  final String recipeId; // Añadido el campo recipeId
 
   const RecipeCard({
     super.key,
@@ -228,13 +230,18 @@ class RecipeCard extends StatelessWidget {
     required this.imageUrl,
     required this.width,
     this.rating,
+    required this.recipeId, // Añadido el campo recipeId
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(context, '/recipe');
+        Navigator.pushNamed(
+          context,
+          '/recipe',
+          arguments: {'recipeId': recipeId}, // Pasar el recipeId como argumento
+        );
       },
       child: SizedBox(
         width: width,
@@ -253,12 +260,12 @@ class RecipeCard extends StatelessWidget {
                 ),
                 child: Image.asset(
                   imageUrl,
-                  width: double.infinity,
-                  height: 100,
                   fit: BoxFit.cover,
+                  width: width,
+                  height: 150,
                 ),
               ),
-              Container(
+              Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -266,44 +273,37 @@ class RecipeCard extends StatelessWidget {
                     Text(
                       title,
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Chef: $chef',
+                      chef,
                       style: const TextStyle(
-                        fontSize: 12,
-                        color: Color.fromARGB(255, 82, 82, 82),
+                        fontSize: 14,
+                        color: Colors.grey,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          duration,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
+                    Text(
+                      duration,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    if (rating != null)
+                      Row(
+                        children: List.generate(
+                          rating!,
+                          (index) => const Icon(
+                            Icons.star,
+                            color: Colors.amber,
+                            size: 16,
                           ),
                         ),
-                        Row(
-                          children: List.generate(5, (index) {
-                            return Icon(
-                              index < (rating ?? 0) ? Icons.star : Icons.star_border,
-                              color: Colors.amber,
-                              size: 12,
-                            );
-                          }),
-                        ),
-                      ],
-                    ),
+                      ),
                   ],
                 ),
               ),

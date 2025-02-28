@@ -1,116 +1,63 @@
 import 'package:flutter/material.dart';
-
-class Profile {
-  final String name;
-  final String imageUrl;
-
-  Profile({required this.name, required this.imageUrl});
-}
-
-class Recipe {
-  final String title;
-  final String chef;
-  final String duration;
-  final String imageRecipeUrl;
-  final int rating;
-  final String filters;
-  final int reviews;
-  final int totalPortions;
-  final List<Ingredient> ingredients;
-  final List<String> steps;
-
-  Recipe({
-    required this.title,
-    required this.chef,
-    required this.duration,
-    required this.imageRecipeUrl,
-    required this.rating,
-    required this.filters,
-    required this.reviews,
-    this.totalPortions = 1,
-    this.ingredients = const [],
-    this.steps = const [],
-  });
-}
-
-class Ingredient {
-  final String name;
-  final String quantity;
-  final String unit;
-
-  Ingredient({
-    required this.name,
-    required this.quantity,
-    required this.unit,
-  });
-}
+import '/controllers/profile_controller.dart';
+import '/controllers/ingredient_controller.dart';
+import '/controllers/recipe_controller.dart'; // Importa el RecipeController
+import '/models/profile_model.dart';
+import '/models/ingredient_model.dart';
+import '/models/recipe_model.dart';
 
 class RecipeScreen extends StatefulWidget {
   const RecipeScreen({super.key});
 
   @override
-  _CreateRecipeState createState() => _CreateRecipeState();
+  _RecipeScreenState createState() => _RecipeScreenState();
 }
 
-class _CreateRecipeState extends State<RecipeScreen> {
+class _RecipeScreenState extends State<RecipeScreen> {
   int selectedIndex = 0;
   bool isSaved = false;
 
-  final List<Profile> recommendedProfiles = [
-    Profile(name: "Laura_Bozzo", imageUrl: "assets/chefs/Laura_Bozzo.jpg"),
-  ];
+  ProfileController profileController = ProfileController();
+  IngredientController ingredientController = IngredientController();
+  RecipeController recipeController = RecipeController(); // Instancia del RecipeController
 
-  final List<Recipe> principalRecipe = [
-    Recipe(
-      title: "Salchipapa Venezolana XXL",
-      chef: "Laura_Bozzo",
-      duration: "35",
-      imageRecipeUrl: "assets/recipes/recipe1.jpg",
-      rating: 5,
-      filters: "Proteina, Cena, Venezolana",
-      reviews: 75,
-      totalPortions: 4,
-      ingredients: [
-        Ingredient(name: "Salchichas", quantity: "1/2", unit: "kg"),
-        Ingredient(name: "Papas", quantity: "1/2", unit: "kg"),
-        Ingredient(name: "Aceite", quantity: "1/2", unit: "taza"),
-        Ingredient(name: "Cebolla picada", quantity: "1/2", unit: "taza"),
-        Ingredient(name: "Tomate picado", quantity: "1/2", unit: "taza"),
-        Ingredient(name: "Ají amarillo molido", quantity: "1/2", unit: "taza"),
-        Ingredient(name: "Ají panca molido", quantity: "1/2", unit: "taza"),
-        Ingredient(name: "Culantro picado", quantity: "1/2", unit: "taza"),
-        Ingredient(name: "Arvejas", quantity: "1/2", unit: "taza"),
-        Ingredient(name: "Zanahoria rallada", quantity: "1/2", unit: "taza"),
-        Ingredient(name: "Choclo desgranado", quantity: "1/2", unit: "taza"),
-        Ingredient(name: "Perejil picado", quantity: "1/2", unit: "taza"),
-        Ingredient(name: "Cebolla china picada", quantity: "1/2", unit: "taza"),
-        Ingredient(name: "Ajo molido", quantity: "1/2", unit: "taza"),
-        Ingredient(name: "Vinagre", quantity: "1/2", unit: "taza"),
-        Ingredient(name: "Sillao", quantity: "1/2", unit: "taza"),
-        Ingredient(name: "Kétchup", quantity: "1/2", unit: "taza"),
-        Ingredient(name: "Mostaza", quantity: "1/2", unit: "taza"),
-        Ingredient(name: "Mayonesa", quantity: "1/2", unit: "taza"),
-        Ingredient(name: "Paprika", quantity: "1/2", unit: "taza"),
-        Ingredient(name: "Pimienta", quantity: "1/2", unit: "taza"),
-        Ingredient(name: "Sal", quantity: "1/2", unit: "taza"),
-        Ingredient(name: "Azúcar", quantity: "1/2", unit: "taza"),
-        Ingredient(name: "Comino", quantity: "1/2", unit: "taza"),
-        Ingredient(name: "Orégano", quantity: "1/2", unit: "taza"),
-      ],
-      steps: [
-        "Cocinar las salchichas en agua hirviendo por 10 minutos.",
-        "Pelar las papas y cortarlas en bastones.",
-        "Freír las papas en aceite caliente hasta que estén doradas.",
-        "En una sartén con aceite caliente, sofreír la cebolla, el tomate, el ají amarillo, el ají panca, el culantro, las arvejas, la zanahoria, el choclo, el perejil, la cebolla china y el ajo.",
-        "Agregar el vinagre, el sillao, el kétchup, la mostaza, la mayonesa, la paprika, la pimienta, la sal, el azúcar, el comino y el orégano.",
-        "Incorporar las salchichas y las papas a la mezcla.",
-        "Servir caliente y disfrutar.",
-      ],
-    ),
-  ];
+  Map<String, dynamic>? arguments;
+  int? recipeId;
+  Profile? chefProfile;
+  List<Ingredient> ingredients = [];
+  List<String> steps = [];
+  String? imageUrl;
+  String? recipeTitle;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    arguments = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    if (arguments != null && arguments!['recipeId'] != null) {
+      recipeId = int.tryParse(arguments!['recipeId'].toString());
+      if (recipeId != null) {
+        chefProfile = profileController.getProfileByRecipeId(recipeId!);
+        ingredients = ingredientController.getIngredientsByRecipeId(recipeId.toString());
+        steps = recipeController.getSteps(recipeId.toString());
+        imageUrl = recipeController.getImageUrl(recipeId.toString());
+        recipeTitle = recipeController.getTitle(recipeId.toString());
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (recipeId == null || chefProfile == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Receta'),
+        ),
+        body: const Center(
+          child: Text('No se encontró la receta.'),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -148,7 +95,7 @@ class _CreateRecipeState extends State<RecipeScreen> {
                         BlendMode.darken,
                       ),
                       child: Image.asset(
-                        principalRecipe[0].imageRecipeUrl,
+                        imageUrl ?? 'assets/recipes/recipe_placeholder.jpg', // Use the imageUrl
                         fit: BoxFit.cover,
                         width: double.infinity,
                         height: 150,
@@ -163,7 +110,7 @@ class _CreateRecipeState extends State<RecipeScreen> {
                         const Icon(Icons.access_time, color: Colors.white),
                         const SizedBox(width: 4),
                         Text(
-                          "${principalRecipe[0].duration} min",
+                          "35 min", // Placeholder duration
                           style: const TextStyle(color: Colors.white),
                         ),
                       ],
@@ -203,7 +150,7 @@ class _CreateRecipeState extends State<RecipeScreen> {
                           const Icon(Icons.star, color: Colors.yellow),
                           const SizedBox(width: 4),
                           Text(
-                            principalRecipe[0].rating.toString(),
+                            "5", // Placeholder rating
                             style: const TextStyle(color: Colors.black), // Changed text color to black for better contrast
                           ),
                         ],
@@ -219,11 +166,11 @@ class _CreateRecipeState extends State<RecipeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    principalRecipe[0].title,
+                    recipeTitle ?? "Receta Placeholder", // Use the recipeTitle
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    "${principalRecipe[0].reviews} reseñas",
+                    "75 reseñas", // Placeholder reviews
                     style: const TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                 ],
@@ -237,12 +184,12 @@ class _CreateRecipeState extends State<RecipeScreen> {
                   Row(
                     children: [
                       CircleAvatar(
-                        backgroundImage: AssetImage(recommendedProfiles[0].imageUrl),
+                        backgroundImage: AssetImage(chefProfile!.imageUrl),
                         radius: 20,
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        recommendedProfiles[0].name,
+                        chefProfile!.name,
                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                     ],
@@ -293,13 +240,13 @@ class _CreateRecipeState extends State<RecipeScreen> {
                           Icon(Icons.restaurant, color: Colors.grey),
                           SizedBox(width: 4),
                           Text(
-                            '${principalRecipe[0].totalPortions} Porción',
+                            '4 Porción', // Placeholder total portions
                             style: TextStyle(color: Colors.grey),
                           ),
                         ],
                       ),
                       Text(
-                        '${principalRecipe[0].steps.length} Pasos',
+                        '${steps.length} Pasos',
                         style: TextStyle(color: Colors.grey),
                       ),
                     ],
@@ -312,16 +259,16 @@ class _CreateRecipeState extends State<RecipeScreen> {
               Expanded(
                 child: selectedIndex == 0
                     ? ListView.builder(
-                        itemCount: principalRecipe[0].ingredients.length,
+                        itemCount: ingredients.length,
                         itemBuilder: (context, index) {
-                          final ingredient = principalRecipe[0].ingredients[index];
+                          final ingredient = ingredients[index];
                           return IngredientCard(ingredient: ingredient);
                         },
                       )
                     : ListView.builder(
-                        itemCount: principalRecipe[0].steps.length,
+                        itemCount: steps.length,
                         itemBuilder: (context, index) {
-                          final step = principalRecipe[0].steps[index];
+                          final step = steps[index];
                           return StepCard(step: step, stepNumber: index + 1);
                         },
                       ),
@@ -411,12 +358,12 @@ class IngredientCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              ingredient.name,
+              ingredient.ingredientName,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
             ),
             Text(
               "${ingredient.quantity} ${ingredient.unit}",
-              style: const TextStyle(fontSize: 16, color:Color.fromARGB(255, 51, 50, 50)),
+              style: const TextStyle(fontSize: 16, color: Color.fromARGB(255, 51, 50, 50)),
             ),
           ],
         ),

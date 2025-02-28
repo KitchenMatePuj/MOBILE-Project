@@ -73,7 +73,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           width: double.infinity,
                           child: GestureDetector(
                             onTap: () {
-                              Navigator.pushNamed(context, '/recipe');
+                              Navigator.pushNamed(
+                                context,
+                                '/recipe',
+                                arguments: {'recipeId': recipe.recipeId},
+                              );
                             },
                             child: RecipeCard(
                               title: recipe.title,
