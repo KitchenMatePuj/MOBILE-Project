@@ -20,7 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final userModel = UserModel(fullName: '', email: '123', alias: '', password: '123');
+    final userModel = UserModel(firstName: '', lastName: '', email: '123', password: '123');
     final loginController = LoginController(userModel: userModel);
 
     return Scaffold(

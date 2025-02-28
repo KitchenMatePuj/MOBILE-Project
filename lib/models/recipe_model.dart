@@ -1,10 +1,18 @@
 class Recipe {
+  final String recipeId;
   final String title;
   final String chef;
-  final String duration;
   final String imageUrl;
+  final DateTime creationDate;
+  final DateTime updateDate;
+  final List<String> steps;
+
+  final String? hashtags;
+  final String duration;
   final int? rating;
-  final String? filters;
+  final String category;
+  final String typeFood;
+  final String typeCuisine;
 
   Recipe({
     required this.title,
@@ -12,6 +20,13 @@ class Recipe {
     required this.duration,
     required this.imageUrl,
     this.rating,
-    this.filters,
+    this.hashtags,
+    required this.category,
+    required this.typeFood,
+    required this.typeCuisine,
+    required this.steps,
+    required this.recipeId,
+    required this.creationDate,
+    required this.updateDate,
   });
 }

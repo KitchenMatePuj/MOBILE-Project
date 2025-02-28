@@ -37,7 +37,7 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
   void _filterRecipes() {
     setState(() {
       String query = _searchController.text.toLowerCase();
-      filteredRecipes = _recipeController.allRecipes.where((recipe) {
+      filteredRecipes = _recipeController.allRecipes2.where((recipe) {
         return recipe.title.toLowerCase().contains(query) || recipe.chef.toLowerCase().contains(query);
       }).toList();
     });
@@ -45,12 +45,12 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
 
   void _applyFilters() {
     setState(() {
-      filteredRecipes = _recipeController.allRecipes.where((recipe) {
+      filteredRecipes = _recipeController.allRecipes2.where((recipe) {
         bool matchesDuration = selectedDuration == "Todos" || _matchesDuration(recipe.duration);
         bool matchesRating = selectedRating == "Todas" || recipe.rating == int.parse(selectedRating);
-        bool matchesCategory = selectedCategory == "Todos" || recipe.filters?.contains(selectedCategory) == true;
-        bool matchesMealType = selectedMealType == "Todos" || recipe.filters?.contains(selectedMealType) == true;
-        bool matchesCuisine = selectedCuisine == "Todas" || recipe.filters?.contains(selectedCuisine) == true;
+        bool matchesCategory = selectedCategory == "Todos" || recipe.hashtags?.contains(selectedCategory) == true;
+        bool matchesMealType = selectedMealType == "Todos" || recipe.hashtags?.contains(selectedMealType) == true;
+        bool matchesCuisine = selectedCuisine == "Todas" || recipe.hashtags?.contains(selectedCuisine) == true;
         return matchesDuration && matchesRating && matchesCategory && matchesMealType && matchesCuisine;
       }).toList();
     });

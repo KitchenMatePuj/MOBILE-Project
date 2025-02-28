@@ -2,10 +2,10 @@ import '/models/profile_model.dart';
 
 class ProfileController {
   final List<Profile> recommendedProfiles = [
-    Profile(name: "Laura_Bozzo", description: "Chef de comidas rápidas y cenas abundantes.", imageUrl: "assets/chefs/Laura_Bozzo.jpg"),
-    Profile(name: "Tia_Piedad", description: "Cocinera de almuerzos rápidos y deliciosos.", imageUrl: "assets/chefs/Tia_Piedad.jpg"),
-    Profile(name: "Machis", description: "Amante de la pasta y la cocina italiana.", imageUrl: "assets/chefs/Machis.jpg"),
-    Profile(name: "Dora_Explora", description: "Chef de mariscos y cenas especiales.", imageUrl: "assets/chefs/Dora_Explora.jpg"),
-    Profile(name: "Chilindrinita99", description: "Experta en cocina española y mariscos.", imageUrl: "assets/chefs/Chilindrinita99.jpg"),
+    Profile(name: "Laura_Bozzo", description: "Chef de comidas rápidas y cenas abundantes.", imageUrl: "assets/chefs/Laura_Bozzo.jpg", followers: 100, following: 50, saved_recipes: [1, 2, 3], published_recipes: [1, 2, 3], shopping_list_recipes: [1, 2, 3], keycloak_user_id: 1, roleId: 1, email: "laurita@gmail.com", forbidden_foods: ["Pescado"], last_name: "Bozzo", password: "123456", creation_date: DateTime.now(), update_date: DateTime.now()),
+    Profile(name: "Tia_Piedad", description: "Cocinera de almuerzos rápidos y deliciosos.", imageUrl: "assets/chefs/Tia_Piedad.jpg", followers: 200, following: 100, saved_recipes: [4, 5, 6], published_recipes: [4, 5, 6], shopping_list_recipes: [4, 5, 6], keycloak_user_id: 2, roleId: 2, email: "tiita@gmail.com", forbidden_foods: ["Mariscos"], last_name: "Piedad", password: "123456", creation_date: DateTime.now(), update_date: DateTime.now()),
+    Profile(name: "Machis", description: "Amante de la pasta y la cocina italiana.", imageUrl: "assets/chefs/Machis.jpg", followers: 300, following: 150, saved_recipes: [7, 8, 9], published_recipes: [7, 8, 9], shopping_list_recipes: [7, 8, 9], keycloak_user_id: 3, roleId: 3, email: "machis@gmail.com", forbidden_foods: ["Cereal"], last_name: "Machis", password: "123456", creation_date: DateTime.now(), update_date: DateTime.now()),
+    Profile(name: "Dora_Explora", description: "Chef de mariscos y cenas especiales.", imageUrl: "assets/chefs/Dora_Explora.jpg", followers: 400, following: 200, saved_recipes: [10, 11, 12], published_recipes: [10, 11, 12], shopping_list_recipes: [10, 11, 12], keycloak_user_id: 4, roleId: 4, email: "dorita@gmail.com", forbidden_foods: ["Cereal"], last_name: "Explora", password: "123456", creation_date: DateTime.now(), update_date: DateTime.now()),
+    Profile(name: "Chilindrinita99", description: "Experta en cocina española y mariscos.", imageUrl: "assets/chefs/Chilindrinita99.jpg", followers: 400, following: 200, saved_recipes: [10, 11, 12], published_recipes: [10, 11, 12], shopping_list_recipes: [10, 11, 12], keycloak_user_id: 4, roleId: 4, email: "chilindirnita@gmail.com", forbidden_foods: ["Cereal"], last_name: "Chilindrinita", password: "123456", creation_date: DateTime.now(), update_date: DateTime.now()),
   ];
 }

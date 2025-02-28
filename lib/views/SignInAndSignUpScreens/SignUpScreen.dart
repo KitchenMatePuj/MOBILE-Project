@@ -11,9 +11,9 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
-  final _fullNameController = TextEditingController();
+  final _firstNameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _aliasController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isPasswordValid = true;
@@ -29,14 +29,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   void initState() {
     super.initState();
-    final userModel = UserModel(fullName: '', email: '', alias: '', password: '');
+    final userModel = UserModel(firstName: '', lastName: '', email: '', password: '');
     _controller = SignUpController(userModel: userModel);
   }
 
   void _validateForm() {
-    final fullName = _fullNameController.text;
+    final fullName = _firstNameController.text;
     final email = _emailController.text;
-    final alias = _aliasController.text;
+    final alias = _lastNameController.text;
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
 
@@ -123,14 +123,43 @@ class _SignUpScreenState extends State<SignUpScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          "Nombre Completo (privado)",
+          "Nombres Completo",
           style: TextStyle(fontSize: 14, color: Color(0xFF121212)),
         ),
         const SizedBox(height: 5),
         TextField(
-          controller: _fullNameController,
+          controller: _firstNameController,
           decoration: InputDecoration(
-            hintText: "Escribe tu nombre completo",
+            hintText: "Escribe tus nombres completos",
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(
+                color: Color(0xFFD9D9D9),
+                width: 1.5,
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
+          ),
+          onChanged: (value) => _validateForm(),
+        ),
+        const SizedBox(height: 15),
+      ],
+    );
+  }
+
+  Widget _buildUsersAliasNameInput() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Escribe tus apellidos completos",
+          style: TextStyle(fontSize: 14, color: Color(0xFF121212)),
+        ),
+        const SizedBox(height: 5),
+        TextField(
+          controller: _lastNameController,
+          decoration: InputDecoration(
+            hintText: "Escribe tu apellido",
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
@@ -161,35 +190,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
           decoration: InputDecoration(
             hintText: "Escribe tu correo electrónico",
             errorText: _emailError,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(
-                color: Color(0xFFD9D9D9),
-                width: 1.5,
-              ),
-            ),
-            contentPadding: const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
-          ),
-          onChanged: (value) => _validateForm(),
-        ),
-        const SizedBox(height: 15),
-      ],
-    );
-  }
-
-  Widget _buildUsersAliasNameInput() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Nombre de Usuario (público)",
-          style: TextStyle(fontSize: 14, color: Color(0xFF121212)),
-        ),
-        const SizedBox(height: 5),
-        TextField(
-          controller: _aliasController,
-          decoration: InputDecoration(
-            hintText: "Escribe tu nombre de usuario",
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
