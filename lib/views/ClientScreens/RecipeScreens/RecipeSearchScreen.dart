@@ -133,7 +133,7 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
                           imageUrl: recipe.imageUrl,
                           width: cardWidth,
                           rating: recipe.rating,
-                          recipeId: recipe.recipeId, // Añadido el campo recipeId
+                          recipeId: recipe.recipeId,
                         );
                       }).toList(),
                     ),
@@ -220,7 +220,7 @@ class RecipeCard extends StatelessWidget {
   final String imageUrl;
   final double width;
   final int? rating;
-  final String recipeId; // Añadido el campo recipeId
+  final String recipeId;
 
   const RecipeCard({
     super.key,
@@ -230,7 +230,7 @@ class RecipeCard extends StatelessWidget {
     required this.imageUrl,
     required this.width,
     this.rating,
-    required this.recipeId, // Añadido el campo recipeId
+    required this.recipeId,
   });
 
   @override
@@ -240,7 +240,7 @@ class RecipeCard extends StatelessWidget {
         Navigator.pushNamed(
           context,
           '/recipe',
-          arguments: {'recipeId': recipeId}, // Pasar el recipeId como argumento
+          arguments: {'recipeId': recipeId},
         );
       },
       child: SizedBox(
@@ -262,7 +262,7 @@ class RecipeCard extends StatelessWidget {
                   imageUrl,
                   fit: BoxFit.cover,
                   width: width,
-                  height: 150,
+                  height: 100,
                 ),
               ),
               Padding(
@@ -273,37 +273,44 @@ class RecipeCard extends StatelessWidget {
                     Text(
                       title,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      chef,
+                      'Chef: $chef',
                       style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey,
+                        fontSize: 12,
+                        color: Color.fromARGB(255, 71, 71, 71),
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      duration,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    if (rating != null)
-                      Row(
-                        children: List.generate(
-                          rating!,
-                          (index) => const Icon(
-                            Icons.star,
-                            color: Colors.amber,
-                            size: 16,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          duration,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey,
                           ),
                         ),
-                      ),
+                        if (rating != null)
+                          Row(
+                          children: List.generate(
+                            5,
+                            (index) => Icon(
+                            index < rating! ? Icons.star : Icons.star_border,
+                            color: Colors.amber,
+                            size: 13,
+                            ),
+                          ),
+                          ),
+                      ],
+                    ),
                   ],
                 ),
               ),
