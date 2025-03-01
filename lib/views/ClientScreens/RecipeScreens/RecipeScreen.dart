@@ -126,7 +126,6 @@ class _RecipeScreenState extends State<RecipeScreen> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: Colors.white.withOpacity(0.5), // White color with opacity
-                          border: Border.all(color: Colors.black), // Add black border
                         ),
                         padding: const EdgeInsets.all(3.0), // Increase padding to make the circle larger
                         child: Icon(Icons.bookmark, color: isSaved ? Colors.yellow : Colors.white),
