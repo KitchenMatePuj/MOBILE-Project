@@ -6,6 +6,7 @@ class Recipe {
   final DateTime creationDate;
   final DateTime updateDate;
   final List<String> steps;
+  final int? total_servings;
 
   final String? hashtags;
   final String duration;
@@ -20,6 +21,7 @@ class Recipe {
     required this.duration,
     required this.imageUrl,
     this.rating,
+    required this.total_servings,
     this.hashtags,
     required this.category,
     required this.typeFood,

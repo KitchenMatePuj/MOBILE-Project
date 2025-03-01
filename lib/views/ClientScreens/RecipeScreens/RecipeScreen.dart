@@ -28,6 +28,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
   List<String> steps = [];
   String? imageUrl;
   String? recipeTitle;
+  int? totalServings;
 
   @override
   void didChangeDependencies() {
@@ -41,6 +42,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
         steps = recipeController.getSteps(recipeId.toString());
         imageUrl = recipeController.getImageUrl(recipeId.toString());
         recipeTitle = recipeController.getTitle(recipeId.toString());
+        totalServings = int.tryParse(recipeController.getTotalServings(recipeId.toString()) ?? '');
       }
     }
   }
@@ -240,7 +242,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
                           Icon(Icons.restaurant, color: Colors.grey),
                           SizedBox(width: 4),
                           Text(
-                            '4 Porción', // Placeholder total portions
+                            '${totalServings ?? 1} ${totalServings == 1 ? "Porción" : "Porciones"}',
                             style: TextStyle(color: Colors.grey),
                           ),
                         ],
