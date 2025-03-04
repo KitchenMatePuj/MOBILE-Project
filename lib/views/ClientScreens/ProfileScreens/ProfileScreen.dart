@@ -90,48 +90,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
         automaticallyImplyLeading: false,
       ),
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 23),
-              child: Column(
-                children: [
-                  ProfileStats(profile: profile), // Estadísticas del usuario
-                  const SizedBox(height: 16),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      profile.name,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
+      body: Column(
+        children: [
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 23),
+            child: Column(
+              children: [
+                ProfileStats(profile: profile), // Estadísticas del usuario
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    profile.name,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  ProfileBio(description: profile.description), // Biografía
-                  const SizedBox(height: 16),
-                  ProfileTabs(
-                    selectedIndex: selectedIndex,
-                    onTabSelected: (index) {
-                      setState(() {
-                        selectedIndex = index;
-                      });
-                    },
-                  ), // Pestañas para publicaciones y guardados
-                  const SizedBox(height: 16),
-                  SavedRecipesGrid(
-                    selectedIndex: selectedIndex,
-                    profile: profile,
-                  ), // Recetas guardadas
-                ],
-              ),
+                ),
+                const SizedBox(height: 8),
+                ProfileBio(description: profile.description), // Biografía
+                const SizedBox(height: 16),
+                ProfileTabs(
+                  selectedIndex: selectedIndex,
+                  onTabSelected: (index) {
+                    setState(() {
+                      selectedIndex = index;
+                    });
+                  },
+                ), // Pestañas para publicaciones y guardados
+              ],
             ),
-          ],
-        ),
+          ),
+          Expanded(
+            child: SavedRecipesGrid(
+              selectedIndex: selectedIndex,
+              profile: profile,
+            ), // Recetas guardadas
+          ),
+        ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
@@ -169,7 +168,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-// Componentes adicionales
 class ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -382,30 +380,28 @@ class SavedRecipesGrid extends StatelessWidget {
 
     final recipesToShow = selectedIndex == 0 ? publishedRecipes : savedRecipes;
 
-    return SizedBox(
-      height: 500, // Adjust height as needed
-      child: ListView.builder(
-        itemCount: recipesToShow.length,
-        itemBuilder: (context, index) {
-          final recipe = recipesToShow[index];
-          return GestureDetector(
-            onTap: () {
-              Navigator.pushNamed(
-                context,
-                '/recipe',
-                arguments: {'recipeId': recipe.recipeId},
-              );
-            },
-            child: RecipeCard(
-              title: recipe.title,
-              chef: recipe.chef,
-              duration: recipe.duration,
-              imageUrl: recipe.imageUrl,
-              rating: recipe.rating,
-            ),
-          );
-        },
-      ),
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 23, vertical: 16),
+      itemCount: recipesToShow.length,
+      itemBuilder: (context, index) {
+        final recipe = recipesToShow[index];
+        return GestureDetector(
+          onTap: () {
+            Navigator.pushNamed(
+              context,
+              '/recipe',
+              arguments: {'recipeId': recipe.recipeId},
+            );
+          },
+          child: RecipeCard(
+            title: recipe.title,
+            chef: recipe.chef,
+            duration: recipe.duration,
+            imageUrl: recipe.imageUrl,
+            rating: recipe.rating,
+          ),
+        );
+      },
     );
   }
 }

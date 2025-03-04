@@ -18,6 +18,9 @@ class IngredientController {
     Ingredient(ingredientId: "13", ingredientName: "Salchichas", quantity: "4", unit: "u"),
     Ingredient(ingredientId: "14", ingredientName: "Mariscos", quantity: "300", unit: "g"),
     Ingredient(ingredientId: "15", ingredientName: "Arroz", quantity: "200", unit: "g"),
+    Ingredient(ingredientId: "16", ingredientName: "Leche", quantity: "200", unit: "ml"),
+    Ingredient(ingredientId: "17", ingredientName: "Carne", quantity: "300", unit: "g"),
+    Ingredient(ingredientId: "18", ingredientName: "Galletas", quantity: "100", unit: "g"),
   ];
 
   final List<RecipeIngredient> recipeIngredients = [
@@ -44,6 +47,8 @@ class IngredientController {
     RecipeIngredient(recipeId: "11", ingredientId: "8"),
     RecipeIngredient(recipeId: "12", ingredientId: "1"),
     RecipeIngredient(recipeId: "12", ingredientId: "9"),
+    RecipeIngredient(recipeId: "13", ingredientId: "17"),
+    RecipeIngredient(recipeId: "13", ingredientId: "10"),
   ];
 
   List<Ingredient> getIngredientsByRecipeId(String recipeId) {
