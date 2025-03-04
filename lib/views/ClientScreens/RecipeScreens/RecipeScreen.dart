@@ -140,21 +140,26 @@ class _RecipeScreenState extends State<RecipeScreen> {
                   Positioned(
                     top: 8,
                     right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: const Color.fromARGB(255, 238, 228, 173).withOpacity(0.5), // White color with opacity
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.star, color: Colors.yellow),
-                          const SizedBox(width: 4),
-                          Text(
-                            "5", // Placeholder rating
-                            style: const TextStyle(color: Colors.black), // Changed text color to black for better contrast
-                          ),
-                        ],
+                    child: GestureDetector(
+                      onTap: () {
+                        _showRatingDialog();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: const Color.fromARGB(255, 238, 228, 173).withOpacity(0.5), // White color with opacity
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.star, color: Colors.yellow),
+                            const SizedBox(width: 4),
+                            Text(
+                              "5", // Placeholder rating
+                              style: const TextStyle(color: Colors.black), // Changed text color to black for better contrast
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -338,6 +343,81 @@ class _RecipeScreenState extends State<RecipeScreen> {
               color: const Color(0xFF129575),
             ),
         ],
+      ),
+    );
+  }
+
+  void _showRatingDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return RatingDialog();
+      },
+    );
+  }
+}
+
+class RatingDialog extends StatefulWidget {
+  @override
+  _RatingDialogState createState() => _RatingDialogState();
+}
+
+class _RatingDialogState extends State<RatingDialog> {
+  int _selectedRating = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent, // Transparent background
+      child: Center(
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.7, // Set width to 80% of screen width
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+          'Calificación',
+          style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 5),
+          Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(5, (index) {
+            return IconButton(
+            icon: Icon(
+              _selectedRating > index ? Icons.star : Icons.star_border,
+              color: Colors.orange, 
+              // color: const Color(0xFF129575)
+            ),
+            onPressed: () {
+              setState(() {
+              _selectedRating = index + 1;
+              });
+            },
+            );
+          }),
+          ),
+          const SizedBox(height: 5),
+          ElevatedButton(
+          onPressed: _selectedRating == 0 ? null : () {
+            // Handle rating submission
+            Navigator.of(context).pop();
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.orange, 
+            // backgroundColor: Color(0xFF129575)
+            foregroundColor: Colors.white,
+          ),
+          child: const Text('Enviar'),
+          ),
+        ],
+        ),
+      ),
       ),
     );
   }

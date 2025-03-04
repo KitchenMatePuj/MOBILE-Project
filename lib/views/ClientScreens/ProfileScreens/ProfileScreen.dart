@@ -1,10 +1,26 @@
 import 'package:flutter/material.dart';
+import '/controllers/profile_controller.dart';
+import '/controllers/recipe_controller.dart';
+import '/models/recipe_model.dart';
+import '/models/profile_model.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
+  @override
+  _ProfileScreenState createState() => _ProfileScreenState();
+}
 
+class _ProfileScreenState extends State<ProfileScreen> {
+  int selectedIndex = 0;
+  late Profile profile;
 
+  @override
+  void initState() {
+    super.initState();
+    final profileController = ProfileController();
+    profile = profileController.recommendedProfiles.firstWhere((profile) => profile.keycloak_user_id == 11);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,25 +98,35 @@ class ProfileScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 23),
               child: Column(
                 children: [
-                  const ProfileStats(), // Estadísticas del usuario
-                  const SizedBox(height:16),
-                  const Align(
+                  ProfileStats(profile: profile), // Estadísticas del usuario
+                  const SizedBox(height: 16),
+                  Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                    'Miguel_Uribe',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
+                      profile.name,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
                     ),
                   ),
-                  SizedBox(height: 8),
-                  ProfileBio(), // Biografía
-                  SizedBox(height: 16),
-                  ProfileTabs(), // Pestañas para publicaciones y guardados
-                  SizedBox(height: 16),
-                  SavedRecipesGrid(), // Recetas guardadas
+                  const SizedBox(height: 8),
+                  ProfileBio(description: profile.description), // Biografía
+                  const SizedBox(height: 16),
+                  ProfileTabs(
+                    selectedIndex: selectedIndex,
+                    onTabSelected: (index) {
+                      setState(() {
+                        selectedIndex = index;
+                      });
+                    },
+                  ), // Pestañas para publicaciones y guardados
+                  const SizedBox(height: 16),
+                  SavedRecipesGrid(
+                    selectedIndex: selectedIndex,
+                    profile: profile,
+                  ), // Recetas guardadas
                 ],
               ),
             ),
@@ -156,30 +182,30 @@ class ProfileHeader extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-            const Spacer(flex: 4),
-            const Text(
+          const Spacer(flex: 4),
+          const Text(
             'Mi Perfil',
             style: TextStyle(
               color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
-            ),
-            const Spacer(flex: 3),
-            PopupMenuButton<String>(
+          ),
+          const Spacer(flex: 3),
+          PopupMenuButton<String>(
             icon: const Icon(Icons.settings, color: Colors.white),
             color: Colors.white,
             onSelected: (String value) {
               switch (value) {
-              case 'Editar Perfil':
-              Navigator.pushNamed(context, '/edit_profile');
-              break;
-              case 'Reportes':
-              Navigator.pushNamed(context, '/reports');
-              break;
-              case 'Cerrar sesión':
-              Navigator.pushNamed(context, '/');
-              break;
+                case 'Editar Perfil':
+                  Navigator.pushNamed(context, '/edit_profile');
+                  break;
+                case 'Reportes':
+                  Navigator.pushNamed(context, '/reports');
+                  break;
+                case 'Cerrar sesión':
+                  Navigator.pushNamed(context, '/');
+                  break;
               }
             },
             itemBuilder: (BuildContext context) {
@@ -223,7 +249,9 @@ class ProfileHeader extends StatelessWidget {
 }
 
 class ProfileStats extends StatelessWidget {
-  const ProfileStats({super.key});
+  final Profile profile;
+
+  const ProfileStats({required this.profile, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -232,32 +260,31 @@ class ProfileStats extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 45,
-          backgroundImage: AssetImage('assets/chefs/profilePhoto.jpg'),
+          backgroundImage: AssetImage(profile.imageUrl),
         ),
         const SizedBox(width: 2),
-        
-        _buildStatItem('Recetas', '24'),
-        _buildStatItem('Seguidores', '180'),
-        _buildStatItem('Siguiendo', '75'),
+        _buildStatItem('Recetas', profile.published_recipes.length.toString()),
+        _buildStatItem('Seguidores', profile.followers.toString()),
+        _buildStatItem('Siguiendo', profile.following.toString()),
       ],
     );
   }
 
-  Widget _buildStatItem(String count, String label) {
+  Widget _buildStatItem(String label, String count) {
     return Column(
       children: [
         Text(
           count,
           style: const TextStyle(
-            fontSize: 14,
-            color: Colors.grey,
+            fontSize: 19,
+            fontWeight: FontWeight.bold,
           ),
         ),
         Text(
           label,
           style: const TextStyle(
-            fontSize: 19,
-            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            color: Colors.grey,
           ),
         ),
       ],
@@ -266,15 +293,17 @@ class ProfileStats extends StatelessWidget {
 }
 
 class ProfileBio extends StatelessWidget {
-  const ProfileBio({super.key});
+  final String description;
+
+  const ProfileBio({required this.description, super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Align(
+    return Align(
       alignment: Alignment.centerLeft,
       child: Text(
-        'Amante de la cocina saludable y creador de contenido. Comparte recetas únicas y deliciosas.',
-        style: TextStyle(
+        description,
+        style: const TextStyle(
           fontSize: 14,
           color: Colors.grey,
         ),
@@ -283,37 +312,29 @@ class ProfileBio extends StatelessWidget {
   }
 }
 
-class ProfileTabs extends StatefulWidget {
-  const ProfileTabs({super.key});
+class ProfileTabs extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onTabSelected;
 
-  @override
-  State<ProfileTabs> createState() => _ProfileTabsState();
-}
-
-class _ProfileTabsState extends State<ProfileTabs> {
-  int selectedIndex = 0;
+  const ProfileTabs({
+    required this.selectedIndex,
+    required this.onTabSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(top: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildTab('Publicaciones', 0),
-          _buildTab('Guardados', 1),
-        ],
-      ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        _buildTab('Publicaciones', 0),
+        _buildTab('Guardados', 1),
+      ],
     );
   }
 
   Widget _buildTab(String label, int index) {
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedIndex = index;
-        });
-      },
+      onTap: () => onTabSelected(index),
       child: Column(
         children: [
           Text(
@@ -321,7 +342,8 @@ class _ProfileTabsState extends State<ProfileTabs> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: selectedIndex == index ? const Color(0xFF129575) : Colors.grey,
+              color:
+                  selectedIndex == index ? const Color(0xFF129575) : Colors.grey,
             ),
           ),
           if (selectedIndex == index)
@@ -338,30 +360,150 @@ class _ProfileTabsState extends State<ProfileTabs> {
 }
 
 class SavedRecipesGrid extends StatelessWidget {
-  const SavedRecipesGrid({super.key});
+  final int selectedIndex;
+  final Profile profile;
+
+  const SavedRecipesGrid({
+    required this.selectedIndex,
+    required this.profile,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
+    final recipeController = RecipeController();
+    final savedRecipes = profile.saved_recipes
+        .map((recipeId) =>
+            recipeController.allRecipes.firstWhere((recipe) => recipe.recipeId == '$recipeId'))
+        .toList();
+    final publishedRecipes = profile.published_recipes
+        .map((recipeId) =>
+            recipeController.allRecipes.firstWhere((recipe) => recipe.recipeId == '$recipeId'))
+        .toList();
+
+    final recipesToShow = selectedIndex == 0 ? publishedRecipes : savedRecipes;
+
+    return SizedBox(
+      height: 500, // Adjust height as needed
+      child: ListView.builder(
+        itemCount: recipesToShow.length,
+        itemBuilder: (context, index) {
+          final recipe = recipesToShow[index];
+          return GestureDetector(
+            onTap: () {
+              Navigator.pushNamed(
+                context,
+                '/recipe',
+                arguments: {'recipeId': recipe.recipeId},
+              );
+            },
+            child: RecipeCard(
+              title: recipe.title,
+              chef: recipe.chef,
+              duration: recipe.duration,
+              imageUrl: recipe.imageUrl,
+              rating: recipe.rating,
+            ),
+          );
+        },
       ),
-      itemCount: 4, // Número de recetas guardadas (puedes hacerlo dinámico)
-      itemBuilder: (context, index) {
-        return Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15),
-            image: const DecorationImage(
-              image: AssetImage('assets/recipe_placeholder.png'),
+    );
+  }
+}
+
+class RecipeCard extends StatelessWidget {
+  final String title;
+  final String chef;
+  final String duration;
+  final String imageUrl;
+  final int? rating;
+
+  const RecipeCard({
+    Key? key,
+    required this.title,
+    required this.chef,
+    required this.duration,
+    required this.imageUrl,
+    this.rating,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: Image.asset(
+              imageUrl,
+              height: 120,
+              width: double.infinity,
               fit: BoxFit.cover,
             ),
           ),
-        );
-      },
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 12,
+                      backgroundImage: AssetImage('assets/chefs/$chef.jpg'),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      chef,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      duration,
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                    Row(
+                      children: List.generate(5, (index) {
+                        return Icon(
+                          index < (rating ?? 0) ? Icons.star : Icons.star_border,
+                          color: Colors.amber,
+                          size: 12,
+                        );
+                      }),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

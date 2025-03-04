@@ -22,4 +22,12 @@ class UserModel {
     final emailRegExp = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
     return emailRegExp.hasMatch(email);
   }
+
+  bool validateFisrtName(String firstName) {
+    return firstName.isNotEmpty;
+  }
+
+  bool validateLastName(String lastName) {
+    return lastName.isNotEmpty;
+  }
 }

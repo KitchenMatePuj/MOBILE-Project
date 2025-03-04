@@ -12,14 +12,18 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   final _firstNameController = TextEditingController();
-  final _emailController = TextEditingController();
   final _lastNameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  bool _isFirstNameValid = true;
+  bool _isLastNameValid = true;
   bool _isPasswordValid = true;
   bool _isConfirmPasswordValid = true;
   bool _isEmailValid = true;
   bool _canContinue = false;
+  String? _firstNameError;
+  String? _lastNameError;
   String? _passwordError;
   String? _confirmPasswordError;
   String? _emailError;
@@ -35,12 +39,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   void _validateForm() {
     final fullName = _firstNameController.text;
-    final email = _emailController.text;
     final alias = _lastNameController.text;
+    final email = _emailController.text;
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
 
     setState(() {
+      _firstNameError = _controller.validateFullName(fullName);
+      _isFirstNameValid = _firstNameError == null;
+
+      _lastNameError = _controller.validate(alias);
+      _isLastNameValid = _lastNameError == null;
+
       _emailError = _controller.validateEmail(email);
       _isEmailValid = _emailError == null;
 
@@ -100,9 +110,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                _buildUsersNameInput(),
+                _buildUsersFirstNameInput(),
+                _buildUsersLastNameInput(),
                 _buildEmailInput(),
-                _buildUsersAliasNameInput(),
                 _buildPasswordInput(),
                 _buildConfirmPasswordInput(),
                 _buildLoginButton(context),
@@ -118,7 +128,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  Widget _buildUsersNameInput() {
+  Widget _buildUsersFirstNameInput() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -131,6 +141,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           controller: _firstNameController,
           decoration: InputDecoration(
             hintText: "Escribe tus nombres completos",
+            errorText: _firstNameError,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
@@ -147,7 +158,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  Widget _buildUsersAliasNameInput() {
+  Widget _buildUsersLastNameInput() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -160,6 +171,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           controller: _lastNameController,
           decoration: InputDecoration(
             hintText: "Escribe tu apellido",
+            errorText: _lastNameError,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(

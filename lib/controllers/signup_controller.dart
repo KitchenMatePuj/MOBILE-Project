@@ -29,6 +29,22 @@ class SignUpController {
     }
   }
 
+  String? validateFullName(String fullName) {
+    if (userModel.validateFisrtName(fullName)) {
+      return null;
+    } else {
+      return 'Introduce tu nombre completo.';
+    }
+  }
+
+  String? validate(String alias) {
+    if (userModel.validateLastName(alias)) {
+      return null;
+    } else {
+      return 'Introduce tu apellido completo.';
+    }
+  }
+
   bool canContinue(String fullName, String email, String alias, String password, String confirmPassword) {
     return fullName.isNotEmpty &&
            email.isNotEmpty &&
