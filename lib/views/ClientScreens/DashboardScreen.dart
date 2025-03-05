@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '/controllers/recipe_controller.dart';
 import '/controllers/profile_controller.dart';
+import '/providers/user_provider.dart';
 import '/models/recipe_model.dart';
 import '/models/profile_model.dart';
+import '/models/user_model.dart'; // Asegúrate de importar el archivo que define la clase UserModel
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -28,6 +31,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final filteredRecipes = _recipeController.getFilteredRecipes(query, _recipesToShow);
     final recommendedProfiles = _profileController.recommendedProfiles;
+    final user = Provider.of<UserProvider>(context).user;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -43,7 +47,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const UserHeader(),
+                UserHeader(user: user!),
                 const SizedBox(height: 10),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -276,7 +280,9 @@ class RecipeCard extends StatelessWidget {
 }
 
 class UserHeader extends StatelessWidget {
-  const UserHeader({Key? key}) : super(key: key);
+  final UserModel user;
+
+  const UserHeader({Key? key, required this.user}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -285,16 +291,16 @@ class UserHeader extends StatelessWidget {
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
+          children: [
             Text(
-              'Bienvenido Miguel',
-              style: TextStyle(
-                fontSize: 26,
+              'Bienvenido ${user.firstName}',
+              style: const TextStyle(
+                fontSize: 22,
                 fontWeight: FontWeight.w600,
               ),
             ),
-            SizedBox(height: 4),
-            Text(
+            const SizedBox(height: 4),
+            const Text(
               '¿Qué deseas cocinar hoy?',
               style: TextStyle(
                 fontSize: 16,
@@ -312,8 +318,8 @@ class UserHeader extends StatelessWidget {
             height: 48,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              image: const DecorationImage(
-                image: AssetImage('assets/chefs/profilePhoto.jpg'),
+              image: DecorationImage(
+                image: AssetImage(user.imageUrl),
                 fit: BoxFit.cover,
               ),
             ),
@@ -351,6 +357,40 @@ class ProfileCard extends StatelessWidget {
           ),
         ],
       ),
+      /*child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: Image.asset(
+              imageUrl,
+              height: 120,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(30),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  description,
+                  style: const TextStyle(color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),*/
     );
   }
 }

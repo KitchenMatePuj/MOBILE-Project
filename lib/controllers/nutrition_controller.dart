@@ -9,7 +9,7 @@ class NutritionController {
     return model.questions;
   }
 
-  void updateSelectedOption(NutritionQuestion question, String? selectedOption) {
-    question.selected = selectedOption;
+  void updateSelectedOptions(NutritionQuestion question, List<String> selectedOptions) {
+    question.selected = selectedOptions;
   }
 }

@@ -33,7 +33,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   void initState() {
     super.initState();
-    final userModel = UserModel(firstName: '', lastName: '', email: '', password: '');
+    final userModel = UserModel(firstName: '', lastName: '', email: '', password: '', roleId: 0, keycloakUserId: 0, forbiddenFoods: [], imageUrl: '', description: '', creationDate: DateTime.now(), updateDate: DateTime.now(), followers: 0, following: 0, savedRecipes: [], publishedRecipes: [], shoppingListRecipes: []);
     _controller = SignUpController(userModel: userModel);
   }
 

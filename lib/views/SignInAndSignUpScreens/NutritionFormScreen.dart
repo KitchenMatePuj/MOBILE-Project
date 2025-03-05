@@ -56,7 +56,7 @@ class _NutritionFormScreenState extends State<NutritionFormScreen> {
                       style: TextStyle(fontSize: 14, color: Color(0xFF121212)),
                     ),
                     const SizedBox(height: 20),
-                    ...questions.map((q) => _buildDropdown(q)).toList(),
+                    ...questions.map((q) => _buildMultiSelect(q)).toList(),
                     const SizedBox(height: 20),
                     _buildConfirmButton(context),
                   ],
@@ -69,7 +69,7 @@ class _NutritionFormScreenState extends State<NutritionFormScreen> {
     );
   }
 
-  Widget _buildDropdown(NutritionQuestion question) {
+  Widget _buildMultiSelect(NutritionQuestion question) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -78,26 +78,28 @@ class _NutritionFormScreenState extends State<NutritionFormScreen> {
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF121212)),
         ),
         const SizedBox(height: 5),
-        DropdownButtonFormField<String>(
-          value: question.selected,
-          hint: const Text("Selecciona una opción"),
-          isExpanded: true,
-          items: question.options.map((option) {
-            return DropdownMenuItem<String>(
-              value: option,
-              child: Text(option),
+        Wrap(
+          spacing: 8.0, 
+          children: question.options.map((option) {
+            final isSelected = question.selected.contains(option);
+            return ChoiceChip(
+              label: Text(option),
+              selected: isSelected,
+              onSelected: (selected) {
+                setState(() {
+                  if (selected) {
+                    question.selected.add(option);
+                  } else {
+                    question.selected.remove(option);
+                  }
+                  _controller.updateSelectedOptions(question, question.selected);
+                });
+              },
+              selectedColor: Color(0xFF129575),
+              backgroundColor: isSelected ? Color(0xFF129575) : Colors.white,
+              labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black),
             );
           }).toList(),
-          onChanged: (value) {
-            setState(() {
-              _controller.updateSelectedOption(question, value);
-            });
-          },
-          dropdownColor: Colors.white,
-          decoration: InputDecoration(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-          ),
         ),
         const SizedBox(height: 20),
       ],

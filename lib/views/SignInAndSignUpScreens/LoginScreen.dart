@@ -1,7 +1,9 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart';
+import 'package:provider/provider.dart';
 import '/controllers/login_controller.dart';
+import '/models/profile_model.dart';
+import '/providers/user_provider.dart';
+import 'package:flutter/gestures.dart';
 import '/models/user_model.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -20,8 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final userModel = UserModel(firstName: '', lastName: '', email: '123', password: '123');
-    final loginController = LoginController(userModel: userModel);
+    final loginController = LoginController();
 
     return Scaffold(
       appBar: AppBar(
@@ -66,7 +67,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 _buildForgotPassword(context),
                 _buildLoginButton(context, loginController),
                 if (_isLoading) CircularProgressIndicator(),
-                // Removed duplicate error message
                 const SizedBox(height: 30),
                 _buildLoginWith(context),
                 _buildRegisterPrompt(context),
@@ -190,14 +190,35 @@ class _LoginScreenState extends State<LoginScreen> {
                 _errorMessage = '';
               });
 
-              final bool success = await loginController.login(
+              final Profile? profile = await loginController.login(
                 _emailController.text,
                 _passwordController.text,
               );
 
               setState(() {
                 _isLoading = false;
-                if (success) {
+                if (profile != null) {
+                  // Almacena el perfil del usuario en el UserProvider
+                  Provider.of<UserProvider>(context, listen: false).setUser(
+                    UserModel(
+                      keycloakUserId: profile.keycloak_user_id,
+                      roleId: profile.roleId,
+                      forbiddenFoods: profile.forbidden_foods,
+                      imageUrl: profile.imageUrl,
+                      description: profile.description,
+                      creationDate: profile.creation_date,
+                      updateDate: profile.update_date,
+                      followers: profile.followers,
+                      following: profile.following,
+                      savedRecipes: profile.saved_recipes,
+                      publishedRecipes: profile.published_recipes,
+                      shoppingListRecipes: profile.shopping_list_recipes,
+                      firstName: profile.name,
+                      lastName: profile.last_name,
+                      email: profile.email,
+                      password: profile.password,
+                    ),
+                  );
                   Navigator.pushNamed(context, '/dashboard');
                 } else {
                   _errorMessage = 'Correo o contraseña incorrectos';

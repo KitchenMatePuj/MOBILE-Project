@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '/controllers/profile_controller.dart';
 import '/controllers/recipe_controller.dart';
 import '/models/recipe_model.dart';
 import '/models/profile_model.dart';
+import '/providers/user_provider.dart';
+import '/models/user_model.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -19,7 +22,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     final profileController = ProfileController();
-    profile = profileController.recommendedProfiles.firstWhere((profile) => profile.keycloak_user_id == 11);
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    if (user != null) {
+      profile = profileController.recommendedProfiles.firstWhere((p) => p.email == user.email);
+    } else {
+      profile = profileController.recommendedProfiles.firstWhere((profile) => profile.keycloak_user_id == 11);
+    }
   }
 
   @override

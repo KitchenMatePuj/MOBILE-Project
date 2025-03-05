@@ -1,22 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'providers/user_provider.dart';
 import 'views/SignInAndSignUpScreens/HomeScreen.dart';
 import 'views/SignInAndSignUpScreens/LoginScreen.dart';
-import 'views/SignInAndSignUpScreens/ForgotPasswordScreens/ForgotPasswordScreen.dart';  // Route for the Forgot Password screen
-import 'views/SignInAndSignUpScreens/SignUpScreen.dart';          // Route for the Sign Up screen
-import 'views/SignInAndSignUpScreens/NutritionFormScreen.dart';   // Route for the Nutrition Registration screen
-import 'views/ClientScreens/DashboardScreen.dart';        // Route for the main screen after logging in
-import 'views/ClientScreens/RecipeScreens/RecipeSearchScreen.dart';    // Route for the specific recipe search screen
-import 'views/ClientScreens/ProfileScreens/ProfileScreen.dart';         // Added the Profile screen route
-import 'views/SignInAndSignUpScreens/ForgotPasswordScreens/EmailForgotPassScreen.dart'; // Route for the Email Forgot Password screen
-import 'views/ClientScreens/ShoppingListScreen.dart';         // Route for the Shopping List screen
-import 'views/ClientScreens/RecipeScreens/CreateRecipeScreen.dart';         // Route for the Create Recipe screen
-import 'views/ClientScreens/RecipeScreens/RecipeScreen.dart';        // Route for the Recipe screen
-import 'views/ClientScreens/ProfileScreens/EditProfileScreen.dart'; // Route for the Edit Profile screen
-import 'views/ClientScreens/ProfileScreens/ReportScreen.dart';    // Route for the Reports screen
-
+import 'views/SignInAndSignUpScreens/ForgotPasswordScreens/ForgotPasswordScreen.dart';
+import 'views/SignInAndSignUpScreens/SignUpScreen.dart';
+import 'views/SignInAndSignUpScreens/NutritionFormScreen.dart';
+import 'views/ClientScreens/DashboardScreen.dart';
+import 'views/ClientScreens/RecipeScreens/RecipeSearchScreen.dart';
+import 'views/ClientScreens/ProfileScreens/ProfileScreen.dart';
+import 'views/SignInAndSignUpScreens/ForgotPasswordScreens/EmailForgotPassScreen.dart';
+import 'views/ClientScreens/ShoppingListScreen.dart';
+import 'views/ClientScreens/RecipeScreens/CreateRecipeScreen.dart';
+import 'views/ClientScreens/RecipeScreens/RecipeScreen.dart';
+import 'views/ClientScreens/ProfileScreens/EditProfileScreen.dart';
+import 'views/ClientScreens/ProfileScreens/ReportScreen.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -30,22 +38,22 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      initialRoute: '/', // Initial route
+      initialRoute: '/',
       routes: {
-        '/': (context) => const HomeScreen(),  // Home screen route
-        '/login': (context) => const LoginScreen(),  // Login screen route
-        '/forgot_password': (context) => const ForgotPasswordScreen(), // Forgot Password screen route
-        '/sign_up': (context) => const SignUpScreen(),  // Sign Up screen route
-        '/nutrition_form': (context) => const NutritionFormScreen(),  // Nutrition Registration screen route
-        '/dashboard': (context) => const DashboardScreen(),  // Main screen after logging in
-        '/recipe_search': (context) => const RecipeSearchScreen(),  // Specific recipe search screen route
-        '/profile': (context) => const ProfileScreen(),  // Added Profile screen route
-        '/email_forgot_pass': (context) => const EmailForgotPassScreen(), // Email Forgot Password screen route
-        '/shopping_list': (context) => const ShoppingList(), // Shopping List screen route
-        '/create': (context) => const CreateRecipe(), // Create Recipe screen route
-        '/recipe': (context) => const RecipeScreen(), // Recipe screen route
-        '/edit_profile': (context) => const Editprofile(), // Edit Profile screen route
-        '/reports': (context) => const Reports(), // Reports screen route
+        '/': (context) => const HomeScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/forgot_password': (context) => const ForgotPasswordScreen(),
+        '/sign_up': (context) => const SignUpScreen(),
+        '/nutrition_form': (context) => const NutritionFormScreen(),
+        '/dashboard': (context) => const DashboardScreen(),
+        '/recipe_search': (context) => const RecipeSearchScreen(),
+        '/profile': (context) => const ProfileScreen(),
+        '/email_forgot_pass': (context) => const EmailForgotPassScreen(),
+        '/shopping_list': (context) => const ShoppingList(),
+        '/create': (context) => const CreateRecipe(),
+        '/recipe': (context) => const RecipeScreen(),
+        '/edit_profile': (context) => const Editprofile(),
+        '/reports': (context) => const Reports(),
       },
     );
   }

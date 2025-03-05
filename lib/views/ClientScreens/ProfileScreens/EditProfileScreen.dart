@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '/models/profile_model.dart';
 import '/controllers/profile_controller.dart';
 import '/controllers/nutrition_controller.dart';
 import '/models/nutrition_model.dart';
+import '/providers/user_provider.dart';
 
 class Editprofile extends StatefulWidget {
   const Editprofile({super.key});
@@ -20,7 +22,12 @@ class _EditprofileState extends State<Editprofile> {
   void initState() {
     super.initState();
     final profileController = ProfileController();
-    profile = profileController.recommendedProfiles.firstWhere((profile) => profile.keycloak_user_id == 11);
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    if (user != null) {
+      profile = profileController.recommendedProfiles.firstWhere((p) => p.email == user.email);
+    } else {
+      profile = profileController.recommendedProfiles.firstWhere((p) => p.keycloak_user_id == 11);
+    }
     final nutritionModel = NutritionModel();
     nutritionController = NutritionController(model: nutritionModel);
   }
@@ -46,61 +53,61 @@ class _EditprofileState extends State<Editprofile> {
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+              children: [
                 Expanded(
                   child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                    isProfileInfoSelected = true;
-                    });
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                    decoration: BoxDecoration(
-                    color: isProfileInfoSelected ? const Color(0xFF129575) : Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFF129575)),
+                    onTap: () {
+                      setState(() {
+                        isProfileInfoSelected = true;
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                      decoration: BoxDecoration(
+                        color: isProfileInfoSelected ? const Color(0xFF129575) : Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFF129575)),
+                      ),
+                      child: Text(
+                        'Información de Perfil',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: isProfileInfoSelected ? Colors.white : const Color(0xFF129575),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
-                    child: Text(
-                    'Información de Perfil',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: isProfileInfoSelected ? Colors.white : const Color(0xFF129575),
-                    ),
-                    textAlign: TextAlign.center,
-                    ),
-                  ),
                   ),
                 ),
                 const SizedBox(width: 30),
                 Expanded(
                   child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                    isProfileInfoSelected = false;
-                    });
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                    decoration: BoxDecoration(
-                    color: isProfileInfoSelected ? Colors.white : const Color(0xFF129575),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFF129575)),
+                    onTap: () {
+                      setState(() {
+                        isProfileInfoSelected = false;
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                      decoration: BoxDecoration(
+                        color: isProfileInfoSelected ? Colors.white : const Color(0xFF129575),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFF129575)),
+                      ),
+                      child: Text(
+                        'Información Dietética',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: isProfileInfoSelected ? const Color(0xFF129575) : Colors.white,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
-                    child: Text(
-                    'Información Dietética',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: isProfileInfoSelected ? const Color(0xFF129575) : Colors.white,
-                    ),
-                    textAlign: TextAlign.center,
-                    ),
-                  ),
                   ),
                 ),
-                ],
+              ],
             ),
             const SizedBox(height: 20),
             if (isProfileInfoSelected) ...[
@@ -138,36 +145,36 @@ class _EditprofileState extends State<Editprofile> {
                       buildInfoContainer('Correo Electrónico', profile.email),
                       buildInfoContainer('Contraseña', profile.password),
                       const SizedBox(height: 15),
-                        Row(
+                      Row(
                         children: [
                           Expanded(
-                          child: ElevatedButton(
-                          onPressed: () {
-                          Navigator.pushNamed(context, '/profile');
-                          },
-                          style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF129575),
-                          ),
-                          child: const Text(
-                          'Guardar Cambios',
-                          style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                          ),
-                          ),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.pushNamed(context, '/profile');
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF129575),
+                              ),
+                              child: const Text(
+                                'Guardar Cambios',
+                                style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
-                          child: ElevatedButton(
-                          onPressed: () {
-                          Navigator.pushNamed(context, '/profile');
-                          },
-                          style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(255, 193, 128, 124),
-                          ),
-                          child: const Text(
-                          'Cancelar',
-                          style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                          ),
-                          ),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.pushNamed(context, '/profile');
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color.fromARGB(255, 181, 108, 106),
+                              ),
+                              child: const Text(
+                                'Cancelar',
+                                style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -179,7 +186,8 @@ class _EditprofileState extends State<Editprofile> {
               Expanded(
                 child: ListView(
                   children: [
-                    ...nutritionQuestions.map((q) => buildDropdown(q)).toList(),
+                    const SizedBox(height: 20),
+                    ...nutritionQuestions.map((q) => _buildMultiSelect(q)).toList(),
                     const SizedBox(height: 1),
                     Row(
                       children: [
@@ -292,7 +300,7 @@ class _EditprofileState extends State<Editprofile> {
     );
   }
 
-  Widget buildDropdown(NutritionQuestion question) {
+  Widget _buildMultiSelect(NutritionQuestion question) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -301,26 +309,28 @@ class _EditprofileState extends State<Editprofile> {
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF121212)),
         ),
         const SizedBox(height: 5),
-        DropdownButtonFormField<String>(
-          value: question.selected,
-          hint: const Text("Selecciona una opción"),
-          isExpanded: true,
-          items: question.options.map((option) {
-            return DropdownMenuItem<String>(
-              value: option,
-              child: Text(option),
+        Wrap(
+          spacing: 8.0, // Add spacing between options
+          children: question.options.map((option) {
+            final isSelected = question.selected.contains(option);
+            return ChoiceChip(
+              label: Text(option),
+              selected: isSelected,
+              onSelected: (selected) {
+                setState(() {
+                  if (selected) {
+                    question.selected.add(option);
+                  } else {
+                    question.selected.remove(option);
+                  }
+                  nutritionController.updateSelectedOptions(question, question.selected);
+                });
+              },
+              selectedColor: const Color(0xFF129575),
+              backgroundColor: isSelected ? const Color(0xFF129575) : Colors.white,
+              labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black),
             );
           }).toList(),
-          onChanged: (value) {
-            setState(() {
-              nutritionController.updateSelectedOption(question, value);
-            });
-          },
-          dropdownColor: Colors.white,
-          decoration: InputDecoration(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-          ),
         ),
         const SizedBox(height: 20),
       ],
