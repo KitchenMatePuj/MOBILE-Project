@@ -46,158 +46,176 @@ class _EditprofileState extends State<Editprofile> {
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircleAvatar(
-                  radius: 55,
-                  backgroundImage: AssetImage(profile.imageUrl),
-                ),
-                const SizedBox(width: 35),
-                CircleAvatar(
-                  radius: 55,
-                  backgroundColor: Colors.grey[300],
-                  child: Icon(Icons.add, color: Colors.grey[700], size: 40),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'Editar Foto de Perfil',
-              style: TextStyle(
-                color: Colors.orange,
-                fontSize: 13,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                GestureDetector(
+                children: [
+                Expanded(
+                  child: GestureDetector(
                   onTap: () {
                     setState(() {
-                      isProfileInfoSelected = true;
+                    isProfileInfoSelected = true;
                     });
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
                     decoration: BoxDecoration(
-                      color: isProfileInfoSelected ? const Color(0xFF129575) : Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFF129575)),
+                    color: isProfileInfoSelected ? const Color(0xFF129575) : Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFF129575)),
                     ),
                     child: Text(
-                      'Información de Perfil',
-                      style: TextStyle(
-                        color: isProfileInfoSelected ? Colors.white : const Color(0xFF129575),
-                      ),
+                    'Información de Perfil',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: isProfileInfoSelected ? Colors.white : const Color(0xFF129575),
                     ),
+                    textAlign: TextAlign.center,
+                    ),
+                  ),
                   ),
                 ),
                 const SizedBox(width: 30),
-                GestureDetector(
+                Expanded(
+                  child: GestureDetector(
                   onTap: () {
                     setState(() {
-                      isProfileInfoSelected = false;
+                    isProfileInfoSelected = false;
                     });
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
                     decoration: BoxDecoration(
-                      color: isProfileInfoSelected ? Colors.white : const Color(0xFF129575),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFF129575)),
+                    color: isProfileInfoSelected ? Colors.white : const Color(0xFF129575),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFF129575)),
                     ),
                     child: Text(
-                      'Información Dietética',
-                      style: TextStyle(
-                        color: isProfileInfoSelected ? const Color(0xFF129575) : Colors.white,
-                      ),
+                    'Información Dietética',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: isProfileInfoSelected ? const Color(0xFF129575) : Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
                     ),
                   ),
+                  ),
                 ),
-              ],
+                ],
             ),
             const SizedBox(height: 20),
             if (isProfileInfoSelected) ...[
-              buildInfoContainer('Nombre de Perfil', profile.name),
-              buildInfoContainer('Descripción', profile.description, isDescription: true),
-              buildInfoContainer('Correo Electrónico', profile.email),
-              buildInfoContainer('Contraseña', profile.password),
-              const SizedBox(height: 15),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/profile');
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF129575),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircleAvatar(
+                            radius: 55,
+                            backgroundImage: AssetImage(profile.imageUrl),
+                          ),
+                          const SizedBox(width: 35),
+                          CircleAvatar(
+                            radius: 55,
+                            backgroundColor: Colors.grey[300],
+                            child: Icon(Icons.add, color: Colors.grey[700], size: 40),
+                          ),
+                        ],
                       ),
-                      child: const Text(
-                        'Guardar Cambios',
-                        style: TextStyle(color: Colors.white),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'Editar Foto de Perfil',
+                        style: TextStyle(
+                          color: Colors.orange,
+                          fontSize: 12,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                    ),
+                      const SizedBox(height: 20),
+                      buildInfoContainer('Nombre de Perfil', profile.name),
+                      buildInfoContainer('Descripción', profile.description, isDescription: true),
+                      buildInfoContainer('Correo Electrónico', profile.email),
+                      buildInfoContainer('Contraseña', profile.password),
+                      const SizedBox(height: 15),
+                        Row(
+                        children: [
+                          Expanded(
+                          child: ElevatedButton(
+                          onPressed: () {
+                          Navigator.pushNamed(context, '/profile');
+                          },
+                          style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF129575),
+                          ),
+                          child: const Text(
+                          'Guardar Cambios',
+                          style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
+                          ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                          child: ElevatedButton(
+                          onPressed: () {
+                          Navigator.pushNamed(context, '/profile');
+                          },
+                          style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(255, 193, 128, 124),
+                          ),
+                          child: const Text(
+                          'Cancelar',
+                          style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
+                          ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/profile');
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 193, 128, 124),
-                      ),
-                      child: const Text(
-                        'Cancelar',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ] else ...[
               Expanded(
-              child: ListView(
-                children: [
-                ...nutritionQuestions.map((q) => buildDropdown(q)).toList(),
-                const SizedBox(height: 15),
-                Row(
+                child: ListView(
                   children: [
-                  Expanded(
-                    child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/profile');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF129575),
+                    ...nutritionQuestions.map((q) => buildDropdown(q)).toList(),
+                    const SizedBox(height: 1),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/profile');
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF129575),
+                            ),
+                            child: const Text(
+                              'Guardar Cambios',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/profile');
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color.fromARGB(255, 193, 128, 124),
+                            ),
+                            child: const Text(
+                              'Cancelar',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    child: const Text(
-                      'Guardar Cambios',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/profile');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 193, 128, 124),
-                    ),
-                    child: const Text(
-                      'Cancelar',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    ),
-                  ),
                   ],
                 ),
-                ],
-              ),
               ),
             ],
           ],
@@ -252,7 +270,7 @@ class _EditprofileState extends State<Editprofile> {
         children: [
           Text(
             title,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17), // title
           ),
           const SizedBox(height: 8),
           Row(
