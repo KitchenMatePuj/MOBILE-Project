@@ -25,7 +25,7 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
     super.initState();
     _recipeController = RecipeController();
     filteredRecipes = _recipeController.allRecipes;
-    _searchController.addListener(_filterRecipes);
+    _searchController.addListener(_applyFilters);
   }
 
   @override
@@ -34,24 +34,17 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
     super.dispose();
   }
 
-  void _filterRecipes() {
+  void _applyFilters() {
     setState(() {
       String query = _searchController.text.toLowerCase();
       filteredRecipes = _recipeController.allRecipes.where((recipe) {
-        return recipe.title.toLowerCase().contains(query) || recipe.chef.toLowerCase().contains(query);
-      }).toList();
-    });
-  }
-
-  void _applyFilters() {
-    setState(() {
-      filteredRecipes = _recipeController.allRecipes.where((recipe) {
+        bool matchesSearch = recipe.title.toLowerCase().contains(query) || recipe.chef.toLowerCase().contains(query);
         bool matchesDuration = selectedDuration == "Todos" || _matchesDuration(recipe.duration);
         bool matchesRating = selectedRating == "Todas" || recipe.rating == int.parse(selectedRating);
         bool matchesCategory = selectedCategory == "Todos" || recipe.hashtags?.contains(selectedCategory) == true;
         bool matchesMealType = selectedMealType == "Todos" || recipe.hashtags?.contains(selectedMealType) == true;
         bool matchesCuisine = selectedCuisine == "Todas" || recipe.hashtags?.contains(selectedCuisine) == true;
-        return matchesDuration && matchesRating && matchesCategory && matchesMealType && matchesCuisine;
+        return matchesSearch && matchesDuration && matchesRating && matchesCategory && matchesMealType && matchesCuisine;
       }).toList();
     });
   }
@@ -111,6 +104,7 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
                           selectedMealType = mealType;
                           selectedCuisine = cuisine;
                         });
+                        _applyFilters();
                       },
                     ),
                     const SizedBox(height: 15),
@@ -292,7 +286,7 @@ class RecipeCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          duration,
+                          '$duration mins',
                           style: const TextStyle(
                             fontSize: 13,
                             color: Colors.grey,

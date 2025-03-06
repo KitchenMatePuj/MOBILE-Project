@@ -29,6 +29,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
   String? imageUrl;
   String? recipeTitle;
   int? totalServings;
+  int? duration;
 
   @override
   void didChangeDependencies() {
@@ -42,6 +43,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
         steps = recipeController.getSteps(recipeId.toString());
         imageUrl = recipeController.getImageUrl(recipeId.toString());
         recipeTitle = recipeController.getTitle(recipeId.toString());
+        duration = int.tryParse(recipeController.getDuration(recipeId.toString()) ?? '');
         totalServings = int.tryParse(recipeController.getTotalServings(recipeId.toString()) ?? '');
       }
     }
@@ -112,7 +114,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
                         const Icon(Icons.access_time, color: Colors.white),
                         const SizedBox(width: 4),
                         Text(
-                          "35 min", // Placeholder duration
+                          '$duration mins', // Placeholder duration
                           style: const TextStyle(color: Colors.white),
                         ),
                       ],

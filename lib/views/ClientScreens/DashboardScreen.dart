@@ -254,9 +254,9 @@ class RecipeCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
+                    children: [
                     Text(
-                      duration,
+                      '$duration mins',
                       style: const TextStyle(color: Colors.grey),
                     ),
                     Row(
