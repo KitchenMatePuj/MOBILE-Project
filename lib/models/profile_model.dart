@@ -12,8 +12,8 @@ class Profile {
 
 // Los siguientes datyos los necesito dentro y no tengo el phone (no lo vi necesario).
   final String description;
-  final int followers;
-  final int following;
+  final List<int> followers;
+  final List<int> following;
   final List<int> saved_recipes;
   final List<int> published_recipes;
   final List<int> shopping_list_recipes;

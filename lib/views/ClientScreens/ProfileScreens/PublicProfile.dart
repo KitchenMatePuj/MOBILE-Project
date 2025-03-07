@@ -7,95 +7,28 @@ import '/models/profile_model.dart';
 import '/providers/user_provider.dart';
 import '/models/user_model.dart';
 
-class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+class PublicProfileScreen extends StatelessWidget {
+  final int keycloakUserId;
 
-  @override
-  _ProfileScreenState createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends State<ProfileScreen> {
-  int selectedIndex = 0;
-  late Profile profile;
-
-  @override
-  void initState() {
-    super.initState();
-    final profileController = ProfileController();
-    final user = Provider.of<UserProvider>(context, listen: false).user;
-    if (user != null) {
-      profile = profileController.recommendedProfiles.firstWhere((p) => p.email == user.email);
-    } else {
-      profile = profileController.recommendedProfiles.firstWhere((profile) => profile.keycloak_user_id == 11);
-    }
-  }
+  const PublicProfileScreen({super.key, required this.keycloakUserId});
 
   @override
   Widget build(BuildContext context) {
+    final profileController = ProfileController();
+    final profile = profileController.recommendedProfiles.firstWhere((p) => p.keycloak_user_id == keycloakUserId);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Mi Perfil',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        title: const Text(''),
         backgroundColor: const Color(0xFF129575),
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.settings, color: Colors.white),
-            color: Colors.white,
-            onSelected: (String value) {
-              switch (value) {
-                case 'Editar Perfil':
-                  Navigator.pushNamed(context, '/edit_profile');
-                  break;
-                case 'Reportes':
-                  Navigator.pushNamed(context, '/reports');
-                  break;
-                case 'Cerrar sesión':
-                  Navigator.pushNamed(context, '/');
-                  break;
-              }
-            },
-            itemBuilder: (BuildContext context) {
-              return [
-                PopupMenuItem(
-                  value: 'Editar Perfil',
-                  child: Row(
-                    children: const [
-                      Icon(Icons.edit, color: Colors.black),
-                      SizedBox(width: 8),
-                      Text('Editar Perfil'),
-                    ],
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'Reportes',
-                  child: Row(
-                    children: const [
-                      Icon(Icons.report, color: Colors.black),
-                      SizedBox(width: 8),
-                      Text('Reportes'),
-                    ],
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'Cerrar sesión',
-                  child: Center(
-                    child: Text(
-                      'Cerrar sesión',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ),
-                ),
-              ];
-            },
-          ),
-        ],
-        automaticallyImplyLeading: false,
+        foregroundColor: Colors.white,
+        automaticallyImplyLeading: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
       ),
       backgroundColor: Colors.white,
       body: Column(
@@ -121,29 +54,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 8),
                 ProfileBio(description: profile.description), // Biografía
                 const SizedBox(height: 16),
-                ProfileTabs(
-                  selectedIndex: selectedIndex,
-                  onTabSelected: (index) {
-                    setState(() {
-                      selectedIndex = index;
-                    });
-                  },
-                ), // Pestañas para publicaciones y guardados
               ],
             ),
           ),
           Expanded(
-            child: SavedRecipesGrid(
-              selectedIndex: selectedIndex,
-              profile: profile,
-            ), // Recetas guardadas
+            child: PublishedRecipesGrid(profile: profile), // Recetas publicadas
           ),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xFF129575),
+        selectedItemColor: const Color.fromARGB(255, 83, 83, 83),
         unselectedItemColor: const Color.fromARGB(255, 83, 83, 83),
         currentIndex: 4,
         onTap: (int index) {
@@ -161,6 +83,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Navigator.pushNamed(context, '/shopping_list');
               break;
             case 4:
+              Navigator.pushNamed(context, '/profile');
               break;
           }
         },
@@ -170,84 +93,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.add), label: 'Publicar'),
           BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Compras'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
-        ],
-      ),
-    );
-  }
-}
-
-class ProfileHeader extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(5),
-      decoration: const BoxDecoration(
-        color: Color(0xFF129575),
-        borderRadius: BorderRadius.only(),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Spacer(flex: 4),
-          const Text(
-            'Mi Perfil',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const Spacer(flex: 3),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.settings, color: Colors.white),
-            color: Colors.white,
-            onSelected: (String value) {
-              switch (value) {
-                case 'Editar Perfil':
-                  Navigator.pushNamed(context, '/edit_profile');
-                  break;
-                case 'Reportes':
-                  Navigator.pushNamed(context, '/reports');
-                  break;
-                case 'Cerrar sesión':
-                  Navigator.pushNamed(context, '/');
-                  break;
-              }
-            },
-            itemBuilder: (BuildContext context) {
-              return [
-                PopupMenuItem(
-                  value: 'Editar Perfil',
-                  child: Row(
-                    children: const [
-                      Icon(Icons.edit, color: Colors.black),
-                      SizedBox(width: 8),
-                      Text('Editar Perfil'),
-                    ],
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'Reportes',
-                  child: Row(
-                    children: const [
-                      Icon(Icons.report, color: Colors.black),
-                      SizedBox(width: 8),
-                      Text('Reportes'),
-                    ],
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'Cerrar sesión',
-                  child: Center(
-                    child: Text(
-                      'Cerrar sesión',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ),
-                ),
-              ];
-            },
-          ),
         ],
       ),
     );
@@ -318,81 +163,24 @@ class ProfileBio extends StatelessWidget {
   }
 }
 
-class ProfileTabs extends StatelessWidget {
-  final int selectedIndex;
-  final ValueChanged<int> onTabSelected;
-
-  const ProfileTabs({
-    required this.selectedIndex,
-    required this.onTabSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _buildTab('Recetas', 0),
-        _buildTab('Guardados', 1),
-      ],
-    );
-  }
-
-  Widget _buildTab(String label, int index) {
-    return GestureDetector(
-      onTap: () => onTabSelected(index),
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color:
-                  selectedIndex == index ? const Color(0xFF129575) : Colors.grey,
-            ),
-          ),
-          if (selectedIndex == index)
-            Container(
-              margin: const EdgeInsets.only(top: 4),
-              height: 2,
-              width: 60,
-              color: const Color(0xFF129575),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class SavedRecipesGrid extends StatelessWidget {
-  final int selectedIndex;
+class PublishedRecipesGrid extends StatelessWidget {
   final Profile profile;
 
-  const SavedRecipesGrid({
-    required this.selectedIndex,
-    required this.profile,
-  });
+  const PublishedRecipesGrid({required this.profile, super.key});
 
   @override
   Widget build(BuildContext context) {
     final recipeController = RecipeController();
-    final savedRecipes = profile.saved_recipes
-        .map((recipeId) =>
-            recipeController.allRecipes.firstWhere((recipe) => recipe.recipeId == '$recipeId'))
-        .toList();
     final publishedRecipes = profile.published_recipes
         .map((recipeId) =>
             recipeController.allRecipes.firstWhere((recipe) => recipe.recipeId == '$recipeId'))
         .toList();
 
-    final recipesToShow = selectedIndex == 0 ? publishedRecipes : savedRecipes;
-
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 23, vertical: 16),
-      itemCount: recipesToShow.length,
+      itemCount: publishedRecipes.length,
       itemBuilder: (context, index) {
-        final recipe = recipesToShow[index];
+        final recipe = publishedRecipes[index];
         return GestureDetector(
           onTap: () {
             Navigator.pushNamed(

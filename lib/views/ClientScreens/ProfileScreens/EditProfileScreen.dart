@@ -6,14 +6,14 @@ import '/controllers/nutrition_controller.dart';
 import '/models/nutrition_model.dart';
 import '/providers/user_provider.dart';
 
-class Editprofile extends StatefulWidget {
-  const Editprofile({super.key});
+class EditprofileScreen extends StatefulWidget {
+  const EditprofileScreen({super.key});
 
   @override
   _EditprofileState createState() => _EditprofileState();
 }
 
-class _EditprofileState extends State<Editprofile> {
+class _EditprofileState extends State<EditprofileScreen> {
   late Profile profile;
   late NutritionController nutritionController;
   bool isProfileInfoSelected = true;

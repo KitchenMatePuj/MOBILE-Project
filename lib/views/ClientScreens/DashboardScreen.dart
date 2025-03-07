@@ -29,9 +29,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredRecipes = _recipeController.getFilteredRecipes(query, _recipesToShow);
-    final recommendedProfiles = _profileController.recommendedProfiles;
     final user = Provider.of<UserProvider>(context).user;
+    final followingIds = user!.following;
+
+    // Mostrar siempre recetas del usuario con keycloak_user_id: 1
+    final List<Recipe> recipesFromUser1 = _recipeController.allRecipes.where((recipe) {
+      final profile = _profileController.getProfileByRecipeId(int.parse(recipe.recipeId));
+      return profile.keycloak_user_id == 1;
+    }).toList();
+
+    // Mostrar recetas de las personas que sigue el usuario logueado
+    final List<Recipe> followingRecipes = _recipeController.allRecipes.where((recipe) {
+      final profile = _profileController.getProfileByRecipeId(int.parse(recipe.recipeId));
+      return followingIds.contains(profile.keycloak_user_id);
+    }).toList();
+
+    // Combinar ambas listas
+    final List<Recipe> combinedRecipes = [...recipesFromUser1, ...followingRecipes].take(_recipesToShow).toList();
+
+    final recommendedProfiles = _profileController.recommendedProfiles;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -47,7 +63,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                UserHeader(user: user!),
+                UserHeader(user: user),
                 const SizedBox(height: 10),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -71,7 +87,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(height: 7),
                 Column(
-                  children: filteredRecipes.map((recipe) => Padding(
+                  children: combinedRecipes.map((recipe) => Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         child: SizedBox(
                           width: double.infinity,
@@ -254,7 +270,7 @@ class RecipeCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
+                  children: [
                     Text(
                       '$duration mins',
                       style: const TextStyle(color: Colors.grey),
@@ -370,7 +386,7 @@ class ProfileCard extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(30),
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

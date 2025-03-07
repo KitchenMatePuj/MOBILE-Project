@@ -191,9 +191,18 @@ class _RecipeScreenState extends State<RecipeScreen> {
                 children: [
                   Row(
                     children: [
-                      CircleAvatar(
-                        backgroundImage: AssetImage(chefProfile!.imageUrl),
-                        radius: 20,
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            '/public_profile',
+                            arguments: {'keycloak_user_id': chefProfile!.keycloak_user_id},
+                          );
+                        },
+                        child: CircleAvatar(
+                          backgroundImage: AssetImage(chefProfile!.imageUrl),
+                          radius: 20,
+                        ),
                       ),
                       const SizedBox(width: 10),
                       Text(

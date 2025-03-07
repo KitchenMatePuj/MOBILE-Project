@@ -7,14 +7,14 @@ import 'package:flutter/services.dart'; // Import the services package for input
 const List<String> defaultIngredients = ['Otro', 'Tomate', 'Cebolla', 'Ajo', 'Pimienta', 'Sal', 'Azúcar', 'Aceite', 'Vinagre', 'Leche', 'Huevos', 'Harina', 'Arroz', 'Pasta', 'Carne', 'Pollo', 'Pescado', 'Mariscos', 'Verduras', 'Frutas', 'Queso', 'Yogurt', 'Mantequilla', 'Pan', 'Cereal', 'Galletas', 'Chocolate', 'Café', 'Té', 'Agua', 'Vino', 'Cerveza', 'Ron', 'Whisky', 'Vodka', 'Ginebra', 'Brandy', 'Coñac', 'Licor'];
 const List<String> defaultUnits = ['Otro', 'Gramos', 'Mililitros', 'Cucharadas', 'Cucharadita', 'Tazas', 'Pizca'];
 
-class CreateRecipe extends StatefulWidget {
-  const CreateRecipe({super.key});
+class CreateRecipeScreen extends StatefulWidget {
+  const CreateRecipeScreen({super.key});
 
   @override
   _CreateRecipeState createState() => _CreateRecipeState();
 }
 
-class _CreateRecipeState extends State<CreateRecipe> {
+class _CreateRecipeState extends State<CreateRecipeScreen> {
   int selectedIndex = 0;
   List<Ingredient> ingredients = [
     Ingredient(name: "", quantity: "", unit: ""),

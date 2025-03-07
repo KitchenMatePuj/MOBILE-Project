@@ -9,6 +9,7 @@ import 'views/SignInAndSignUpScreens/NutritionFormScreen.dart';
 import 'views/ClientScreens/DashboardScreen.dart';
 import 'views/ClientScreens/RecipeScreens/RecipeSearchScreen.dart';
 import 'views/ClientScreens/ProfileScreens/ProfileScreen.dart';
+import 'views/ClientScreens/ProfileScreens/PublicProfile.dart';
 import 'views/SignInAndSignUpScreens/ForgotPasswordScreens/EmailForgotPassScreen.dart';
 import 'views/ClientScreens/ShoppingListScreen.dart';
 import 'views/ClientScreens/RecipeScreens/CreateRecipeScreen.dart';
@@ -39,6 +40,18 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       initialRoute: '/',
+      onGenerateRoute: (settings) {
+        if (settings.name == '/public_profile') {
+          final args = settings.arguments as Map<String, dynamic>;
+          return MaterialPageRoute(
+            builder: (context) {
+              return PublicProfileScreen(keycloakUserId: args['keycloak_user_id']);
+            },
+          );
+        }
+        // Define other routes here if needed
+        return null;
+      },
       routes: {
         '/': (context) => const HomeScreen(),
         '/login': (context) => const LoginScreen(),
@@ -49,11 +62,11 @@ class MyApp extends StatelessWidget {
         '/recipe_search': (context) => const RecipeSearchScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/email_forgot_pass': (context) => const EmailForgotPassScreen(),
-        '/shopping_list': (context) => const ShoppingList(),
-        '/create': (context) => const CreateRecipe(),
+        '/shopping_list': (context) => const ShoppingListScreen(),
+        '/create': (context) => const CreateRecipeScreen(),
         '/recipe': (context) => const RecipeScreen(),
-        '/edit_profile': (context) => const Editprofile(),
-        '/reports': (context) => const Reports(),
+        '/edit_profile': (context) => const EditprofileScreen(),
+        '/reports': (context) => const ReportsScreen(),
       },
     );
   }

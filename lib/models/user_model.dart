@@ -10,8 +10,8 @@ class UserModel {
   final String password;
   final DateTime creationDate;
   final DateTime updateDate;
-  final int followers;
-  final int following;
+  final List<int> followers;
+  final List<int> following;
   final List<int> savedRecipes;
   final List<int> publishedRecipes;
   final List<int> shoppingListRecipes;
