@@ -9,7 +9,7 @@ import 'views/SignInAndSignUpScreens/NutritionFormScreen.dart';
 import 'views/ClientScreens/DashboardScreen.dart';
 import 'views/ClientScreens/RecipeScreens/RecipeSearchScreen.dart';
 import 'views/ClientScreens/ProfileScreens/ProfileScreen.dart';
-import 'views/ClientScreens/ProfileScreens/PublicProfile.dart';
+import 'views/ClientScreens/ProfileScreens/PublicProfileScreen.dart';
 import 'views/SignInAndSignUpScreens/ForgotPasswordScreens/EmailForgotPassScreen.dart';
 import 'views/ClientScreens/ShoppingListScreen.dart';
 import 'views/ClientScreens/RecipeScreens/CreateRecipeScreen.dart';
