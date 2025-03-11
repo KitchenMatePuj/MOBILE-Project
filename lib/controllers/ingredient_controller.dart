@@ -33,7 +33,7 @@ class IngredientController {
     RecipeIngredient(recipeId: "3", ingredientId: "7", quantity: "200", unit: "g"),
     RecipeIngredient(recipeId: "4", ingredientId: "8", quantity: "500", unit: "g"),
     RecipeIngredient(recipeId: "4", ingredientId: "9", quantity: "50", unit: "ml"),
-    RecipeIngredient(recipeId: "5", ingredientId: "10", quantity: "200", unit: "g"),
+    RecipeIngredient(recipeId: "5", ingredientId: "10", quantity: "1000", unit: "g"),
     RecipeIngredient(recipeId: "5", ingredientId: "5", quantity: "10", unit: "g"),
     RecipeIngredient(recipeId: "6", ingredientId: "12", quantity: "4", unit: "u"),
     RecipeIngredient(recipeId: "6", ingredientId: "9", quantity: "50", unit: "ml"),

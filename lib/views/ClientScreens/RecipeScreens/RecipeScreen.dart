@@ -174,10 +174,13 @@ class _RecipeScreenState extends State<RecipeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    recipeTitle ?? "Receta Placeholder", // Use the recipeTitle
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
+                    Flexible(
+                    child: Text(
+                      recipeTitle ?? "Receta Placeholder", // Use the recipeTitle
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    ),
                   Text(
                     "75 reseñas", // Placeholder reviews
                     style: const TextStyle(fontSize: 14, color: Colors.grey),
@@ -187,54 +190,60 @@ class _RecipeScreenState extends State<RecipeScreen> {
               const SizedBox(height: 14),
 
               // Fila 2: Foto de perfil, nombre del chef y botones
-              Row(
+                Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/public_profile',
-                            arguments: {'keycloak_user_id': chefProfile!.keycloak_user_id},
-                          );
-                        },
-                        child: CircleAvatar(
-                          backgroundImage: AssetImage(chefProfile!.imageUrl),
-                          radius: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        chefProfile!.name,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ],
+                  children: [
+                    GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(
+                      context,
+                      '/public_profile',
+                      arguments: {'keycloak_user_id': chefProfile!.keycloak_user_id},
+                      );
+                    },
+                    child: CircleAvatar(
+                      backgroundImage: AssetImage(chefProfile!.imageUrl),
+                      radius: 20,
+                    ),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 0.2, // Adjust the width as needed
+                    ),
+                    child: Text(
+                      chefProfile!.name,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    ),
+                  ],
                   ),
                   Row(
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF129575),
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Text("Seguir"),
-                      ),
-                      const SizedBox(width: 5),
-                      ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF129575),
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Text("+ Lista de\nCompras"),
-                      ),
-                    ],
+                  children: [
+                    ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF129575),
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text("Seguir"),
+                    ),
+                    const SizedBox(width: 5),
+                    ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF129575),
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text("+ Lista de\nCompras"),
+                    ),
+                  ],
                   ),
                 ],
-              ),
+                ),
               const SizedBox(height: 14),
 
               // Fila 3: Ingredientes y Procedimiento

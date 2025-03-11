@@ -25,7 +25,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
   String estimatedTime = "Tiempo estimado ";
   String estimatedPortions = "Porciones estimadas ";
   File? _image;
-  String recipeTitle = "Escriba el nombre de su Receta aquí por favor ";
+  String recipeTitle = "Nombre de la Receta";
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();

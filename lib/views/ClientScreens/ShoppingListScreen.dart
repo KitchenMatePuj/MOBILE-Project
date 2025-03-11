@@ -138,18 +138,21 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    isIngredientSelected
+                    Flexible(
+                    child: Text(
+                      isIngredientSelected
                         ? 'Ingredientes Pendientes'
                         : selectedRecipe == null
-                            ? 'Recetas en Lista de Compras'
-                            : selectedRecipe!.title,
-                    style: const TextStyle(
+                          ? 'Recetas en Lista de Compras'
+                          : selectedRecipe!.title,
+                      style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF121212),
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
+                    ),
                   if (selectedRecipe != null)
                     IconButton(
                       icon: const Icon(Icons.arrow_back, color: Color(0xFF129575)),
@@ -256,8 +259,26 @@ class IngredientsPendingList extends StatelessWidget {
       ingredients.addAll(ingredientController.getIngredientsByRecipeId(recipeId.toString()));
     }
 
-    // Filtrar ingredientes por término de búsqueda
-    final filteredIngredients = ingredients.where((recipeIngredient) {
+    // Agrupar ingredientes repetidos y sumar cantidades
+    final Map<String, RecipeIngredient> groupedIngredients = {};
+    for (var recipeIngredient in ingredients) {
+      final key = '${recipeIngredient.ingredientId}-${recipeIngredient.unit}';
+      if (groupedIngredients.containsKey(key)) {
+        final existing = groupedIngredients[key]!;
+        final newQuantity = double.parse(existing.quantity) + double.parse(recipeIngredient.quantity);
+        groupedIngredients[key] = RecipeIngredient(
+          recipeId: existing.recipeId,
+          ingredientId: existing.ingredientId,
+          quantity: newQuantity.toString(),
+          unit: existing.unit,
+        );
+      } else {
+        groupedIngredients[key] = recipeIngredient;
+      }
+    }
+
+    // Convertir a lista y filtrar por término de búsqueda
+    final filteredIngredients = groupedIngredients.values.where((recipeIngredient) {
       final ingredient = ingredientController.allIngredients.firstWhere((ing) => ing.ingredientId == recipeIngredient.ingredientId);
       return ingredient.ingredientName.toLowerCase().contains(searchTerm.toLowerCase());
     }).toList();
@@ -343,7 +364,7 @@ class RecipeCard extends StatelessWidget {
             bottom: 8,
             right: 8,
             child: Text(
-              recipe.title,
+              recipe.title.length > 30 ? '${recipe.title.substring(0, 27)}...' : recipe.title,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 16,

@@ -53,7 +53,6 @@ class PublicProfileScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 ProfileBio(description: profile.description), // Biografía
-                const SizedBox(height: 16),
               ],
             ),
           ),
@@ -177,7 +176,7 @@ class PublishedRecipesGrid extends StatelessWidget {
         .toList();
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 23, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 23, vertical: 10),
       itemCount: publishedRecipes.length,
       itemBuilder: (context, index) {
         final recipe = publishedRecipes[index];
