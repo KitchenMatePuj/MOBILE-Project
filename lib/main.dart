@@ -16,6 +16,7 @@ import 'views/ClientScreens/RecipeScreens/CreateRecipeScreen.dart';
 import 'views/ClientScreens/RecipeScreens/RecipeScreen.dart';
 import 'views/ClientScreens/ProfileScreens/EditProfileScreen.dart';
 import 'views/ClientScreens/ProfileScreens/ReportScreen.dart';
+import 'views/ClientScreens/RecipeScreens/CommentsScreen.dart';
 
 void main() {
   runApp(
@@ -67,6 +68,7 @@ class MyApp extends StatelessWidget {
         '/recipe': (context) => const RecipeScreen(),
         '/edit_profile': (context) => const EditprofileScreen(),
         '/reports': (context) => const ReportsScreen(),
+        '/comments': (context) => const CommentsScreen(),
       },
     );
   }

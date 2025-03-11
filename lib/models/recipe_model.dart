@@ -7,7 +7,6 @@ class Recipe {
   final DateTime updateDate;
   final List<String> steps;
   final int? total_servings;
-
   final String? hashtags;
   final String duration;
   final int? rating;

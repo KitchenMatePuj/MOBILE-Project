@@ -9,8 +9,6 @@ class Profile {
   final String password;
   final DateTime creation_date;
   final DateTime update_date;
-
-// Los siguientes datyos los necesito dentro y no tengo el phone (no lo vi necesario).
   final String description;
   final List<int> followers;
   final List<int> following;

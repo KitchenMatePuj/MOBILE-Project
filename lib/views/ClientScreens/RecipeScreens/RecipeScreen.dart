@@ -5,6 +5,7 @@ import '/controllers/recipe_controller.dart'; // Importa el RecipeController
 import '/models/profile_model.dart';
 import '/models/ingredient_model.dart';
 import '/models/recipe_model.dart';
+import '/models/recipe_ingredient_model.dart';
 
 class RecipeScreen extends StatefulWidget {
   const RecipeScreen({super.key});
@@ -24,7 +25,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
   Map<String, dynamic>? arguments;
   int? recipeId;
   Profile? chefProfile;
-  List<Ingredient> ingredients = [];
+  List<RecipeIngredient> recipeIngredients = [];
   List<String> steps = [];
   String? imageUrl;
   String? recipeTitle;
@@ -39,7 +40,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
       recipeId = int.tryParse(arguments!['recipeId'].toString());
       if (recipeId != null) {
         chefProfile = profileController.getProfileByRecipeId(recipeId!);
-        ingredients = ingredientController.getIngredientsByRecipeId(recipeId.toString());
+        recipeIngredients = ingredientController.getIngredientsByRecipeId(recipeId.toString());
         steps = recipeController.getSteps(recipeId.toString());
         imageUrl = recipeController.getImageUrl(recipeId.toString());
         recipeTitle = recipeController.getTitle(recipeId.toString());
@@ -276,10 +277,15 @@ class _RecipeScreenState extends State<RecipeScreen> {
               Expanded(
                 child: selectedIndex == 0
                     ? ListView.builder(
-                        itemCount: ingredients.length,
+                        itemCount: recipeIngredients.length,
                         itemBuilder: (context, index) {
-                          final ingredient = ingredients[index];
-                          return IngredientCard(ingredient: ingredient);
+                          final recipeIngredient = recipeIngredients[index];
+                          final ingredient = ingredientController.allIngredients.firstWhere((ing) => ing.ingredientId == recipeIngredient.ingredientId);
+                          return IngredientCard(
+                            ingredient: ingredient,
+                            quantity: recipeIngredient.quantity,
+                            unit: recipeIngredient.unit,
+                          );
                         },
                       )
                     : ListView.builder(
@@ -436,8 +442,14 @@ class _RatingDialogState extends State<RatingDialog> {
 
 class IngredientCard extends StatelessWidget {
   final Ingredient ingredient;
+  final String quantity;
+  final String unit;
 
-  const IngredientCard({required this.ingredient});
+  const IngredientCard({
+    required this.ingredient, 
+    required this.quantity, 
+    required this.unit
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -454,7 +466,7 @@ class IngredientCard extends StatelessWidget {
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
             ),
             Text(
-              "${ingredient.quantity} ${ingredient.unit}",
+              "$quantity $unit",
               style: const TextStyle(fontSize: 16, color: Color.fromARGB(255, 51, 50, 50)),
             ),
           ],
