@@ -12,6 +12,7 @@ class CommentsScreen extends StatelessWidget {
         foregroundColor: Colors.white,
         automaticallyImplyLeading: false,
       ),
+      backgroundColor: Colors.white,
       body: const Center(
         child: Text('Pendiente Comentarios de Publicaciones'),
       ),

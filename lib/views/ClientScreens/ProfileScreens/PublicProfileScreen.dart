@@ -38,7 +38,7 @@ class PublicProfileScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 23),
             child: Column(
               children: [
-                ProfileStats(profile: profile), // Estadísticas del usuario
+                ProfileStats(profile: profile, keycloakUserId: keycloakUserId), // Estadísticas del usuario
                 const SizedBox(height: 16),
                 Align(
                   alignment: Alignment.centerLeft,
@@ -100,8 +100,9 @@ class PublicProfileScreen extends StatelessWidget {
 
 class ProfileStats extends StatelessWidget {
   final Profile profile;
+  final int keycloakUserId;
 
-  const ProfileStats({required this.profile, super.key});
+  const ProfileStats({required this.profile, required this.keycloakUserId, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -113,9 +114,36 @@ class ProfileStats extends StatelessWidget {
           backgroundImage: AssetImage(profile.imageUrl),
         ),
         const SizedBox(width: 2),
-        _buildStatItem('Recetas', profile.published_recipes.length.toString()),
-        _buildStatItem('Seguidores', profile.followers.length.toString()),
-        _buildStatItem('Siguiendo', profile.following.length.toString()),
+        GestureDetector(
+          onTap: () {
+            Navigator.pushNamed(
+              context, 
+              '/followers_and_following', 
+              arguments: {'keycloak_user_id': keycloakUserId, 'type': 'recipes'},
+            );
+          },
+          child: _buildStatItem('Recetas', profile.published_recipes.length.toString()),
+        ),
+        GestureDetector(
+          onTap: () {
+            Navigator.pushNamed(
+              context, 
+              '/followers_and_following', 
+              arguments: {'keycloak_user_id': keycloakUserId, 'type': 'followers'},
+            );
+          },
+          child: _buildStatItem('Seguidores', profile.followers.length.toString()),
+        ),
+        GestureDetector(
+          onTap: () {
+            Navigator.pushNamed(
+              context, 
+              '/followers_and_following', 
+              arguments: {'keycloak_user_id': keycloakUserId, 'type': 'following'},
+            );
+          },
+          child: _buildStatItem('Siguiendo', profile.following.length.toString()),
+        ),
       ],
     );
   }

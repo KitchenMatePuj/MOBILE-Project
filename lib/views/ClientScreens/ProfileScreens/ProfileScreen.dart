@@ -105,7 +105,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 23),
             child: Column(
               children: [
-                ProfileStats(profile: profile), // Estadísticas del usuario
+                ProfileStats(profile: profile, keycloakUserId: profile.keycloak_user_id), // Estadísticas del usuario
                 const SizedBox(height: 16),
                 Align(
                   alignment: Alignment.centerLeft,
@@ -176,88 +176,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-class ProfileHeader extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(5),
-      decoration: const BoxDecoration(
-        color: Color(0xFF129575),
-        borderRadius: BorderRadius.only(),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Spacer(flex: 4),
-          const Text(
-            'Mi Perfil',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const Spacer(flex: 3),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.settings, color: Colors.white),
-            color: Colors.white,
-            onSelected: (String value) {
-              switch (value) {
-                case 'Editar Perfil':
-                  Navigator.pushNamed(context, '/edit_profile');
-                  break;
-                case 'Reportes':
-                  Navigator.pushNamed(context, '/reports');
-                  break;
-                case 'Cerrar sesión':
-                  Navigator.pushNamed(context, '/');
-                  break;
-              }
-            },
-            itemBuilder: (BuildContext context) {
-              return [
-                PopupMenuItem(
-                  value: 'Editar Perfil',
-                  child: Row(
-                    children: const [
-                      Icon(Icons.edit, color: Colors.black),
-                      SizedBox(width: 8),
-                      Text('Editar Perfil'),
-                    ],
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'Reportes',
-                  child: Row(
-                    children: const [
-                      Icon(Icons.report, color: Colors.black),
-                      SizedBox(width: 8),
-                      Text('Reportes'),
-                    ],
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'Cerrar sesión',
-                  child: Center(
-                    child: Text(
-                      'Cerrar sesión',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ),
-                ),
-              ];
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class ProfileStats extends StatelessWidget {
   final Profile profile;
+  final int keycloakUserId;
 
-  const ProfileStats({required this.profile, super.key});
+  const ProfileStats({required this.profile, required this.keycloakUserId, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -269,9 +192,36 @@ class ProfileStats extends StatelessWidget {
           backgroundImage: AssetImage(profile.imageUrl),
         ),
         const SizedBox(width: 2),
-        _buildStatItem('Recetas', profile.published_recipes.length.toString()),
-        _buildStatItem('Seguidores', profile.followers.length.toString()),
-        _buildStatItem('Siguiendo', profile.following.length.toString()),
+        GestureDetector(
+          onTap: () {
+            Navigator.pushNamed(
+              context,
+              '/followers_and_following',
+              arguments: {'keycloak_user_id': keycloakUserId, 'type': 'recipes'},
+            );
+          },
+          child: _buildStatItem('Recetas', profile.published_recipes.length.toString()),
+        ),
+        GestureDetector(
+          onTap: () {
+            Navigator.pushNamed(
+              context,
+              '/followers_and_following',
+              arguments: {'keycloak_user_id': keycloakUserId, 'type': 'followers'},
+            );
+          },
+          child: _buildStatItem('Seguidores', profile.followers.length.toString()),
+        ),
+        GestureDetector(
+          onTap: () {
+            Navigator.pushNamed(
+              context,
+              '/followers_and_following',
+              arguments: {'keycloak_user_id': keycloakUserId, 'type': 'following'},
+            );
+          },
+          child: _buildStatItem('Siguiendo', profile.following.length.toString()),
+        ),
       ],
     );
   }

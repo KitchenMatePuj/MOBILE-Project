@@ -17,6 +17,7 @@ import 'views/ClientScreens/RecipeScreens/RecipeScreen.dart';
 import 'views/ClientScreens/ProfileScreens/EditProfileScreen.dart';
 import 'views/ClientScreens/ProfileScreens/ReportScreen.dart';
 import 'views/ClientScreens/RecipeScreens/CommentsScreen.dart';
+import 'views/ClientScreens/ProfileScreens/FollowersAndFollowing.dart';
 
 void main() {
   runApp(
@@ -47,6 +48,16 @@ class MyApp extends StatelessWidget {
           return MaterialPageRoute(
             builder: (context) {
               return PublicProfileScreen(keycloakUserId: args['keycloak_user_id']);
+            },
+          );
+        } else if (settings.name == '/followers_and_following') {
+          final args = settings.arguments as Map<String, dynamic>;
+          return MaterialPageRoute(
+            builder: (context) {
+              return FollowersAndFollowingScreen(
+                keycloakUserId: args['keycloak_user_id'],
+                type: args['type'],
+              );
             },
           );
         }
