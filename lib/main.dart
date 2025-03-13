@@ -60,6 +60,13 @@ class MyApp extends StatelessWidget {
               );
             },
           );
+        } else if (settings.name == '/comments') {
+          final args = settings.arguments as Map<String, dynamic>;
+          return MaterialPageRoute(
+            builder: (context) {
+              return CommentsScreen(recipeId: args['recipeId']);
+            },
+          );
         }
         // Define other routes here if needed
         return null;
@@ -79,7 +86,6 @@ class MyApp extends StatelessWidget {
         '/recipe': (context) => const RecipeScreen(),
         '/edit_profile': (context) => const EditprofileScreen(),
         '/reports': (context) => const ReportsScreen(),
-        '/comments': (context) => const CommentsScreen(),
       },
     );
   }

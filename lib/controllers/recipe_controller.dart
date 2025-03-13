@@ -44,3 +44,4 @@ class RecipeController {
     return allRecipes.firstWhere((recipe) => recipe.recipeId == recipeId).duration;
   }
 }
+

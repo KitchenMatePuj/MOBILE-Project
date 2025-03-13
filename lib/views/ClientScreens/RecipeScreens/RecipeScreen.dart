@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_kitchenmate/models/comment_model.dart';
 import '/controllers/profile_controller.dart';
 import '/controllers/ingredient_controller.dart';
 import '/controllers/recipe_controller.dart'; // Importa el RecipeController
@@ -6,6 +7,7 @@ import '/models/profile_model.dart';
 import '/models/ingredient_model.dart';
 import '/models/recipe_model.dart';
 import '/models/recipe_ingredient_model.dart';
+import '/controllers/comment_controller.dart'; // Importa el CommentController
 
 class RecipeScreen extends StatefulWidget {
   const RecipeScreen({super.key});
@@ -21,6 +23,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
   ProfileController profileController = ProfileController();
   IngredientController ingredientController = IngredientController();
   RecipeController recipeController = RecipeController(); // Instancia del RecipeController
+  CommentController commentController = CommentController();
 
   Map<String, dynamic>? arguments;
   int? recipeId;
@@ -31,6 +34,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
   String? recipeTitle;
   int? totalServings;
   int? duration;
+  int totalComments = 0; // Variable para almacenar el número total de comentarios
 
   @override
   void didChangeDependencies() {
@@ -46,6 +50,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
         recipeTitle = recipeController.getTitle(recipeId.toString());
         duration = int.tryParse(recipeController.getDuration(recipeId.toString()) ?? '');
         totalServings = int.tryParse(recipeController.getTotalServings(recipeId.toString()) ?? '');
+        totalComments = commentController.getTotalComments(recipeId!);
       }
     }
   }
@@ -174,76 +179,85 @@ class _RecipeScreenState extends State<RecipeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                    Flexible(
+                  Flexible(
                     child: Text(
                       recipeTitle ?? "Receta Placeholder", // Use the recipeTitle
                       style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       overflow: TextOverflow.ellipsis,
                     ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        '/comments',
+                        arguments: {'recipeId': recipeId},
+                      );
+                    },
+                    child: Text(
+                      "$totalComments Comentarios", // Usar el número real de comentarios
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
                     ),
-                  Text(
-                    "75 reseñas", // Placeholder reviews
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                 ],
               ),
               const SizedBox(height: 14),
 
               // Fila 2: Foto de perfil, nombre del chef y botones
-                Row(
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
-                  children: [
-                    GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(
-                      context,
-                      '/public_profile',
-                      arguments: {'keycloak_user_id': chefProfile!.keycloak_user_id},
-                      );
-                    },
-                    child: CircleAvatar(
-                      backgroundImage: AssetImage(chefProfile!.imageUrl),
-                      radius: 20,
-                    ),
-                    ),
-                    const SizedBox(width: 10),
-                    Container(
-                    constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width * 0.2, // Adjust the width as needed
-                    ),
-                    child: Text(
-                      chefProfile!.name,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    ),
-                  ],
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            '/public_profile',
+                            arguments: {'keycloak_user_id': chefProfile!.keycloak_user_id},
+                          );
+                        },
+                        child: CircleAvatar(
+                          backgroundImage: AssetImage(chefProfile!.imageUrl),
+                          radius: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Container(
+                        constraints: BoxConstraints(
+                          maxWidth: MediaQuery.of(context).size.width * 0.2, // Adjust the width as needed
+                        ),
+                        child: Text(
+                          chefProfile!.name,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
                   ),
                   Row(
-                  children: [
-                    ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF129575),
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text("Seguir"),
-                    ),
-                    const SizedBox(width: 5),
-                    ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF129575),
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text("+ Lista de\nCompras"),
-                    ),
-                  ],
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF129575),
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text("Seguir"),
+                      ),
+                      const SizedBox(width: 5),
+                      ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF129575),
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text("+ Lista de\nCompras"),
+                      ),
+                    ],
                   ),
                 ],
-                ),
+              ),
               const SizedBox(height: 14),
 
               // Fila 3: Ingredientes y Procedimiento
@@ -396,54 +410,54 @@ class _RatingDialogState extends State<RatingDialog> {
     return Dialog(
       backgroundColor: Colors.transparent, // Transparent background
       child: Center(
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.7, // Set width to 80% of screen width
-        padding: const EdgeInsets.all(15),
-        decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.7, // Set width to 80% of screen width
+          padding: const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Calificación',
+                style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 5),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (index) {
+                  return IconButton(
+                    icon: Icon(
+                      _selectedRating > index ? Icons.star : Icons.star_border,
+                      color: Colors.orange, 
+                      // color: const Color(0xFF129575)
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _selectedRating = index + 1;
+                      });
+                    },
+                  );
+                }),
+              ),
+              const SizedBox(height: 5),
+              ElevatedButton(
+                onPressed: _selectedRating == 0 ? null : () {
+                  // Handle rating submission
+                  Navigator.of(context).pop();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange, 
+                  // backgroundColor: Color(0xFF129575)
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Enviar'),
+              ),
+            ],
+          ),
         ),
-        child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-          'Calificación',
-          style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 5),
-          Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(5, (index) {
-            return IconButton(
-            icon: Icon(
-              _selectedRating > index ? Icons.star : Icons.star_border,
-              color: Colors.orange, 
-              // color: const Color(0xFF129575)
-            ),
-            onPressed: () {
-              setState(() {
-              _selectedRating = index + 1;
-              });
-            },
-            );
-          }),
-          ),
-          const SizedBox(height: 5),
-          ElevatedButton(
-          onPressed: _selectedRating == 0 ? null : () {
-            // Handle rating submission
-            Navigator.of(context).pop();
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.orange, 
-            // backgroundColor: Color(0xFF129575)
-            foregroundColor: Colors.white,
-          ),
-          child: const Text('Enviar'),
-          ),
-        ],
-        ),
-      ),
       ),
     );
   }
