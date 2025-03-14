@@ -18,7 +18,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late RecipeController _recipeController;
   late ProfileController _profileController;
   String query = '';
-  int _recipesToShow = 6;
+  int _recipesToShow = 4;
+  int selectedIndex = 0;
 
   @override
   void initState() {
@@ -36,16 +37,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final List<Recipe> recipesFromUser1 = _recipeController.allRecipes.where((recipe) {
       final profile = _profileController.getProfileByRecipeId(int.parse(recipe.recipeId));
       return profile.keycloak_user_id == 1;
-    }).toList();
+    }).toList()
+      ..sort((a, b) => b.creationDate.compareTo(a.creationDate)); // Ordenar por fecha de creación
 
     // Mostrar recetas de las personas que sigue el usuario logueado
     final List<Recipe> followingRecipes = _recipeController.allRecipes.where((recipe) {
       final profile = _profileController.getProfileByRecipeId(int.parse(recipe.recipeId));
       return followingIds.contains(profile.keycloak_user_id);
-    }).toList();
+    }).toList()
+      ..sort((a, b) => b.creationDate.compareTo(a.creationDate)); // Ordenar por fecha de creación
 
-    // Combinar ambas listas
-    final List<Recipe> combinedRecipes = [...recipesFromUser1, ...followingRecipes].take(_recipesToShow).toList();
+    // Filtrar recetas por query y seleccionadas por pestaña
+    final List<Recipe> filteredRecipes = (selectedIndex == 0 ? recipesFromUser1 : followingRecipes)
+        .where((recipe) => recipe.title.toLowerCase().contains(query.toLowerCase()))
+        .take(_recipesToShow)
+        .toList();
 
     final recommendedProfiles = _profileController.recommendedProfiles;
 
@@ -57,94 +63,119 @@ class _DashboardScreenState extends State<DashboardScreen> {
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                UserHeader(user: user),
-                const SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: TextField(
-                    onChanged: (value) {
-                      setState(() {
-                        query = value;
-                      });
-                    },
-                    decoration: InputDecoration(
-                      hintText: 'Buscar receta',
-                      fillColor: Colors.white,
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFF129575)),
-                      ),
-                      filled: true,
-                    ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 10),
+              child: UserHeader(user: user),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: TextField(
+                onChanged: (value) {
+                  setState(() {
+                    query = value;
+                  });
+                },
+                decoration: InputDecoration(
+                  hintText: 'Buscar receta',
+                  fillColor: Colors.white,
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFF129575)),
                   ),
+                  filled: true,
                 ),
-                const SizedBox(height: 7),
-                Column(
-                  children: combinedRecipes.map((recipe) => Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: GestureDetector(
-                            onTap: () {
-                              Navigator.pushNamed(
-                                context,
-                                '/recipe',
-                                arguments: {'recipeId': recipe.recipeId},
-                              );
-                            },
-                            child: RecipeCard(
-                              title: recipe.title,
-                              chef: recipe.chef,
-                              duration: recipe.duration,
-                              imageUrl: recipe.imageUrl,
-                              rating: recipe.rating,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ProfileTabs(
+              selectedIndex: selectedIndex,
+              onTabSelected: (index) {
+                setState(() {
+                  selectedIndex = index;
+                  _recipesToShow = 4; // Reset the number of recipes to show whenever the tab changes
+                });
+              },
+            ), // Opciones de "Recomendaciones Personalizadas" y "Publicaciones de Amigos"
+            const SizedBox(height: 10),
+            Expanded(
+              child: selectedIndex == 1 && followingRecipes.isEmpty
+                  ? Center(
+                      child: Text(
+                        '¡Sigue a algunas personas para ver sus publicaciones!',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 16,
+                          fontStyle: FontStyle.italic,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  : ListView(
+                      padding: const EdgeInsets.symmetric(horizontal: 25), // Agregar margen horizontal
+                      children: [
+                        ...filteredRecipes.map((recipe) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8), // Margen vertical
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/recipe',
+                                      arguments: {'recipeId': recipe.recipeId},
+                                    );
+                                  },
+                                  child: RecipeCard(
+                                    title: recipe.title,
+                                    chef: recipe.chef,
+                                    duration: recipe.duration,
+                                    imageUrl: recipe.imageUrl,
+                                    rating: recipe.rating,
+                                  ),
+                                ),
+                              ),
+                            )),
+                        if ((selectedIndex == 0 && _recipesToShow < recipesFromUser1.length) ||
+                            (selectedIndex == 1 && _recipesToShow < followingRecipes.length))
+                          Center(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF129575),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _recipesToShow += 4;
+                                });
+                              },
+                              child: const Text(
+                                'Cargar más',
+                                style: TextStyle(color: Colors.white),
+                              ),
                             ),
                           ),
-                        ),
-                      )).toList(),
-                ),
-                if (_recipesToShow < _recipeController.allRecipes.length)
-                  Center(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF129575),
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _recipesToShow += 4;
-                        });
-                      },
-                      child: const Text(
-                        'Cargar más',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ),
-                const SizedBox(height: 16),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: recommendedProfiles.map((profile) => Padding(
-                          padding: const EdgeInsets.only(right: 16),
-                          child: ProfileCard(
-                            name: profile.name,
-                            description: profile.description,
-                            imageUrl: profile.imageUrl,
+                        const SizedBox(height: 16),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Row(
+                            children: recommendedProfiles.map((profile) => Padding(
+                                  padding: const EdgeInsets.only(right: 16),
+                                  child: ProfileCard(
+                                    name: profile.name,
+                                    description: profile.description,
+                                    imageUrl: profile.imageUrl,
+                                  ),
+                                )).toList(),
                           ),
-                        )).toList(),
-                  ),
-                ),
-              ],
+                        ),
+                      ],
+                    ),
             ),
-          ),
+          ],
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -373,40 +404,54 @@ class ProfileCard extends StatelessWidget {
           ),
         ],
       ),
-      /*child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    );
+  }
+}
+
+class ProfileTabs extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onTabSelected;
+
+  const ProfileTabs({
+    required this.selectedIndex,
+    required this.onTabSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _buildTab('Recomendaciones', 0),
+        const SizedBox(width: 45), 
+        _buildTab('Publicaciones', 1),
+      ],
+    );
+  }
+
+  Widget _buildTab(String label, int index) {
+    return GestureDetector(
+      onTap: () => onTabSelected(index),
+      child: Column(
         children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Image.asset(
-              imageUrl,
-              height: 120,
-              width: double.infinity,
-              fit: BoxFit.cover,
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: selectedIndex == index ? const Color(0xFF129575) : Colors.grey,
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  description,
-                  style: const TextStyle(color: Colors.grey),
-                ),
-              ],
+          if (selectedIndex == index)
+            Container(
+              margin: const EdgeInsets.only(top: 4),
+              height: 2,
+              width: 60,
+              color: const Color(0xFF129575),
             ),
-          ),
         ],
-      ),*/
+      ),
     );
   }
 }

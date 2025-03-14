@@ -85,36 +85,47 @@ class CommentsScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    '/public_profile',
-                                    arguments: {'keycloak_user_id': profile.keycloak_user_id},
-                                  );
-                                },
-                                child: Row(
-                                  children: [
-                                    CircleAvatar(
-                                      backgroundImage: AssetImage(profile.imageUrl),
-                                      radius: 20,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                              Row(
+                                children: [
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/public_profile',
+                                        arguments: {'keycloak_user_id': profile.keycloak_user_id},
+                                      );
+                                    },
+                                    child: Row(
                                       children: [
-                                        Text(
-                                          profile.name,
-                                          style: TextStyle(fontWeight: FontWeight.bold),
+                                        CircleAvatar(
+                                          backgroundImage: AssetImage(profile.imageUrl),
+                                          radius: 20,
                                         ),
-                                        Text(
-                                          '${comment.fecha_creacion.toLocal()}'.split(' ')[0],
-                                          style: TextStyle(color: Colors.grey, fontSize: 12),
+                                        const SizedBox(width: 8),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              profile.name,
+                                              style: TextStyle(fontWeight: FontWeight.bold),
+                                            ),
+                                            Text(
+                                              '${comment.fecha_creacion.toLocal()}'.split(' ')[0],
+                                              style: TextStyle(color: Colors.grey, fontSize: 12),
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                  Spacer(),
+                                  IconButton(
+                                    icon: const Icon(Icons.report, color: const Color.fromARGB(255, 181, 108, 106)),
+                                    onPressed: () {
+                                      // Lógica para reportar el comentario
+                                    },
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 8),
                               Text(comment.texto_comentario),

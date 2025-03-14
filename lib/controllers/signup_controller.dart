@@ -47,10 +47,10 @@ class SignUpController {
 
   bool canContinue(String fullName, String email, String alias, String password, String confirmPassword) {
     return fullName.isNotEmpty &&
-           email.isNotEmpty &&
-           alias.isNotEmpty &&
-           validateEmail(email) == null &&
-           validatePassword(password) == null &&
-           validateConfirmPassword(password, confirmPassword) == null;
+    email.isNotEmpty &&
+    alias.isNotEmpty &&
+    validateEmail(email) == null &&
+    validatePassword(password) == null &&
+    validateConfirmPassword(password, confirmPassword) == null;
   }
 }

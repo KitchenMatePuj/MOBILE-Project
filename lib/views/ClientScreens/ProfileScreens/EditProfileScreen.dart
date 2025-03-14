@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '/models/profile_model.dart';
 import '/controllers/profile_controller.dart';
 import '/controllers/nutrition_controller.dart';
@@ -17,6 +19,7 @@ class _EditprofileState extends State<EditprofileScreen> {
   late Profile profile;
   late NutritionController nutritionController;
   bool isProfileInfoSelected = true;
+  File? _profileImage;
 
   @override
   void initState() {
@@ -30,6 +33,17 @@ class _EditprofileState extends State<EditprofileScreen> {
     }
     final nutritionModel = NutritionModel();
     nutritionController = NutritionController(model: nutritionModel);
+  }
+
+  Future<void> _pickProfileImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _profileImage = File(pickedFile.path);
+      });
+    }
   }
 
   @override
@@ -120,13 +134,18 @@ class _EditprofileState extends State<EditprofileScreen> {
                         children: [
                           CircleAvatar(
                             radius: 55,
-                            backgroundImage: AssetImage(profile.imageUrl),
+                            backgroundImage: _profileImage != null
+                                ? FileImage(_profileImage!)
+                                : AssetImage(profile.imageUrl) as ImageProvider,
                           ),
                           const SizedBox(width: 35),
-                          CircleAvatar(
-                            radius: 55,
-                            backgroundColor: Colors.grey[300],
-                            child: Icon(Icons.add, color: Colors.grey[700], size: 40),
+                          GestureDetector(
+                            onTap: _pickProfileImage,
+                            child: CircleAvatar(
+                              radius: 55,
+                              backgroundColor: Colors.grey[300],
+                              child: Icon(Icons.add, color: Colors.grey[700], size: 40),
+                            ),
                           ),
                         ],
                       ),

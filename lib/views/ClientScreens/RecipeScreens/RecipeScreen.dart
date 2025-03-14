@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:mobile_kitchenmate/models/comment_model.dart';
 import '/controllers/profile_controller.dart';
 import '/controllers/ingredient_controller.dart';
@@ -8,6 +9,8 @@ import '/models/ingredient_model.dart';
 import '/models/recipe_model.dart';
 import '/models/recipe_ingredient_model.dart';
 import '/controllers/comment_controller.dart'; // Importa el CommentController
+import '/providers/user_provider.dart';
+import '/models/user_model.dart';
 
 class RecipeScreen extends StatefulWidget {
   const RecipeScreen({super.key});
@@ -35,10 +38,18 @@ class _RecipeScreenState extends State<RecipeScreen> {
   int? totalServings;
   int? duration;
   int totalComments = 0; // Variable para almacenar el número total de comentarios
+  Profile? userProfile;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    if (user != null) {
+      userProfile = profileController.recommendedProfiles.firstWhere((p) => p.email == user.email);
+    } else {
+      userProfile = profileController.recommendedProfiles.firstWhere((profile) => profile.keycloak_user_id == 11);
+    }
+    
     arguments = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     if (arguments != null && arguments!['recipeId'] != null) {
       recipeId = int.tryParse(arguments!['recipeId'].toString());
@@ -51,6 +62,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
         duration = int.tryParse(recipeController.getDuration(recipeId.toString()) ?? '');
         totalServings = int.tryParse(recipeController.getTotalServings(recipeId.toString()) ?? '');
         totalComments = commentController.getTotalComments(recipeId!);
+        isSaved = userProfile!.saved_recipes.contains(recipeId);
       }
     }
   }
@@ -141,6 +153,11 @@ class _RecipeScreenState extends State<RecipeScreen> {
                       onPressed: () {
                         setState(() {
                           isSaved = !isSaved;
+                          if (isSaved) {
+                            userProfile!.saved_recipes.add(recipeId!);
+                          } else {
+                            userProfile!.saved_recipes.remove(recipeId);
+                          }
                         });
                       },
                     ),
@@ -155,7 +172,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: const Color.fromARGB(255, 238, 228, 173).withOpacity(0.5), // White color with opacity
+                          color: const Color.fromARGB(255, 255, 255, 255).withOpacity(0.5), // White color with opacity
                           borderRadius: BorderRadius.circular(5),
                         ),
                         child: Row(

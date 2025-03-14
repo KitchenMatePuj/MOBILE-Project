@@ -7,16 +7,50 @@ import '/models/profile_model.dart';
 import '/providers/user_provider.dart';
 import '/models/user_model.dart';
 
-class PublicProfileScreen extends StatelessWidget {
+class PublicProfileScreen extends StatefulWidget {
   final int keycloakUserId;
 
   const PublicProfileScreen({super.key, required this.keycloakUserId});
 
   @override
-  Widget build(BuildContext context) {
-    final profileController = ProfileController();
-    final profile = profileController.recommendedProfiles.firstWhere((p) => p.keycloak_user_id == keycloakUserId);
+  _PublicProfileScreenState createState() => _PublicProfileScreenState();
+}
 
+class _PublicProfileScreenState extends State<PublicProfileScreen> {
+  late ProfileController profileController;
+  late Profile profile;
+  late bool isFollowing;
+
+  @override
+  void initState() {
+    super.initState();
+    profileController = ProfileController();
+    profile = profileController.recommendedProfiles.firstWhere((p) => p.keycloak_user_id == widget.keycloakUserId);
+    isFollowing = profileController.recommendedProfiles
+        .firstWhere((p) => p.keycloak_user_id == 11)
+        .following
+        .contains(widget.keycloakUserId);
+  }
+
+  void _toggleFollow() {
+    setState(() {
+      if (isFollowing) {
+        profileController.recommendedProfiles
+            .firstWhere((p) => p.keycloak_user_id == 11)
+            .following
+            .remove(widget.keycloakUserId);
+      } else {
+        profileController.recommendedProfiles
+            .firstWhere((p) => p.keycloak_user_id == 11)
+            .following
+            .add(widget.keycloakUserId);
+      }
+      isFollowing = !isFollowing;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text(''),
@@ -38,7 +72,7 @@ class PublicProfileScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 23),
             child: Column(
               children: [
-                ProfileStats(profile: profile, keycloakUserId: keycloakUserId), // Estadísticas del usuario
+                ProfileStats(profile: profile, keycloakUserId: widget.keycloakUserId), // Estadísticas del usuario
                 const SizedBox(height: 16),
                 Align(
                   alignment: Alignment.centerLeft,
@@ -53,6 +87,39 @@ class PublicProfileScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 ProfileBio(description: profile.description), // Biografía
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _toggleFollow,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF129575),
+                        ),
+                        child: Text(
+                          isFollowing ? 'Dejar de Seguir' : 'Seguir',
+                          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // Report logic
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(255, 181, 108, 106),
+                        ),
+                        child: const Text(
+                          'Reportar',
+                          style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
