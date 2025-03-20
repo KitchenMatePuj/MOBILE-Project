@@ -20,6 +20,7 @@ class _EditprofileState extends State<EditprofileScreen> {
   late NutritionController nutritionController;
   bool isProfileInfoSelected = true;
   File? _profileImage;
+  int _currentQuestionIndex = 0;
 
   @override
   void initState() {
@@ -49,6 +50,7 @@ class _EditprofileState extends State<EditprofileScreen> {
   @override
   Widget build(BuildContext context) {
     final nutritionQuestions = nutritionController.getQuestions();
+    final currentQuestion = nutritionQuestions[_currentQuestionIndex];
 
     return Scaffold(
       appBar: AppBar(
@@ -203,11 +205,36 @@ class _EditprofileState extends State<EditprofileScreen> {
               ),
             ] else ...[
               Expanded(
-                child: ListView(
+                child: Column(
                   children: [
                     const SizedBox(height: 20),
-                    ...nutritionQuestions.map((q) => _buildMultiSelect(q)).toList(),
-                    const SizedBox(height: 1),
+                    _buildCheckboxList(currentQuestion),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (_currentQuestionIndex > 0)
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back),
+                            onPressed: () {
+                              setState(() {
+                                _currentQuestionIndex--;
+                              });
+                            },
+                            color: Colors.grey,
+                          ),
+                        if (_currentQuestionIndex < nutritionQuestions.length - 1)
+                          IconButton(
+                            icon: const Icon(Icons.arrow_forward),
+                            onPressed: () {
+                              setState(() {
+                                _currentQuestionIndex++;
+                              });
+                            },
+                            color: const Color(0xFF129575),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
                     Row(
                       children: [
                         Expanded(
@@ -319,7 +346,7 @@ class _EditprofileState extends State<EditprofileScreen> {
     );
   }
 
-  Widget _buildMultiSelect(NutritionQuestion question) {
+  Widget _buildCheckboxList(NutritionQuestion question) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -328,30 +355,25 @@ class _EditprofileState extends State<EditprofileScreen> {
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF121212)),
         ),
         const SizedBox(height: 5),
-        Wrap(
-          spacing: 8.0, // Add spacing between options
-          children: question.options.map((option) {
-            final isSelected = question.selected.contains(option);
-            return ChoiceChip(
-              label: Text(option),
-              selected: isSelected,
-              onSelected: (selected) {
-                setState(() {
-                  if (selected) {
-                    question.selected.add(option);
-                  } else {
-                    question.selected.remove(option);
-                  }
-                  nutritionController.updateSelectedOptions(question, question.selected);
-                });
-              },
-              selectedColor: const Color(0xFF129575),
-              backgroundColor: isSelected ? const Color(0xFF129575) : Colors.white,
-              labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black),
-            );
-          }).toList(),
-        ),
-        const SizedBox(height: 20),
+        ...question.options.map((option) {
+          final isSelected = question.selected.contains(option);
+          return CheckboxListTile(
+            title: Text(option),
+            value: isSelected,
+            onChanged: (selected) {
+              setState(() {
+                if (selected == true) {
+                  question.selected.add(option);
+                } else {
+                  question.selected.remove(option);
+                }
+                nutritionController.updateSelectedOptions(question, question.selected);
+              });
+            },
+            activeColor: const Color(0xFF129575),
+            checkColor: Colors.white,
+          );
+        }).toList(),
       ],
     );
   }
