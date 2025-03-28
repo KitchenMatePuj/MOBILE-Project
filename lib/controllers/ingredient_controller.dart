@@ -63,4 +63,8 @@ class IngredientController {
         .take(ingredientsToShow)
         .toList();
   }
+
+  List<String> getAllIngredientNames() {
+    return allIngredients.map((ingredient) => ingredient.ingredientName).toList();
+  }
 }

@@ -34,4 +34,25 @@ class Profile {
     required this.published_recipes,
     required this.shopping_list_recipes,
   });
+
+  factory Profile.fromJson(Map<String, dynamic> json) {
+    return Profile(
+      keycloak_user_id: json['keycloak_user_id'],
+      roleId: json['role_id'],
+      name: json['first_name'],
+      last_name: json['last_name'],
+      email: json['email'],
+      forbidden_foods: List<String>.from(json['forbidden_foods'] ?? []),
+      imageUrl: json['profile_photo'] ?? '',
+      description: json['description'] ?? '',
+      password: json['password'] ?? '',
+      creation_date: DateTime.parse(json['created_at']),
+      update_date: DateTime.parse(json['updated_at']),
+      followers: List<int>.from(json['followers'] ?? []),
+      following: List<int>.from(json['following'] ?? []),
+      saved_recipes: List<int>.from(json['saved_recipes'] ?? []),
+      published_recipes: List<int>.from(json['published_recipes'] ?? []),
+      shopping_list_recipes: List<int>.from(json['shopping_list_recipes'] ?? []),
+    );
+  }
 }

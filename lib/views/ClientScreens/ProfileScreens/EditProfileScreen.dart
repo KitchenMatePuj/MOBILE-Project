@@ -5,6 +5,7 @@ import 'dart:io';
 import '/models/profile_model.dart';
 import '/controllers/profile_controller.dart';
 import '/controllers/nutrition_controller.dart';
+import '/controllers/ingredient_controller.dart';
 import '/models/nutrition_model.dart';
 import '/providers/user_provider.dart';
 
@@ -20,7 +21,8 @@ class _EditprofileState extends State<EditprofileScreen> {
   late NutritionController nutritionController;
   bool isProfileInfoSelected = true;
   File? _profileImage;
-  int _currentQuestionIndex = 0;
+  String _searchQuery = '';
+  int _ingredientsToShow = 10;
 
   @override
   void initState() {
@@ -32,7 +34,9 @@ class _EditprofileState extends State<EditprofileScreen> {
     } else {
       profile = profileController.recommendedProfiles.firstWhere((p) => p.keycloak_user_id == 11);
     }
-    final nutritionModel = NutritionModel();
+    final ingredientController = IngredientController();
+    final sortedIngredients = ingredientController.getAllIngredientNames()..sort();
+    final nutritionModel = NutritionModel(sortedIngredients);
     nutritionController = NutritionController(model: nutritionModel);
   }
 
@@ -50,7 +54,7 @@ class _EditprofileState extends State<EditprofileScreen> {
   @override
   Widget build(BuildContext context) {
     final nutritionQuestions = nutritionController.getQuestions();
-    final currentQuestion = nutritionQuestions[_currentQuestionIndex];
+    final currentQuestion = nutritionQuestions.first;
 
     return Scaffold(
       appBar: AppBar(
@@ -205,70 +209,51 @@ class _EditprofileState extends State<EditprofileScreen> {
               ),
             ] else ...[
               Expanded(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    _buildCheckboxList(currentQuestion),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (_currentQuestionIndex > 0)
-                          IconButton(
-                            icon: const Icon(Icons.arrow_back),
-                            onPressed: () {
-                              setState(() {
-                                _currentQuestionIndex--;
-                              });
-                            },
-                            color: Colors.grey,
-                          ),
-                        if (_currentQuestionIndex < nutritionQuestions.length - 1)
-                          IconButton(
-                            icon: const Icon(Icons.arrow_forward),
-                            onPressed: () {
-                              setState(() {
-                                _currentQuestionIndex++;
-                              });
-                            },
-                            color: const Color(0xFF129575),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/profile');
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF129575),
-                            ),
-                            child: const Text(
-                              'Guardar Cambios',
-                              style: TextStyle(color: Colors.white),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 20),
+                      _buildSearchBar(),
+                      const SizedBox(height: 10),
+                      _buildCheckboxList(currentQuestion),
+                      const SizedBox(height: 20),
+                      _buildLoadMoreButton(currentQuestion),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.pushNamed(context, '/profile');
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF129575),
+                              ),
+                              child: const Text(
+                                'Guardar Cambios',
+                                style: TextStyle(color: Colors.white),
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/profile');
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color.fromARGB(255, 193, 128, 124),
-                            ),
-                            child: const Text(
-                              'Cancelar',
-                              style: TextStyle(color: Colors.white),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.pushNamed(context, '/profile');
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color.fromARGB(255, 193, 128, 124),
+                              ),
+                              child: const Text(
+                                'Cancelar',
+                                style: TextStyle(color: Colors.white),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -346,7 +331,31 @@ class _EditprofileState extends State<EditprofileScreen> {
     );
   }
 
+  Widget _buildSearchBar() {
+    return TextField(
+      onChanged: (value) {
+        setState(() {
+          _searchQuery = value;
+          _ingredientsToShow = 10;
+        });
+      },
+      decoration: InputDecoration(
+        labelText: 'Buscar alimentos',
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        prefixIcon: const Icon(Icons.search),
+      ),
+    );
+  }
+
   Widget _buildCheckboxList(NutritionQuestion question) {
+    final filteredOptions = question.options
+        .where((option) => option.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .toList()
+        .take(_ingredientsToShow)
+        .toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -355,7 +364,7 @@ class _EditprofileState extends State<EditprofileScreen> {
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF121212)),
         ),
         const SizedBox(height: 5),
-        ...question.options.map((option) {
+        ...filteredOptions.map((option) {
           final isSelected = question.selected.contains(option);
           return CheckboxListTile(
             title: Text(option),
@@ -375,6 +384,33 @@ class _EditprofileState extends State<EditprofileScreen> {
           );
         }).toList(),
       ],
+    );
+  }
+
+  Widget _buildLoadMoreButton(NutritionQuestion question) {
+    final filteredOptions = question.options
+        .where((option) => option.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .toList();
+    
+    if (_ingredientsToShow >= filteredOptions.length) {
+      return const SizedBox.shrink();
+    }
+
+    return Center(
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF129575),
+        ),
+        onPressed: () {
+          setState(() {
+            _ingredientsToShow += 10;
+          });
+        },
+        child: const Text(
+          'Cargar más',
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
     );
   }
 }

@@ -35,6 +35,27 @@ class UserModel {
     required this.shoppingListRecipes,
   });
 
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      keycloakUserId: json['keycloak_user_id'],
+      roleId: json['role_id'],
+      firstName: json['first_name'],
+      lastName: json['last_name'],
+      email: json['email'],
+      forbiddenFoods: List<String>.from(json['forbidden_foods'] ?? []),
+      imageUrl: json['profile_photo'] ?? '',
+      description: json['description'] ?? '',
+      password: json['password'] ?? '',
+      creationDate: DateTime.parse(json['created_at']),
+      updateDate: DateTime.parse(json['updated_at']),
+      followers: List<int>.from(json['followers'] ?? []),
+      following: List<int>.from(json['following'] ?? []),
+      savedRecipes: List<int>.from(json['saved_recipes'] ?? []),
+      publishedRecipes: List<int>.from(json['published_recipes'] ?? []),
+      shoppingListRecipes: List<int>.from(json['shopping_list_recipes'] ?? []),
+    );
+  }
+
   bool validatePassword(String password) {
     final hasMinLength = password.length > 8;
     final hasNumber = RegExp(r'\d').hasMatch(password);
