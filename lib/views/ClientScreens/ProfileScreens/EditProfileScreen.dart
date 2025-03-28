@@ -212,13 +212,19 @@ class _EditprofileState extends State<EditprofileScreen> {
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
-                      const SizedBox(height: 20),
+                        Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "Alimentos Restringidos",
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF121212)),
+                        ),
+                        ),
+                      const SizedBox(height: 15),
                       _buildSearchBar(),
                       const SizedBox(height: 10),
                       _buildCheckboxList(currentQuestion),
-                      const SizedBox(height: 20),
                       _buildLoadMoreButton(currentQuestion),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
                       Row(
                         children: [
                           Expanded(
@@ -359,11 +365,6 @@ class _EditprofileState extends State<EditprofileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          question.question,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF121212)),
-        ),
-        const SizedBox(height: 5),
         ...filteredOptions.map((option) {
           final isSelected = question.selected.contains(option);
           return CheckboxListTile(
