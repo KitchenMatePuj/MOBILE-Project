@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import '../../controllers/signup_controller.dart';
+import '../../controllers/nutrition_controller.dart';
+import '../../controllers/ingredient_controller.dart';
 import '../../models/user_model.dart';
+import '../../models/nutrition_model.dart';
+import '../../services/api_service_profile.dart'; // Import the ApiService
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
 
   @override
-  _SignUpScreenState createState() => _SignUpScreenState();
+  SignUpScreenState createState() => SignUpScreenState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen> {
+class SignUpScreenState extends State<SignUpScreen> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -28,13 +32,40 @@ class _SignUpScreenState extends State<SignUpScreen> {
   String? _confirmPasswordError;
   String? _emailError;
 
-  late SignUpController _controller;
+  bool _isSignUpScreen = true; // Flag to switch between screens
+  late SignUpController _signUpController;
+  late NutritionController _nutritionController;
+  int _currentQuestionIndex = 0;
+  String _searchQuery = '';
+  int _ingredientsToShow = 10;
 
   @override
   void initState() {
     super.initState();
-    final userModel = UserModel(firstName: '', lastName: '', email: '', password: '', roleId: 0, keycloakUserId: 0, forbiddenFoods: [], imageUrl: '', description: '', creationDate: DateTime.now(), updateDate: DateTime.now(), followers: [], following: [], savedRecipes: [], publishedRecipes: [], shoppingListRecipes: []);
-    _controller = SignUpController(userModel: userModel);
+    final userModel = UserModel(
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      roleId: 0,
+      keycloakUserId: 0,
+      forbiddenFoods: [],
+      imageUrl: '',
+      description: '',
+      creationDate: DateTime.now(),
+      updateDate: DateTime.now(),
+      followers: [],
+      following: [],
+      savedRecipes: [],
+      publishedRecipes: [],
+      shoppingListRecipes: [],
+    );
+    _signUpController = SignUpController(userModel: userModel, apiService: ApiService()); // Pass the ApiService instance
+
+    final ingredientController = IngredientController();
+    final sortedIngredients = ingredientController.getAllIngredientNames()..sort();
+    final nutritionModel = NutritionModel(sortedIngredients);
+    _nutritionController = NutritionController(model: nutritionModel);
   }
 
   void _validateForm() {
@@ -45,30 +76,48 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final confirmPassword = _confirmPasswordController.text;
 
     setState(() {
-      _firstNameError = _controller.validateFullName(fullName);
+      _firstNameError = _signUpController.validateFullName(fullName);
       _isFirstNameValid = _firstNameError == null;
 
-      _lastNameError = _controller.validate(alias);
+      _lastNameError = _signUpController.validate(alias);
       _isLastNameValid = _lastNameError == null;
 
-      _emailError = _controller.validateEmail(email);
+      _emailError = _signUpController.validateEmail(email);
       _isEmailValid = _emailError == null;
 
-      _passwordError = _controller.validatePassword(password);
+      _passwordError = _signUpController.validatePassword(password);
       _isPasswordValid = _passwordError == null;
 
-      _confirmPasswordError = _controller.validateConfirmPassword(password, confirmPassword);
+      _confirmPasswordError = _signUpController.validateConfirmPassword(password, confirmPassword);
       _isConfirmPasswordValid = _confirmPasswordError == null;
 
-      _canContinue = _controller.canContinue(fullName, email, alias, password, confirmPassword);
+      _canContinue = _signUpController.canContinue(fullName, email, alias, password, confirmPassword);
     });
   }
+
+Future<void> _createAccount() async {
+    // Update user model with values from the form
+    _signUpController.userModel.firstName = _firstNameController.text;
+    _signUpController.userModel.lastName = _lastNameController.text;
+    _signUpController.userModel.email = _emailController.text;
+
+    final success = await _signUpController.registerUser();
+    if (success) {
+      // Navigate to the next screen or show success message
+      Navigator.pushNamed(context, '/login');
+    } else {
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to create account')),
+      );
+    }
+}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Creación de Cuenta'),
+        title: Text(_isSignUpScreen ? 'Creación de Cuenta' : 'Formulario de Nutrición'),
         backgroundColor: const Color(0xFF129575),
         foregroundColor: Colors.white,
         leading: IconButton(
@@ -78,50 +127,54 @@ class _SignUpScreenState extends State<SignUpScreen> {
           },
         ),
       ),
-      body: SingleChildScrollView(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minHeight: MediaQuery.of(context).size.height,
+      body: _isSignUpScreen ? _buildSignUpScreen(context) : _buildNutritionFormScreen(context),
+    );
+  }
+
+  Widget _buildSignUpScreen(BuildContext context) {
+    return SingleChildScrollView(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: MediaQuery.of(context).size.height,
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(30),
+            color: Colors.white,
           ),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(30),
-              color: Colors.white,
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 20),
-                const Text(
-                  "Crear una Cuenta",
-                  style: TextStyle(
-                    fontSize: 25,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              const Text(
+                "Crear una Cuenta",
+                style: TextStyle(
+                  fontSize: 25,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  "Permítanos ayudarle con la creación de su cuenta, no le llevará mucho tiempo.",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF121212),
-                  ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                "Permítanos ayudarle con la creación de su cuenta, no le llevará mucho tiempo.",
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF121212),
                 ),
-                const SizedBox(height: 20),
-                _buildUsersFirstNameInput(),
-                _buildUsersLastNameInput(),
-                _buildEmailInput(),
-                _buildPasswordInput(),
-                _buildConfirmPasswordInput(),
-                _buildLoginButton(context),
-                const SizedBox(height: 30),
-                _buildSignUpWith(context),
-                _buildRegisterPrompt(context),
-                const SizedBox(height: 20),
-              ],
-            ),
+              ),
+              const SizedBox(height: 20),
+              _buildUsersFirstNameInput(),
+              _buildUsersLastNameInput(),
+              _buildEmailInput(),
+              _buildPasswordInput(),
+              _buildConfirmPasswordInput(),
+              _buildLoginButton(context),
+              const SizedBox(height: 30),
+              _buildSignUpWith(context),
+              _buildRegisterPrompt(context),
+              const SizedBox(height: 20),
+            ],
           ),
         ),
       ),
@@ -292,7 +345,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ),
         onPressed: _canContinue
             ? () {
-                Navigator.pushNamed(context, '/nutrition_form');
+                setState(() {
+                  _isSignUpScreen = false; // Switch to the nutrition form screen
+                });
               }
             : null,
         child: Row(
@@ -356,7 +411,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
               // Google Icon with GestureDetector
               GestureDetector(
                 onTap: () {
-                  Navigator.pushNamed(context, '/nutrition_form');
+                  setState(() {
+                    _isSignUpScreen = false; // Switch to the nutrition form screen
+                  });
                 },
                 child: Image.asset(
                   'assets/icons/googleIcon.png',
@@ -368,7 +425,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
               // Facebook Icon with GestureDetector
               GestureDetector(
                 onTap: () {
-                  Navigator.pushNamed(context, '/nutrition_form');
+                  setState(() {
+                    _isSignUpScreen = false; // Switch to the nutrition form screen
+                  });
                 },
                 child: Image.asset(
                   'assets/icons/facebookIcon.png', 
@@ -407,6 +466,232 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildNutritionFormScreen(BuildContext context) {
+    final questions = _nutritionController.getQuestions();
+    final currentQuestion = questions[_currentQuestionIndex];
+
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.all(20),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Personaliza tus recomendaciones",
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    "Los alimentos restringidos son aquellos alimentos que por temas de alergias, intolerancia, temas de dieta, el usuario no puede comer.",
+                    style: TextStyle(fontSize: 14, color: Color(0xFF121212)),
+                  ),
+                  const SizedBox(height: 20),
+                  _buildSearchBar(),
+                  const SizedBox(height: 10),
+                  _buildCheckboxList(currentQuestion),
+                  const SizedBox(height: 20),
+                  _buildLoadMoreButton(currentQuestion),
+                  const SizedBox(height: 20),
+                  _buildNavigationButtons(context, questions.length),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return TextField(
+      onChanged: (value) {
+        setState(() {
+          _searchQuery = value;
+          _ingredientsToShow = 10;
+        });
+      },
+      decoration: InputDecoration(
+        labelText: 'Buscar alimentos',
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        prefixIcon: const Icon(Icons.search),
+      ),
+    );
+  }
+
+  Widget _buildCheckboxList(NutritionQuestion question) {
+    final filteredOptions = question.options
+        .where((option) => option.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .toList()
+        .take(_ingredientsToShow)
+        .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          question.question,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF121212)),
+        ),
+        const SizedBox(height: 5),
+        ...filteredOptions.map((option) {
+          final isSelected = question.selected.contains(option);
+          return CheckboxListTile(
+            title: Text(option),
+            value: isSelected,
+            onChanged: (selected) {
+              setState(() {
+                if (selected == true) {
+                  question.selected.add(option);
+                } else {
+                  question.selected.remove(option);
+                }
+                _nutritionController.updateSelectedOptions(question, question.selected);
+              });
+            },
+            activeColor: const Color(0xFF129575),
+            checkColor: Colors.white,
+          );
+        }).toList(),
+      ],
+    );
+  }
+
+  Widget _buildLoadMoreButton(NutritionQuestion question) {
+    final filteredOptions = question.options
+        .where((option) => option.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .toList();
+    
+    if (_ingredientsToShow >= filteredOptions.length) {
+      return const SizedBox.shrink();
+    }
+
+    return Center(
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF129575),
+        ),
+        onPressed: () {
+          setState(() {
+            _ingredientsToShow += 10;
+          });
+        },
+        child: const Text(
+          'Cargar más',
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
+    );
+  }
+
+Widget _buildNavigationButtons(BuildContext context, int totalQuestions) {
+    final isLastQuestion = _currentQuestionIndex == totalQuestions - 1;
+    final isFirstQuestion = _currentQuestionIndex == 0;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Ancho máximo disponible para los botones
+        double availableWidth = constraints.maxWidth;
+
+        // Definición los anchos base de los botones
+        double mainButtonWidth = isLastQuestion ? 180 : 150;
+        double backButtonWidth = 150;
+        double spacing = 40;
+
+        // Calcular si hay suficiente espacio para ambos botones con el espaciado
+        double totalRequiredWidth = mainButtonWidth + backButtonWidth + spacing;
+        if (totalRequiredWidth > availableWidth) {
+          // Ajustar el ancho del botón "Atrás" si es necesario
+          double excess = totalRequiredWidth - availableWidth;
+          backButtonWidth = (backButtonWidth - excess).clamp(80, 150); // No menor de 80
+        }
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (!isFirstQuestion) ...[
+              SizedBox(
+                width: backButtonWidth,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    backgroundColor: Colors.grey,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _currentQuestionIndex--;
+                    });
+                  },
+                  child: const Text(
+                    "Atrás",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: spacing),
+            ] else ...[
+              // Espacio vacío simula la posición del botón "Atrás"
+              SizedBox(width: backButtonWidth + spacing),
+            ],
+            SizedBox(
+              width: mainButtonWidth,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  backgroundColor: const Color(0xFF129575),
+                ),
+                onPressed: () {
+                  if (isLastQuestion) {
+                    _createAccount(); // Call the function to create account
+                  } else {
+                    setState(() {
+                      _currentQuestionIndex++;
+                    });
+                  }
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      isLastQuestion ? "Crear Cuenta" : "Siguiente",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 11),
+                    const Icon(
+                      Icons.arrow_forward,
+                      size: 20,
+                      color: Colors.white,
+                    )
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

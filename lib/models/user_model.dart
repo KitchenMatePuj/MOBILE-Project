@@ -1,20 +1,20 @@
 class UserModel {
-  final int keycloakUserId;
-  final int roleId;
-  final String firstName;
-  final String lastName;
-  final String email;
-  final List<String> forbiddenFoods;
-  final String imageUrl;
-  final String description;
-  final String password;
-  final DateTime creationDate;
-  final DateTime updateDate;
-  final List<int> followers;
-  final List<int> following;
-  final List<int> savedRecipes;
-  final List<int> publishedRecipes;
-  final List<int> shoppingListRecipes;
+  late int keycloakUserId;
+  late int roleId;
+  late String firstName;
+  late String lastName;
+  late String email;
+  late List<String> forbiddenFoods;
+  late String imageUrl;
+  late String description;
+  late String password;
+  late DateTime creationDate;
+  late DateTime updateDate;
+  late List<int> followers;
+  late List<int> following;
+  late List<int> savedRecipes;
+  late List<int> publishedRecipes;
+  late List<int> shoppingListRecipes;
 
   UserModel({
     required this.keycloakUserId,

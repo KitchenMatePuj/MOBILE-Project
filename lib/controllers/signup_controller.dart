@@ -1,9 +1,11 @@
 import '/models/user_model.dart';
+import '../services/api_service_profile.dart';
 
 class SignUpController {
   final UserModel userModel;
+  final ApiService apiService;
 
-  SignUpController({required this.userModel});
+  SignUpController({required this.userModel, required this.apiService});
 
   String? validatePassword(String password) {
     if (userModel.validatePassword(password)) {
@@ -52,5 +54,9 @@ class SignUpController {
     validateEmail(email) == null &&
     validatePassword(password) == null &&
     validateConfirmPassword(password, confirmPassword) == null;
+  }
+
+  Future<bool> registerUser() async {
+    return await apiService.createProfile(userModel.firstName, userModel.lastName, userModel.email);
   }
 }

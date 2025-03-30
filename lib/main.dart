@@ -5,7 +5,6 @@ import 'views/SignInAndSignUpScreens/HomeScreen.dart';
 import 'views/SignInAndSignUpScreens/LoginScreen.dart';
 import 'views/SignInAndSignUpScreens/ForgotPasswordScreens/ForgotPasswordScreen.dart';
 import 'views/SignInAndSignUpScreens/SignUpScreen.dart';
-import 'views/SignInAndSignUpScreens/NutritionFormScreen.dart';
 import 'views/ClientScreens/DashboardScreen.dart';
 import 'views/ClientScreens/RecipeScreens/RecipeSearchScreen.dart';
 import 'views/ClientScreens/ProfileScreens/ProfileScreen.dart';
@@ -76,7 +75,6 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/forgot_password': (context) => const ForgotPasswordScreen(),
         '/sign_up': (context) => const SignUpScreen(),
-        '/nutrition_form': (context) => const NutritionFormScreen(),
         '/dashboard': (context) => const DashboardScreen(),
         '/recipe_search': (context) => const RecipeSearchScreen(),
         '/profile': (context) => const ProfileScreen(),
