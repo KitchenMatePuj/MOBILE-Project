@@ -43,24 +43,24 @@ class SignUpScreenState extends State<SignUpScreen> {
   void initState() {
     super.initState();
     final userModel = UserModel(
-      firstName: '',
-      lastName: '',
+      first_name: '',
+      last_name: '',
       email: '',
       password: '',
       roleId: 0,
-      keycloakUserId: 0,
-      forbiddenFoods: [],
+      keycloak_user_id: 0,
+      forbidden_foods: [],
       imageUrl: '',
       description: '',
-      creationDate: DateTime.now(),
-      updateDate: DateTime.now(),
+      creation_date: DateTime.now(),
+      update_date: DateTime.now(),
       followers: [],
       following: [],
-      savedRecipes: [],
-      publishedRecipes: [],
-      shoppingListRecipes: [],
+      saved_recipes: [],
+      published_recipes: [],
+      shopping_list_recipes: [],
     );
-    _signUpController = SignUpController(userModel: userModel, apiService: ApiService()); // Pass the ApiService instance
+    _signUpController = SignUpController(userModel: userModel, apiService: ApiServiceProfile()); // Pass the ApiService instance
 
     final ingredientController = IngredientController();
     final sortedIngredients = ingredientController.getAllIngredientNames()..sort();
@@ -97,8 +97,8 @@ class SignUpScreenState extends State<SignUpScreen> {
 
 Future<void> _createAccount() async {
     // Update user model with values from the form
-    _signUpController.userModel.firstName = _firstNameController.text;
-    _signUpController.userModel.lastName = _lastNameController.text;
+    _signUpController.userModel.first_name = _firstNameController.text;
+    _signUpController.userModel.last_name = _lastNameController.text;
     _signUpController.userModel.email = _emailController.text;
 
     final success = await _signUpController.registerUser();

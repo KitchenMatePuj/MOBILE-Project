@@ -27,7 +27,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         ? profileController.recommendedProfiles.firstWhere((p) => p.email == user.email)
         : profileController.recommendedProfiles.firstWhere((profile) => profile.keycloak_user_id == 11);
 
-    final userReports = reportController.getReportsByUserId(profile.keycloak_user_id);
+    final userReports = reportController.getReportsByUserId(profile.keycloak_user_id.toString());
 
     return Scaffold(
       appBar: AppBar(

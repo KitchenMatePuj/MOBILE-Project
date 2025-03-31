@@ -3,7 +3,7 @@ import '../services/api_service_profile.dart';
 
 class SignUpController {
   final UserModel userModel;
-  final ApiService apiService;
+  final ApiServiceProfile apiService;
 
   SignUpController({required this.userModel, required this.apiService});
 
@@ -32,7 +32,7 @@ class SignUpController {
   }
 
   String? validateFullName(String fullName) {
-    if (userModel.validateFisrtName(fullName)) {
+    if (userModel.validateFirstName(fullName)) {
       return null;
     } else {
       return 'Introduce tu nombre completo.';
@@ -57,6 +57,6 @@ class SignUpController {
   }
 
   Future<bool> registerUser() async {
-    return await apiService.createProfile(userModel.firstName, userModel.lastName, userModel.email);
+    return await apiService.createProfile(userModel.first_name, userModel.last_name, userModel.email);
   }
 }

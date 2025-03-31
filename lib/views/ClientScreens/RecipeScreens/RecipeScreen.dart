@@ -245,7 +245,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
                           maxWidth: MediaQuery.of(context).size.width * 0.2, // Adjust the width as needed
                         ),
                         child: Text(
-                          chefProfile!.name,
+                          chefProfile!.first_name,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),

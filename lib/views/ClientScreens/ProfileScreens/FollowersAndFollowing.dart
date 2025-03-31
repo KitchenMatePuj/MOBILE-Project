@@ -167,7 +167,7 @@ class FollowersFollowingContent extends StatelessWidget {
           leading: CircleAvatar(
             backgroundImage: AssetImage(user.imageUrl),
           ),
-          title: Text(user.name),
+          title: Text(user.first_name),
           trailing: ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF129575), // Background color

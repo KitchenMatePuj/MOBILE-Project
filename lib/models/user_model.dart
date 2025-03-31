@@ -1,58 +1,58 @@
 class UserModel {
-  late int keycloakUserId;
+  late int keycloak_user_id;
   late int roleId;
-  late String firstName;
-  late String lastName;
+  late String first_name;
+  late String last_name;
   late String email;
-  late List<String> forbiddenFoods;
+  late List<String> forbidden_foods;
   late String imageUrl;
   late String description;
   late String password;
-  late DateTime creationDate;
-  late DateTime updateDate;
+  late DateTime creation_date;
+  late DateTime update_date;
   late List<int> followers;
   late List<int> following;
-  late List<int> savedRecipes;
-  late List<int> publishedRecipes;
-  late List<int> shoppingListRecipes;
+  late List<int> saved_recipes;
+  late List<int> published_recipes;
+  late List<int> shopping_list_recipes;
 
   UserModel({
-    required this.keycloakUserId,
+    required this.keycloak_user_id,
     required this.roleId,
-    required this.firstName,
-    required this.lastName,
+    required this.first_name,
+    required this.last_name,
     required this.email,
-    required this.forbiddenFoods,
+    required this.forbidden_foods,
     required this.imageUrl,
     required this.description,
     required this.password,
-    required this.creationDate,
-    required this.updateDate,
+    required this.creation_date,
+    required this.update_date,
     required this.followers,
     required this.following,
-    required this.savedRecipes,
-    required this.publishedRecipes,
-    required this.shoppingListRecipes,
+    required this.saved_recipes,
+    required this.published_recipes,
+    required this.shopping_list_recipes,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      keycloakUserId: json['keycloak_user_id'],
+      keycloak_user_id: int.parse(json['keycloak_user_id'].toString()),
       roleId: json['role_id'],
-      firstName: json['first_name'],
-      lastName: json['last_name'],
+      first_name: json['first_name'],
+      last_name: json['last_name'],
       email: json['email'],
-      forbiddenFoods: List<String>.from(json['forbidden_foods'] ?? []),
+      forbidden_foods: List<String>.from(json['forbidden_foods'] ?? []),
       imageUrl: json['profile_photo'] ?? '',
       description: json['description'] ?? '',
       password: json['password'] ?? '',
-      creationDate: DateTime.parse(json['created_at']),
-      updateDate: DateTime.parse(json['updated_at']),
+      creation_date: DateTime.parse(json['created_at']),
+      update_date: DateTime.parse(json['updated_at']),
       followers: List<int>.from(json['followers'] ?? []),
       following: List<int>.from(json['following'] ?? []),
-      savedRecipes: List<int>.from(json['saved_recipes'] ?? []),
-      publishedRecipes: List<int>.from(json['published_recipes'] ?? []),
-      shoppingListRecipes: List<int>.from(json['shopping_list_recipes'] ?? []),
+      saved_recipes: List<int>.from(json['saved_recipes'] ?? []),
+      published_recipes: List<int>.from(json['published_recipes'] ?? []),
+      shopping_list_recipes: List<int>.from(json['shopping_list_recipes'] ?? []),
     );
   }
 
@@ -68,11 +68,11 @@ class UserModel {
     return emailRegExp.hasMatch(email);
   }
 
-  bool validateFisrtName(String firstName) {
-    return firstName.isNotEmpty;
+  bool validateFirstName(String first_name) {
+    return first_name.isNotEmpty;
   }
 
-  bool validateLastName(String lastName) {
-    return lastName.isNotEmpty;
+  bool validateLastName(String last_name) {
+    return last_name.isNotEmpty;
   }
 }

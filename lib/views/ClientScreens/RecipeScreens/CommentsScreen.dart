@@ -106,7 +106,7 @@ class CommentsScreen extends StatelessWidget {
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              profile.name,
+                                              profile.first_name,
                                               style: TextStyle(fontWeight: FontWeight.bold),
                                             ),
                                             Text(

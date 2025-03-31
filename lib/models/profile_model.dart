@@ -1,7 +1,7 @@
 class Profile {
   final int keycloak_user_id;
   final int roleId;
-  final String name;
+  final String first_name;
   final String last_name;
   final String email;
   final List<String> forbidden_foods;
@@ -19,15 +19,15 @@ class Profile {
   Profile({
     required this.keycloak_user_id,
     required this.roleId,
-    required this.name,
+    required this.first_name,
     required this.last_name,
     required this.email,
     required this.forbidden_foods,
     required this.imageUrl,
-    required this.description,
     required this.password,
     required this.creation_date,
     required this.update_date,
+    required this.description,
     required this.followers,
     required this.following,
     required this.saved_recipes,
@@ -37,9 +37,9 @@ class Profile {
 
   factory Profile.fromJson(Map<String, dynamic> json) {
     return Profile(
-      keycloak_user_id: json['keycloak_user_id'],
+      keycloak_user_id: int.parse(json['keycloak_user_id'].toString()),
       roleId: json['role_id'],
-      name: json['first_name'],
+      first_name: json['first_name'],
       last_name: json['last_name'],
       email: json['email'],
       forbidden_foods: List<String>.from(json['forbidden_foods'] ?? []),

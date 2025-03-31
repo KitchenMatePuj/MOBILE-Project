@@ -1,20 +1,48 @@
 import '/models/profile_model.dart';
+import '/services/api_service_profile.dart';
 
 class ProfileController {
+  final ApiServiceProfile _apiServiceProfile = ApiServiceProfile();
+  Profile? loggedInProfile;
+
   final List<Profile> recommendedProfiles = [
-    Profile(name: "KitchenMate", description: "Perfil principal de la aplicación KitchenMate.", imageUrl: "assets/chefs/kitchenmate.jpg", followers: [3, 7, 6], following: [], saved_recipes: [2, 3, 5], published_recipes: [1, 4, 7], shopping_list_recipes: [2, 3, 5], keycloak_user_id: 1, roleId: 10, email: "kitchenmate@gmail.com", forbidden_foods: [], last_name: "Mate", password: "123", creation_date: DateTime.now(), update_date: DateTime.now()),
-    Profile(name: "Tia_Piedad", description: "Cocinera de almuerzos rápidos y deliciosos.", imageUrl: "assets/chefs/Tia_Piedad.jpg", followers: [1, 10, 7, 5], following: [], saved_recipes: [4, 5, 6], published_recipes: [10], shopping_list_recipes: [4, 5, 6], keycloak_user_id: 2, roleId: 2, email: "tiita@gmail.com", forbidden_foods: ["Mariscos"], last_name: "Piedad", password: "123", creation_date: DateTime.now(), update_date: DateTime.now()),
-    Profile(name: "Machis", description: "Amante de la pasta y la cocina italiana.", imageUrl: "assets/chefs/Machis.jpg", followers: [11, 7], following: [1, 2, 8, 10], saved_recipes: [7, 8, 9], published_recipes: [12], shopping_list_recipes: [7, 8, 9], keycloak_user_id: 3, roleId: 3, email: "machis@gmail.com", forbidden_foods: ["Cereal"], last_name: "Machis", password: "123", creation_date: DateTime.now(), update_date: DateTime.now()),
-    Profile(name: "Dora_Explora", description: "Chef de mariscos y cenas especiales.", imageUrl: "assets/chefs/Dora_Explora.jpg", followers: [8, 9, 10, 11], following: [10, 7, 11], saved_recipes: [10, 11, 12], published_recipes: [9], shopping_list_recipes: [10, 11, 12], keycloak_user_id: 4, roleId: 4, email: "dorita@gmail.com", forbidden_foods: ["Cereal"], last_name: "Explora", password: "123", creation_date: DateTime.now(), update_date: DateTime.now()),
-    Profile(name: "Chilindrinita99", description: "Experta en cocina española y mariscos.", imageUrl: "assets/chefs/Chilindrinita99.jpg", followers: [8, 9], following: [10, 11, 2], saved_recipes: [10, 11, 12], published_recipes: [8], shopping_list_recipes: [10, 11, 12], keycloak_user_id: 5, roleId: 5, email: "chilindirnita@gmail.com", forbidden_foods: ["Cereal"], last_name: "Chilindrinita", password: "123", creation_date: DateTime.now(), update_date: DateTime.now()),
-    Profile(name: "XxSportacusXx", description: "Chef especializado en platos proteicos y cenas festivas.", imageUrl: "assets/chefs/XxSportacusXx.jpg", followers: [11, 8], following: [10, 1, 7], saved_recipes: [1, 4], published_recipes: [2], shopping_list_recipes: [1, 4], keycloak_user_id: 6, roleId: 6, email: "sportacus@gmail.com", forbidden_foods: ["Gluten"], last_name: "Sportacus", password: "123", creation_date: DateTime.now(), update_date: DateTime.now()),
-    Profile(name: "Rihannita", description: "Amante de los postres y las frutas.", imageUrl: "assets/chefs/Rihannita.jpg", followers: [4, 6], following: [10, 4, 6], saved_recipes: [1, 2, 3], published_recipes: [3], shopping_list_recipes: [1, 2, 3], keycloak_user_id: 7, roleId: 7, email: "rihannita@gmail.com", forbidden_foods: ["Lácteos"], last_name: "Rihanna", password: "123", creation_date: DateTime.now(), update_date: DateTime.now()),
-    Profile(name: "Voldi_Feliz", description: "Experto en desayunos y platos colombianos.", imageUrl: "assets/chefs/Voldi_Feliz.jpg", followers: [3, 9, 11], following: [10, 4, 5, 6, 10, 11], saved_recipes: [1, 2, 3], published_recipes: [5], shopping_list_recipes: [1, 2, 3], keycloak_user_id: 8, roleId: 8, email: "voldi@gmail.com", forbidden_foods: ["Nueces"], last_name: "Feliz", password: "123", creation_date: DateTime.now(), update_date: DateTime.now()),
-    Profile(name: "Calypso66", description: "Especialista en bebidas y cócteles.", imageUrl: "assets/chefs/Calypso66.jpg", followers: [], following: [10, 8, 5, 4], saved_recipes: [1, 2, 3], published_recipes: [6], shopping_list_recipes: [1, 2, 3], keycloak_user_id: 9, roleId: 9, email: "calypso@gmail.com", forbidden_foods: ["Alcohol"], last_name: "Calypso", password: "123", creation_date: DateTime.now(), update_date: DateTime.now()),
-    Profile(name: "Laura_Bozzo", description: "Chef de comidas rápidas y cenas abundantes.", imageUrl: "assets/chefs/Laura_Bozzo.jpg", followers: [3, 4, 5, 6, 7, 8, 9, 11], following: [10, 2, 4, 7], saved_recipes: [1, 2, 3], published_recipes: [11], shopping_list_recipes: [1, 2, 3], keycloak_user_id: 10, roleId: 1, email: "laurita@gmail.com", forbidden_foods: ["Pescado"], last_name: "Bozzo", password: "123", creation_date: DateTime.now(), update_date: DateTime.now()),
-    Profile(name: "Miguel_Uribe", description: "Amo locamente las recetas que tengan Nuggets y/o Milanesas!!! Soy un principiante en esto de cocinar, pero hago mi mayor esfuerzo ✨✨✨", imageUrl: "assets/chefs/profilePhoto.jpg", followers: [4, 5, 8], following: [10, 6, 3, 4, 8], saved_recipes: [1, 2, 3], published_recipes: [13], shopping_list_recipes: [1, 5, 7], keycloak_user_id: 11, roleId: 11, email: "123", forbidden_foods: ["Pescado"], last_name: "Uribe", password: "123", creation_date: DateTime.now(), update_date: DateTime.now()),
-    Profile(keycloak_user_id: 3, roleId: 0, name: 'Miguel Angel', last_name: 'Uribe Villada', email: 'migueluribelabebecitaguaro@hot.com', forbidden_foods: ['LECHE'], imageUrl: 'imageUrl', description: 'description', password: '12345678)', creation_date: DateTime.now(), update_date: DateTime.now(), followers: [], following: [], saved_recipes: [], published_recipes: [], shopping_list_recipes:[]),
-  ];
+    // Default profiles here...
+  Profile(first_name: "KitchenMate", description: "Perfil principal de la aplicación KitchenMate.", imageUrl: "assets/chefs/kitchenmate.jpg", followers: [3, 7, 6], following: [], saved_recipes: [2, 3, 5], published_recipes: [1, 4, 7], shopping_list_recipes: [2, 3, 5], keycloak_user_id: 1, roleId: 10, email: "kitchenmate@gmail.com", forbidden_foods: [], last_name: "Mate", password: "123", creation_date: DateTime.now(), update_date: DateTime.now()),
+    Profile(first_name: "Tia_Piedad", description: "Cocinera de almuerzos rápidos y deliciosos.", imageUrl: "assets/chefs/Tia_Piedad.jpg", followers: [1, 10, 7, 5], following: [], saved_recipes: [4, 5, 6], published_recipes: [10], shopping_list_recipes: [4, 5, 6], keycloak_user_id: 2, roleId: 2, email: "tiita@gmail.com", forbidden_foods: ["Mariscos"], last_name: "Piedad", password: "123", creation_date: DateTime.now(), update_date: DateTime.now()),
+    Profile(first_name: "Machis", description: "Amante de la pasta y la cocina italiana.", imageUrl: "assets/chefs/Machis.jpg", followers: [11, 7], following: [1, 2, 8, 10], saved_recipes: [7, 8, 9], published_recipes: [12], shopping_list_recipes: [7, 8, 9], keycloak_user_id: 3, roleId: 3, email: "machis@gmail.com", forbidden_foods: ["Cereal"], last_name: "Machis", password: "123", creation_date: DateTime.now(), update_date: DateTime.now()),
+    Profile(first_name: "Dora_Explora", description: "Chef de mariscos y cenas especiales.", imageUrl: "assets/chefs/Dora_Explora.jpg", followers: [8, 9, 10, 11], following: [10, 7, 11], saved_recipes: [10, 11, 12], published_recipes: [9], shopping_list_recipes: [10, 11, 12], keycloak_user_id: 4, roleId: 4, email: "dorita@gmail.com", forbidden_foods: ["Cereal"], last_name: "Explora", password: "123", creation_date: DateTime.now(), update_date: DateTime.now()),
+    Profile(first_name: "Chilindrinita99", description: "Experta en cocina española y mariscos.", imageUrl: "assets/chefs/Chilindrinita99.jpg", followers: [8, 9], following: [10, 11, 2], saved_recipes: [10, 11, 12], published_recipes: [8], shopping_list_recipes: [10, 11, 12], keycloak_user_id: 5, roleId: 5, email: "chilindirnita@gmail.com", forbidden_foods: ["Cereal"], last_name: "Chilindrinita", password: "123", creation_date: DateTime.now(), update_date: DateTime.now()),
+    Profile(first_name: "XxSportacusXx", description: "Chef especializado en platos proteicos y cenas festivas.", imageUrl: "assets/chefs/XxSportacusXx.jpg", followers: [11, 8], following: [10, 1, 7], saved_recipes: [1, 4], published_recipes: [2], shopping_list_recipes: [1, 4], keycloak_user_id: 6, roleId: 6, email: "sportacus@gmail.com", forbidden_foods: ["Gluten"], last_name: "Sportacus", password: "123", creation_date: DateTime.now(), update_date: DateTime.now()),
+    Profile(first_name: "Rihannita", description: "Amante de los postres y las frutas.", imageUrl: "assets/chefs/Rihannita.jpg", followers: [4, 6], following: [10, 4, 6], saved_recipes: [1, 2, 3], published_recipes: [3], shopping_list_recipes: [1, 2, 3], keycloak_user_id: 7, roleId: 7, email: "rihannita@gmail.com", forbidden_foods: ["Lácteos"], last_name: "Rihanna", password: "123", creation_date: DateTime.now(), update_date: DateTime.now()),
+    Profile(first_name: "Voldi_Feliz", description: "Experto en desayunos y platos colombianos.", imageUrl: "assets/chefs/Voldi_Feliz.jpg", followers: [3, 9, 11], following: [10, 4, 5, 6, 10, 11], saved_recipes: [1, 2, 3], published_recipes: [5], shopping_list_recipes: [1, 2, 3], keycloak_user_id: 8, roleId: 8, email: "voldi@gmail.com", forbidden_foods: ["Nueces"], last_name: "Feliz", password: "123", creation_date: DateTime.now(), update_date: DateTime.now()),
+    Profile(first_name: "Calypso66", description: "Especialista en bebidas y cócteles.", imageUrl: "assets/chefs/Calypso66.jpg", followers: [], following: [10, 8, 5, 4], saved_recipes: [1, 2, 3], published_recipes: [6], shopping_list_recipes: [1, 2, 3], keycloak_user_id: 9, roleId: 9, email: "calypso@gmail.com", forbidden_foods: ["Alcohol"], last_name: "Calypso", password: "123", creation_date: DateTime.now(), update_date: DateTime.now()),
+    Profile(first_name: "Laura_Bozzo", description: "Chef de comidas rápidas y cenas abundantes.", imageUrl: "assets/chefs/Laura_Bozzo.jpg", followers: [3, 4, 5, 6, 7, 8, 9, 11], following: [10, 2, 4, 7], saved_recipes: [1, 2, 3], published_recipes: [11], shopping_list_recipes: [1, 2, 3], keycloak_user_id: 10, roleId: 1, email: "laurita@gmail.com", forbidden_foods: ["Pescado"], last_name: "Bozzo", password: "123", creation_date: DateTime.now(), update_date: DateTime.now()),
+    Profile(first_name: "Miguel_Uribe", description: "Amo locamente las recetas que tengan Nuggets y/o Milanesas!!! Soy un principiante en esto de cocinar, pero hago mi mayor esfuerzo ✨✨✨", imageUrl: "assets/chefs/profilePhoto.jpg", followers: [4, 5, 8], following: [10, 6, 3, 4, 8], saved_recipes: [1, 2, 3], published_recipes: [13], shopping_list_recipes: [1, 5, 7], keycloak_user_id: 11, roleId: 11, email: "123", forbidden_foods: ["Pescado"], last_name: "Uribe", password: "123", creation_date: DateTime.now(), update_date: DateTime.now()),
+    ];
+
+    Future<void> loadProfileByKeycloakUserId(int keycloakUserId) async {
+    final profile = await _apiServiceProfile.getProfileByKeycloak(keycloakUserId);
+    if (profile != null) {
+      loggedInProfile = Profile(
+        keycloak_user_id: profile.keycloak_user_id,
+        roleId: profile.roleId,
+        first_name: profile.first_name,
+        last_name: profile.last_name,
+        email: profile.email,
+        forbidden_foods: profile.forbidden_foods,
+        imageUrl: profile.imageUrl,
+        description: profile.description,
+        password: profile.password,
+        creation_date: profile.creation_date,
+        update_date: profile.update_date,
+        followers: profile.followers,
+        following: profile.following,
+        saved_recipes: profile.saved_recipes,
+        published_recipes: profile.published_recipes,
+        shopping_list_recipes: profile.shopping_list_recipes,
+      );
+    }
+  }
 
   Profile getProfileByRecipeId(int recipeId) {
     return recommendedProfiles.firstWhere((profile) => profile.published_recipes.contains(recipeId));

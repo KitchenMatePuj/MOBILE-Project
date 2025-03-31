@@ -165,7 +165,7 @@ class _EditprofileState extends State<EditprofileScreen> {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 20),
-                      buildInfoContainer('Nombre de Perfil', profile.name),
+                      buildInfoContainer('Nombre de Perfil', profile.first_name),
                       buildInfoContainer('Descripción', profile.description, isDescription: true),
                       buildInfoContainer('Correo Electrónico', profile.email),
                       buildInfoContainer('Contraseña', profile.password),

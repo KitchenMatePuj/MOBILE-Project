@@ -26,6 +26,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     _recipeController = RecipeController();
     _profileController = ProfileController();
+    _loadUserProfile();
+  }
+
+ Future<void> _loadUserProfile() async {
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    if (user != null) {
+      await _profileController.loadProfileByKeycloakUserId(user.keycloak_user_id);
+      setState(() {});
+    }
   }
 
   @override
@@ -68,7 +77,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 10),
-              child: UserHeader(user: user),
+              child: UserHeader(user: _profileController.loggedInProfile),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -165,7 +174,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             children: recommendedProfiles.map((profile) => Padding(
                                   padding: const EdgeInsets.only(right: 16),
                                   child: ProfileCard(
-                                    name: profile.name,
+                                    name: profile.first_name,
                                     description: profile.description,
                                     imageUrl: profile.imageUrl,
                                   ),
@@ -327,12 +336,16 @@ class RecipeCard extends StatelessWidget {
 }
 
 class UserHeader extends StatelessWidget {
-  final UserModel user;
+  final Profile? user;
 
   const UserHeader({Key? key, required this.user}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    if (user == null) {
+      return CircularProgressIndicator();
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -340,7 +353,7 @@ class UserHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Bienvenido ${user.firstName}',
+              'Bienvenido ${user!.first_name}',
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w600,
@@ -366,7 +379,7 @@ class UserHeader extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               image: DecorationImage(
-                image: AssetImage(user.imageUrl),
+                image: AssetImage(user!.imageUrl),
                 fit: BoxFit.cover,
               ),
             ),

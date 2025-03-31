@@ -37,11 +37,12 @@ class ReportController {
     ),
   ];
 
+
   void addReport(Report report) {
     reports.add(report);
   }
 
-  List<Report> getReportsByUserId(int userId) {
+  List<Report> getReportsByUserId(String userId) {
     return reports.where((report) => report.reportingUserId == userId).toList();
   }
 

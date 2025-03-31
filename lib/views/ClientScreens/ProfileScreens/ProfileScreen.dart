@@ -110,7 +110,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    profile.name,
+                    profile.first_name,
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
