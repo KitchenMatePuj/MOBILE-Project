@@ -20,7 +20,7 @@ import 'views/ClientScreens/ProfileScreens/ReportScreen.dart';
 import 'views/ClientScreens/RecipeScreens/CommentsScreen.dart';
 import 'views/ClientScreens/ProfileScreens/FollowersAndFollowing.dart';
 
-void main() {
+Future<void> main() async {
   await dotenv.load();
   runApp(
     MultiProvider(

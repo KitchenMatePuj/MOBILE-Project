@@ -1,11 +1,10 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../models/Profiles/ingredient_request.dart';
 import '../../models/Profiles/ingredient_response.dart';
 
 class IngredientController {
-  final String baseUrl = dotenv.env['PROFILE_URL'];
+  final String baseUrl;
 
   IngredientController({required this.baseUrl});
 

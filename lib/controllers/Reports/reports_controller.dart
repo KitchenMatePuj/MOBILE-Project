@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:your_app_name/models/Reports/report_request.dart';
-import 'package:your_app_name/models/Reports/report_response.dart';
+import '../../models/Reports/report_request.dart';
+import '../../models/Reports/report_response.dart';
 
 class ReportsController {
-  final String baseUrl= dotenv.env['REPORTS_URL'];
+  final String baseUrl;
 
   ReportsController({required this.baseUrl});
 

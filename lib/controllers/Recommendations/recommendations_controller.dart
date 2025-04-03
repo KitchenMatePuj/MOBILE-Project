@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:mobile_project/models/Recommendations/recommendation_request.dart';
-import 'package:mobile_project/models/Recommendations/recommendation_response.dart';
+import '../../models/Recommendations/recommendation_request.dart';
+import '../../models/Recommendations/recommendation_response.dart';
 
 class RecommendationsController {
-  final String baseUrl= dotenv.env['RECOMMENDATIONS_URL'];
+  final String baseUrl;
 
   RecommendationsController({required this.baseUrl});
 

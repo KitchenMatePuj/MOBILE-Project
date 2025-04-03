@@ -1,12 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:kitchenmate/models/Recipes/comments_request.dart';
-import 'package:kitchenmate/models/Recipes/comments_response.dart';
+import '../../models/Recipes/comments_request.dart';
+import '../../models/Recipes/comments_response.dart';
 
 class CommentController {
-  final String baseUrl= dotenv.env['RECIPES_URL'];
-
+  final String baseUrl;
   CommentController({required this.baseUrl});
 
   /// Agregar un comentario a una receta (POST /recipes/{recipeId}/comments)

@@ -1,11 +1,10 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../models/Profiles/shopping_list_request.dart';
 import '../../models/Profiles/shopping_list_response.dart';
 
 class ShoppingListController {
-  final String baseUrl = dotenv.env['PROFILE_URL'];
+  final String baseUrl;
 
   ShoppingListController({required this.baseUrl});
 

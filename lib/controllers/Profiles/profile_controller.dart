@@ -1,11 +1,10 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../models/Profiles/profile_request.dart';
 import '../../models/Profiles/profile_response.dart';
 
 class ProfileController {
-  final String baseUrl = dotenv.env['PROFILE_URL'];
+  final String baseUrl;
 
   ProfileController({required this.baseUrl});
 

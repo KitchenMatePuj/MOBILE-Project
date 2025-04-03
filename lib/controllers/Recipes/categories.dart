@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:kitchenmate/models/Recipes/categories_request.dart';
-import 'package:kitchenmate/models/Recipes/categories_response.dart';
+import '../../models/Recipes/categories_request.dart';
+import '../../models/Recipes/categories_response.dart';
 
 class CategoryController {
-  final String baseUrl= dotenv.env['RECIPES_URL'];
+  final String baseUrl;
 
   CategoryController({required this.baseUrl});
 

@@ -1,11 +1,10 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../models/Profiles/saved_recipe_request.dart';
 import '../../models/Profiles/saved_recipe_response.dart';
 
 class SavedRecipeController {
-  final String baseUrl = dotenv.env['PROFILE_URL'];
+  final String baseUrl;
 
   SavedRecipeController({required this.baseUrl});
 

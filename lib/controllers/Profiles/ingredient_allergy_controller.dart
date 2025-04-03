@@ -1,11 +1,10 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import '../../models/Profiles/ingredientAllergy_request.dart';
-import '../../models/Profiles/ingredientAllergy_response.dart';
+import '../../models/Profiles/ingredientAllery_request.dart';
+import '../../models/Profiles/ingredientAllery_response.dart';
 
 class IngredientAllergyController {
-  final String baseUrl = dotenv.env['PROFILE_URL'];
+  final String baseUrl;
 
   IngredientAllergyController({required this.baseUrl});
 

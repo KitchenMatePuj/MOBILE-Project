@@ -1,11 +1,10 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../models/Profiles/follow_request.dart';
 import '../../models/Profiles/follow_response.dart';
 
 class FollowController {
-  final String baseUrl = dotenv.env['PROFILE_URL'];
+  final String baseUrl;
 
   FollowController({required this.baseUrl});
 

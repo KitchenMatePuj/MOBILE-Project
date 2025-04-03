@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:kitchenmate/models/Recipes/recipe_steps_request.dart';
-import 'package:kitchenmate/models/Recipes/recipe_steps_response.dart';
+import '../../models/Recipes/recipe_steps_request.dart';
+import '../../models/Recipes/recipe_steps_response.dart';
 
 class RecipeStepController {
-  final String baseUrl= dotenv.env['RECIPES_URL'];
+  final String baseUrl;
 
   RecipeStepController({required this.baseUrl});
 
