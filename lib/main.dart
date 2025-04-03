@@ -1,21 +1,35 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/material.dart';
-import 'screens/SignInAndSignUpScreens/ForgotPasswordScreens/HomeScreen.dart';
-import 'screens/SignInAndSignUpScreens/ForgotPasswordScreens/LoginScreen.dart';
-import 'screens/SignInAndSignUpScreens/ForgotPasswordScreens/ForgotPasswordScreen.dart';  // Route for the Forgot Password screen
-import 'screens/SignInAndSignUpScreens/ForgotPasswordScreens/SignUpScreen.dart';          // Route for the Sign Up screen
-import 'screens/SignInAndSignUpScreens/ForgotPasswordScreens/NutritionFormScreen.dart';   // Route for the Nutrition Registration screen
-import 'screens/ClientScreens/HomeScreens/DashboardScreen.dart';        // Route for the main screen after logging in
-import 'screens/ClientScreens/HomeScreens/RecipeSearchScreen.dart';    // Route for the specific recipe search screen
-import 'screens/ClientScreens/HomeScreens/ProfileScreens/ProfileScreen.dart';         // Added the Profile screen route
-import 'screens/SignInAndSignUpScreens/ForgotPasswordScreens/EmailForgotPassScreen.dart'; // Route for the Email Forgot Password screen
-import 'screens/ClientScreens/HomeScreens/ShoppingListScreen.dart';         // Route for the Shopping List screen
-import 'screens/ClientScreens/HomeScreens/RecipeScreens/CreateRecipeScreen.dart';         // Route for the Create Recipe screen
-import 'screens/ClientScreens/HomeScreens/ProfileScreens/EditProfileScreen.dart'; // Route for the Edit Profile screen
-import 'screens/ClientScreens/HomeScreens/ProfileScreens/ReportScreen.dart';    // Route for the Reports screen
-//import 'screens/ClientScreens/HomeScreens/RecipeScreens/Recipe';
+import 'package:provider/provider.dart';
+import 'providers/user_provider.dart';
+import 'views/SignInAndSignUpScreens/HomeScreen.dart';
+import 'views/SignInAndSignUpScreens/LoginScreen.dart';
+import 'views/SignInAndSignUpScreens/ForgotPasswordScreens/ForgotPasswordScreen.dart';
+import 'views/SignInAndSignUpScreens/SignUpScreen.dart';
+import 'views/SignInAndSignUpScreens/NutritionFormScreen.dart';
+import 'views/ClientScreens/DashboardScreen.dart';
+import 'views/ClientScreens/RecipeScreens/RecipeSearchScreen.dart';
+import 'views/ClientScreens/ProfileScreens/ProfileScreen.dart';
+import 'views/ClientScreens/ProfileScreens/PublicProfileScreen.dart';
+import 'views/SignInAndSignUpScreens/ForgotPasswordScreens/EmailForgotPassScreen.dart';
+import 'views/ClientScreens/ShoppingListScreen.dart';
+import 'views/ClientScreens/RecipeScreens/CreateRecipeScreen.dart';
+import 'views/ClientScreens/RecipeScreens/RecipeScreen.dart';
+import 'views/ClientScreens/ProfileScreens/EditProfileScreen.dart';
+import 'views/ClientScreens/ProfileScreens/ReportScreen.dart';
+import 'views/ClientScreens/RecipeScreens/CommentsScreen.dart';
+import 'views/ClientScreens/ProfileScreens/FollowersAndFollowing.dart';
 
 void main() {
-  runApp(const MyApp());
+  await dotenv.load();
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -29,21 +43,51 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      initialRoute: '/', // Initial route
+      initialRoute: '/',
+      onGenerateRoute: (settings) {
+        if (settings.name == '/public_profile') {
+          final args = settings.arguments as Map<String, dynamic>;
+          return MaterialPageRoute(
+            builder: (context) {
+              return PublicProfileScreen(keycloakUserId: args['keycloak_user_id']);
+            },
+          );
+        } else if (settings.name == '/followers_and_following') {
+          final args = settings.arguments as Map<String, dynamic>;
+          return MaterialPageRoute(
+            builder: (context) {
+              return FollowersAndFollowingScreen(
+                keycloakUserId: args['keycloak_user_id'],
+                type: args['type'],
+              );
+            },
+          );
+        } else if (settings.name == '/comments') {
+          final args = settings.arguments as Map<String, dynamic>;
+          return MaterialPageRoute(
+            builder: (context) {
+              return CommentsScreen(recipeId: args['recipeId']);
+            },
+          );
+        }
+        // Define other routes here if needed
+        return null;
+      },
       routes: {
-        '/': (context) => const HomeScreen(),  // Home screen route
-        '/login': (context) => const LoginScreen(),  // Login screen route
-        '/forgot_password': (context) => const ForgotPasswordScreen(), // Forgot Password screen route
-        '/sign_up': (context) => const SignUpScreen(),  // Sign Up screen route
-        '/nutrition_form': (context) => const NutritionFormScreen(),  // Nutrition Registration screen route
-        '/dashboard': (context) => const DashboardScreen(),  // Main screen after logging in
-        '/recipe_search': (context) => const RecipeSearchScreen(),  // Specific recipe search screen route
-        '/profile': (context) => const ProfileScreen(),  // Added Profile screen route
-        '/email_forgot_pass': (context) => const EmailForgotPassScreen(), // Email Forgot Password screen route
-        '/shopping_list': (context) => const ShoppingList(), // Shopping List screen route
-        '/create': (context) => const CreateRecipe(), // Create Recipe screen route
-        '/edit_profile': (context) => const Editprofile(), // Edit Profile screen route
-        '/reports': (context) => const Reports(), // Reports screen route
+        '/': (context) => const HomeScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/forgot_password': (context) => const ForgotPasswordScreen(),
+        '/sign_up': (context) => const SignUpScreen(),
+        '/nutrition_form': (context) => const NutritionFormScreen(),
+        '/dashboard': (context) => const DashboardScreen(),
+        '/recipe_search': (context) => const RecipeSearchScreen(),
+        '/profile': (context) => const ProfileScreen(),
+        '/email_forgot_pass': (context) => const EmailForgotPassScreen(),
+        '/shopping_list': (context) => const ShoppingListScreen(),
+        '/create': (context) => const CreateRecipeScreen(),
+        '/recipe': (context) => const RecipeScreen(),
+        '/edit_profile': (context) => const EditprofileScreen(),
+        '/reports': (context) => const ReportsScreen(),
       },
     );
   }
