@@ -1,319 +1,373 @@
-// import 'package:flutter/material.dart';
-// import 'package:provider/provider.dart';
-// import '/controllers/profile_controller.dart';
-// import '/controllers/recipe_controller.dart';
-// import '/models/recipe_model.dart';
-// import '/models/profile_model.dart';
-// import '/providers/user_provider.dart';
-// import '/models/user_model.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '/controllers/Profiles/profile_controller.dart';
+import '/controllers/Profiles/follow_controller.dart';
+import '/models/Profiles/profile_response.dart';
+import '/models/Profiles/follow_response.dart'; // Ensure FollowResponse is imported
+import '/providers/user_provider.dart';
 
-// class ProfileScreen extends StatefulWidget {
-//   const ProfileScreen({super.key});
+class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({super.key});
 
-//   @override
-//   _ProfileScreenState createState() => _ProfileScreenState();
-// }
+  @override
+  _ProfileScreenState createState() => _ProfileScreenState();
+}
 
-// class _ProfileScreenState extends State<ProfileScreen> {
-//   int selectedIndex = 0;
-//   late Profile profile;
+class _ProfileScreenState extends State<ProfileScreen> {
+  int selectedIndex = 0;
+  late Future<ProfileResponse> _profileFuture;
+  late Future<List<FollowResponse>> _followersFuture;
+  late Future<List<FollowResponse>> _followingFuture;
+  late ProfileController _profileController;
+  late FollowController _followController;
 
-//   @override
-//   void initState() {
-//     super.initState();
-//     final profileController = ProfileController();
-//     final user = Provider.of<UserProvider>(context, listen: false).user;
-//     if (user != null) {
-//       profile = profileController.recommendedProfiles.firstWhere((p) => p.email == user.email);
-//     } else {
-//       profile = profileController.recommendedProfiles.firstWhere((profile) => profile.keycloak_user_id == 11);
-//     }
-//   }
+  @override
+  void initState() {
+    super.initState();
+    _profileController = ProfileController();
+    _followController = FollowController();
+    _profileFuture = _profileController.getProfile('12'); // Reemplaza '12' con el keycloak_user_id correcto
+    _followersFuture = _followController.listFollowers(2); // Reemplaza '12' con el profileId correcto
+    _followingFuture = _followController.listFollowed(2); // Reemplaza '12' con el profileId correcto
+  }
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text(
-//           'Mi Perfil',
-//           style: TextStyle(
-//             color: Colors.white,
-//             fontSize: 20,
-//             fontWeight: FontWeight.bold,
-//           ),
-//         ),
-//         backgroundColor: const Color(0xFF129575),
-//         actions: [
-//           PopupMenuButton<String>(
-//             icon: const Icon(Icons.settings, color: Colors.white),
-//             color: Colors.white,
-//             onSelected: (String value) {
-//               switch (value) {
-//                 case 'Editar Perfil':
-//                   Navigator.pushNamed(context, '/edit_profile');
-//                   break;
-//                 case 'Reportes':
-//                   Navigator.pushNamed(context, '/reports');
-//                   break;
-//                 case 'Cerrar sesión':
-//                   Navigator.pushNamed(context, '/');
-//                   break;
-//               }
-//             },
-//             itemBuilder: (BuildContext context) {
-//               return [
-//                 PopupMenuItem(
-//                   value: 'Editar Perfil',
-//                   child: Row(
-//                     children: const [
-//                       Icon(Icons.edit, color: Colors.black),
-//                       SizedBox(width: 8),
-//                       Text('Editar Perfil'),
-//                     ],
-//                   ),
-//                 ),
-//                 PopupMenuItem(
-//                   value: 'Reportes',
-//                   child: Row(
-//                     children: const [
-//                       Icon(Icons.report, color: Colors.black),
-//                       SizedBox(width: 8),
-//                       Text('Reportes'),
-//                     ],
-//                   ),
-//                 ),
-//                 PopupMenuItem(
-//                   value: 'Cerrar sesión',
-//                   child: Center(
-//                     child: Text(
-//                       'Cerrar sesión',
-//                       style: TextStyle(color: Colors.red),
-//                     ),
-//                   ),
-//                 ),
-//               ];
-//             },
-//           ),
-//         ],
-//         automaticallyImplyLeading: false,
-//       ),
-//       backgroundColor: Colors.white,
-//       body: Column(
-//         children: [
-//           const SizedBox(height: 16),
-//           Padding(
-//             padding: const EdgeInsets.symmetric(horizontal: 23),
-//             child: Column(
-//               children: [
-//                 ProfileStats(profile: profile, keycloakUserId: profile.keycloak_user_id), // Estadísticas del usuario
-//                 const SizedBox(height: 16),
-//                 Align(
-//                   alignment: Alignment.centerLeft,
-//                   child: Text(
-//                     profile.first_name,
-//                     style: const TextStyle(
-//                       fontSize: 22,
-//                       fontWeight: FontWeight.bold,
-//                       color: Colors.black,
-//                     ),
-//                   ),
-//                 ),
-//                 const SizedBox(height: 8),
-//                 ProfileBio(description: profile.description), // Biografía
-//                 const SizedBox(height: 16),
-//                 ProfileTabs(
-//                   selectedIndex: selectedIndex,
-//                   onTabSelected: (index) {
-//                     setState(() {
-//                       selectedIndex = index;
-//                     });
-//                   },
-//                 ), // Pestañas para publicaciones y guardados
-//               ],
-//             ),
-//           ),
-//           Expanded(
-//             child: SavedRecipesGrid(
-//               selectedIndex: selectedIndex,
-//               profile: profile,
-//             ), // Recetas guardadas
-//           ),
-//         ],
-//       ),
-//       bottomNavigationBar: BottomNavigationBar(
-//         type: BottomNavigationBarType.fixed,
-//         backgroundColor: Colors.white,
-//         selectedItemColor: const Color(0xFF129575),
-//         unselectedItemColor: const Color.fromARGB(255, 83, 83, 83),
-//         currentIndex: 4,
-//         onTap: (int index) {
-//           switch (index) {
-//             case 0:
-//               Navigator.pushNamed(context, '/dashboard');
-//               break;
-//             case 1:
-//               Navigator.pushNamed(context, '/recipe_search');
-//               break;
-//             case 2:
-//               Navigator.pushNamed(context, '/create');
-//               break;
-//             case 3:
-//               Navigator.pushNamed(context, '/shopping_list');
-//               break;
-//             case 4:
-//               break;
-//           }
-//         },
-//         items: const [
-//           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-//           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Buscar'),
-//           BottomNavigationBarItem(icon: Icon(Icons.add), label: 'Publicar'),
-//           BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Compras'),
-//           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
-//         ],
-//       ),
-//     );
-//   }
-// }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Mi Perfil',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: const Color(0xFF129575),
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.settings, color: Colors.white),
+            color: Colors.white,
+            onSelected: (String value) {
+              switch (value) {
+                case 'Editar Perfil':
+                  Navigator.pushNamed(context, '/edit_profile');
+                  break;
+                case 'Reportes':
+                  Navigator.pushNamed(context, '/reports');
+                  break;
+                case 'Cerrar sesión':
+                  Navigator.pushNamed(context, '/');
+                  break;
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return [
+                PopupMenuItem(
+                  value: 'Editar Perfil',
+                  child: Row(
+                    children: const [
+                      Icon(Icons.edit, color: Colors.black),
+                      SizedBox(width: 8),
+                      Text('Editar Perfil'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'Reportes',
+                  child: Row(
+                    children: const [
+                      Icon(Icons.report, color: Colors.black),
+                      SizedBox(width: 8),
+                      Text('Reportes'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'Cerrar sesión',
+                  child: Center(
+                    child: Text(
+                      'Cerrar sesión',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ),
+                ),
+              ];
+            },
+          ),
+        ],
+        automaticallyImplyLeading: false,
+      ),
+      backgroundColor: Colors.white,
+      body: FutureBuilder<ProfileResponse>(
+        future: _profileFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return CircularProgressIndicator();
+          } else if (snapshot.hasError) {
+            return Text('Error: ${snapshot.error}');
+          } else if (!snapshot.hasData) {
+            return Text('No data found');
+          }
 
-// class ProfileStats extends StatelessWidget {
-//   final Profile profile;
-//   final int keycloakUserId;
+          final profile = snapshot.data!;
+          return Column(
+            children: [
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 23),
+                child: Column(
+                  children: [
+                    FutureBuilder<List<FollowResponse>>(
+                      future: _followersFuture,
+                      builder: (context, followersSnapshot) {
+                        if (followersSnapshot.connectionState == ConnectionState.waiting) {
+                          return CircularProgressIndicator();
+                        } else if (followersSnapshot.hasError) {
+                          return Text('Error: ${followersSnapshot.error}');
+                        }
 
-//   const ProfileStats({required this.profile, required this.keycloakUserId, super.key});
+                        final followers = followersSnapshot.data ?? [];
+                        return FutureBuilder<List<FollowResponse>>(
+                          future: _followingFuture,
+                          builder: (context, followingSnapshot) {
+                            if (followingSnapshot.connectionState == ConnectionState.waiting) {
+                              return CircularProgressIndicator();
+                            } else if (followingSnapshot.hasError) {
+                              return Text('Error: ${followingSnapshot.error}');
+                            }
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Row(
-//       mainAxisAlignment: MainAxisAlignment.spaceAround,
-//       children: [
-//         CircleAvatar(
-//           radius: 45,
-//           backgroundImage: AssetImage(profile.imageUrl),
-//         ),
-//         const SizedBox(width: 2),
-//         GestureDetector(
-//           onTap: () {
-//             Navigator.pushNamed(
-//               context,
-//               '/followers_and_following',
-//               arguments: {'keycloak_user_id': keycloakUserId, 'type': 'recipes'},
-//             );
-//           },
-//           child: _buildStatItem('Recetas', profile.published_recipes.length.toString()),
-//         ),
-//         GestureDetector(
-//           onTap: () {
-//             Navigator.pushNamed(
-//               context,
-//               '/followers_and_following',
-//               arguments: {'keycloak_user_id': keycloakUserId, 'type': 'followers'},
-//             );
-//           },
-//           child: _buildStatItem('Seguidores', profile.followers.length.toString()),
-//         ),
-//         GestureDetector(
-//           onTap: () {
-//             Navigator.pushNamed(
-//               context,
-//               '/followers_and_following',
-//               arguments: {'keycloak_user_id': keycloakUserId, 'type': 'following'},
-//             );
-//           },
-//           child: _buildStatItem('Siguiendo', profile.following.length.toString()),
-//         ),
-//       ],
-//     );
-//   }
+                            final following = followingSnapshot.data ?? [];
+                            return ProfileStats(
+                              profile: profile,
+                              followersCount: followers.length,
+                              followingCount: following.length,
+                            );
+                          },
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        profile.firstName ?? 'Nombre no disponible',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ProfileBio(description: 'Aquí va una descripción genérica del usuario.'), // Descripción quemada
+                    const SizedBox(height: 16),
+                    ProfileTabs(
+                      selectedIndex: selectedIndex,
+                      onTabSelected: (index) {
+                        setState(() {
+                          selectedIndex = index;
+                        });
+                      },
+                    ), // Pestañas para publicaciones y guardados
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Container(
+                  child: Center(
+                    child: Text('Aquí irá el contenido de las recetas guardadas y publicadas.'),
+                  ),
+                ),
+                // child: SavedRecipesGrid(
+                //   selectedIndex: selectedIndex,
+                //   profile: profile,
+                // ), // Recetas guardadas
+              ),
+            ],
+          );
+        },
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
+        selectedItemColor: const Color(0xFF129575),
+        unselectedItemColor: const Color.fromARGB(255, 83, 83, 83),
+        currentIndex: 4,
+        onTap: (int index) {
+          switch (index) {
+            case 0:
+              Navigator.pushNamed(context, '/dashboard');
+              break;
+            case 1:
+              Navigator.pushNamed(context, '/recipe_search');
+              break;
+            case 2:
+              Navigator.pushNamed(context, '/create');
+              break;
+            case 3:
+              Navigator.pushNamed(context, '/shopping_list');
+              break;
+            case 4:
+              break;
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Buscar'),
+          BottomNavigationBarItem(icon: Icon(Icons.add), label: 'Publicar'),
+          BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Compras'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
+        ],
+      ),
+    );
+  }
+}
 
-//   Widget _buildStatItem(String label, String count) {
-//     return Column(
-//       children: [
-//         Text(
-//           count,
-//           style: const TextStyle(
-//             fontSize: 19,
-//             fontWeight: FontWeight.bold,
-//           ),
-//         ),
-//         Text(
-//           label,
-//           style: const TextStyle(
-//             fontSize: 14,
-//             color: Colors.grey,
-//           ),
-//         ),
-//       ],
-//     );
-//   }
-// }
+class ProfileStats extends StatelessWidget {
+  final ProfileResponse profile;
+  final int followersCount;
+  final int followingCount;
 
-// class ProfileBio extends StatelessWidget {
-//   final String description;
+  const ProfileStats({
+    required this.profile,
+    required this.followersCount,
+    required this.followingCount,
+    super.key,
+  });
 
-//   const ProfileBio({required this.description, super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        CircleAvatar(
+          radius: 45,
+          backgroundImage: NetworkImage(profile.profilePhoto ?? 'default_image_url'), // Utilizamos NetworkImage para imágenes desde una URL
+        ),
+        const SizedBox(width: 2),
+        GestureDetector(
+          onTap: () {
+            Navigator.pushNamed(
+              context,
+              '/followers_and_following',
+              arguments: {'keycloak_user_id': profile.keycloakUserId, 'type': 'recipes'},
+            );
+          },
+          child: _buildStatItem('Recetas', '0'), // Placeholder for the actual recipe count
+        ),
+        GestureDetector(
+          onTap: () {
+            Navigator.pushNamed(
+              context,
+              '/followers_and_following',
+              arguments: {'keycloak_user_id': profile.keycloakUserId, 'type': 'followers'},
+            );
+          },
+          child: _buildStatItem('Seguidores', followersCount.toString()),
+        ),
+        GestureDetector(
+          onTap: () {
+            Navigator.pushNamed(
+              context,
+              '/followers_and_following',
+              arguments: {'keycloak_user_id': profile.keycloakUserId, 'type': 'following'},
+            );
+          },
+          child: _buildStatItem('Siguiendo', followingCount.toString()),
+        ),
+      ],
+    );
+  }
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Align(
-//       alignment: Alignment.centerLeft,
-//       child: Text(
-//         description,
-//         style: const TextStyle(
-//           fontSize: 14,
-//           color: Colors.grey,
-//         ),
-//       ),
-//     );
-//   }
-// }
+  Widget _buildStatItem(String label, String count) {
+    return Column(
+      children: [
+        Text(
+          count,
+          style: const TextStyle(
+            fontSize: 19,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.grey,
+          ),
+        ),
+      ],
+    );
+  }
+}
 
-// class ProfileTabs extends StatelessWidget {
-//   final int selectedIndex;
-//   final ValueChanged<int> onTabSelected;
+class ProfileBio extends StatelessWidget {
+  final String description;
 
-//   const ProfileTabs({
-//     required this.selectedIndex,
-//     required this.onTabSelected,
-//   });
+  const ProfileBio({required this.description, super.key});
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Row(
-//       mainAxisAlignment: MainAxisAlignment.spaceAround,
-//       children: [
-//         _buildTab('Recetas', 0),
-//         _buildTab('Guardados', 1),
-//       ],
-//     );
-//   }
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        description,
+        style: const TextStyle(
+          fontSize: 14,
+          color: Colors.grey,
+        ),
+      ),
+    );
+  }
+}
 
-//   Widget _buildTab(String label, int index) {
-//     return GestureDetector(
-//       onTap: () => onTabSelected(index),
-//       child: Column(
-//         children: [
-//           Text(
-//             label,
-//             style: TextStyle(
-//               fontSize: 16,
-//               fontWeight: FontWeight.bold,
-//               color:
-//                   selectedIndex == index ? const Color(0xFF129575) : Colors.grey,
-//             ),
-//           ),
-//           if (selectedIndex == index)
-//             Container(
-//               margin: const EdgeInsets.only(top: 4),
-//               height: 2,
-//               width: 60,
-//               color: const Color(0xFF129575),
-//             ),
-//         ],
-//       ),
-//     );
-//   }
-// }
+class ProfileTabs extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onTabSelected;
+
+  const ProfileTabs({
+    required this.selectedIndex,
+    required this.onTabSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        _buildTab('Recetas', 0),
+        _buildTab('Guardados', 1),
+      ],
+    );
+  }
+
+  Widget _buildTab(String label, int index) {
+    return GestureDetector(
+      onTap: () => onTabSelected(index),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color:
+                  selectedIndex == index ? const Color(0xFF129575) : Colors.grey,
+            ),
+          ),
+          if (selectedIndex == index)
+            Container(
+              margin: const EdgeInsets.only(top: 4),
+              height: 2,
+              width: 60,
+              color: const Color(0xFF129575),
+            ),
+        ],
+      ),
+    );
+  }
+}
 
 // class SavedRecipesGrid extends StatelessWidget {
 //   final int selectedIndex;

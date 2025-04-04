@@ -1,11 +1,12 @@
 // import 'package:flutter/material.dart';
 // import 'package:flutter/gestures.dart';
-// import '../../controllers/signup_controller.dart';
+// import '../../controllers/profiles/profile_controller.dart';
+// import '../../models/Profiles/profile_request.dart'; // Import the ProfileRequest model
+// import 'package:http/http.dart' as http;
 // import '../../controllers/nutrition_controller.dart';
-// import '../../controllers/ingredient_controller.dart';
-// import '../../models/user_model.dart';
 // import '../../models/nutrition_model.dart';
-// import '../../services/api_service_profile.dart'; // Import the ApiService
+// import '../../controllers/Recipes/ingredients.dart'; // Import the IngredientController
+// import '../../models/Recipes/ingredients_response.dart'; // Import the IngredientResponse model
 
 // class SignUpScreen extends StatefulWidget {
 //   const SignUpScreen({super.key});
@@ -33,39 +34,20 @@
 //   String? _emailError;
 
 //   bool _isSignUpScreen = true; // Flag to switch between screens
-//   late SignUpController _signUpController;
+//   late ProfileController _profileController;
 //   late NutritionController _nutritionController;
+//   late IngredientController _ingredientController; // Add IngredientController
 //   int _currentQuestionIndex = 0;
 //   String _searchQuery = '';
 //   int _ingredientsToShow = 10;
+//   List<String> _allIngredients = []; // List to hold all ingredient names
 
 //   @override
 //   void initState() {
 //     super.initState();
-//     final userModel = UserModel(
-//       first_name: '',
-//       last_name: '',
-//       email: '',
-//       password: '',
-//       roleId: 0,
-//       keycloak_user_id: 0,
-//       forbidden_foods: [],
-//       imageUrl: '',
-//       description: '',
-//       creation_date: DateTime.now(),
-//       update_date: DateTime.now(),
-//       followers: [],
-//       following: [],
-//       saved_recipes: [],
-//       published_recipes: [],
-//       shopping_list_recipes: [],
-//     );
-//     _signUpController = SignUpController(userModel: userModel, apiService: ApiServiceProfile()); // Pass the ApiService instance
-
-//     final ingredientController = IngredientController();
-//     final sortedIngredients = ingredientController.getAllIngredientNames()..sort();
-//     final nutritionModel = NutritionModel(sortedIngredients);
-//     _nutritionController = NutritionController(model: nutritionModel);
+//     _profileController = ProfileController(baseUrl: 'https://api.example.com/profiles'); // Update with your actual base URL
+//     _ingredientController = IngredientController(baseUrl: 'https://api.example.com'); // Update with your actual base URL
+//     _fetchIngredients(); // Fetch ingredients from backend
 //   }
 
 //   void _validateForm() {
@@ -76,42 +58,64 @@
 //     final confirmPassword = _confirmPasswordController.text;
 
 //     setState(() {
-//       _firstNameError = _signUpController.validateFullName(fullName);
+//       _firstNameError = fullName.isEmpty ? 'Nombre es requerido' : null;
 //       _isFirstNameValid = _firstNameError == null;
 
-//       _lastNameError = _signUpController.validate(alias);
+//       _lastNameError = alias.isEmpty ? 'Apellido es requerido' : null;
 //       _isLastNameValid = _lastNameError == null;
 
-//       _emailError = _signUpController.validateEmail(email);
+//       _emailError = email.isEmpty ? 'Correo es requerido' : null;
 //       _isEmailValid = _emailError == null;
 
-//       _passwordError = _signUpController.validatePassword(password);
+//       _passwordError = password.isEmpty ? 'Contraseña es requerida' : null;
 //       _isPasswordValid = _passwordError == null;
 
-//       _confirmPasswordError = _signUpController.validateConfirmPassword(password, confirmPassword);
+//       _confirmPasswordError = confirmPassword != password ? 'Las contraseñas deben coincidir' : null;
 //       _isConfirmPasswordValid = _confirmPasswordError == null;
 
-//       _canContinue = _signUpController.canContinue(fullName, email, alias, password, confirmPassword);
+//       _canContinue = _isFirstNameValid && _isLastNameValid && _isEmailValid && _isPasswordValid && _isConfirmPasswordValid;
 //     });
 //   }
 
-// Future<void> _createAccount() async {
-//     // Update user model with values from the form
-//     _signUpController.userModel.first_name = _firstNameController.text;
-//     _signUpController.userModel.last_name = _lastNameController.text;
-//     _signUpController.userModel.email = _emailController.text;
-
-//     final success = await _signUpController.registerUser();
-//     if (success) {
-//       // Navigate to the next screen or show success message
-//       Navigator.pushNamed(context, '/login');
-//     } else {
-//       // Show error message
+//   Future<void> _fetchIngredients() async {
+//     try {
+//       List<IngredientResponse> ingredients = await _ingredientController.fetchIngredients();
+//       setState(() {
+//         _allIngredients = ingredients.map((ingredient) => ingredient.name).toList();
+//         final nutritionModel = NutritionModel(_allIngredients);
+//         _nutritionController = NutritionController(model: nutritionModel);
+//       });
+//     } catch (e) {
+//       // Handle error
 //       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(content: Text('Failed to create account')),
+//         SnackBar(content: Text('Failed to load ingredients: $e')),
 //       );
 //     }
-// }
+//   }
+
+//   Future<void> _createAccount() async {
+//     final profileRequest = ProfileRequest(
+//       keycloakUserId: '12345', // Hardcoded or dynamically generated
+//       firstName: _firstNameController.text,
+//       lastName: _lastNameController.text,
+//       email: _emailController.text,
+//       phone: '123-456-7890', // Hardcoded or dynamically generated
+//       profilePhoto: 'https://example.com/photo.jpg', // Hardcoded or dynamically generated
+//       accountStatus: 'active', // Hardcoded or dynamically generated
+//       cookingTime: 30, // Hardcoded or dynamically generated
+//     );
+
+//     try {
+//       await _profileController.createProfile(profileRequest);
+//       // Navigate to the next screen or show success message
+//       Navigator.pushNamed(context, '/login');
+//     } catch (e) {
+//       // Show error message
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(content: Text('Failed to create account: $e')),
+//       );
+//     }
+//   }
 
 //   @override
 //   Widget build(BuildContext context) {
@@ -471,43 +475,45 @@
 
 //   Widget _buildNutritionFormScreen(BuildContext context) {
 //     final questions = _nutritionController.getQuestions();
-//     final currentQuestion = questions[_currentQuestionIndex];
+//     final currentQuestion = questions.isNotEmpty ? questions[_currentQuestionIndex] : null;
 
-//     return Container(
-//       color: Colors.white,
-//       padding: const EdgeInsets.all(20),
-//       child: LayoutBuilder(
-//         builder: (context, constraints) {
-//           return SingleChildScrollView(
-//             child: ConstrainedBox(
-//               constraints: BoxConstraints(minHeight: constraints.maxHeight),
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   const Text(
-//                     "Personaliza tus recomendaciones",
-//                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black),
+//     return currentQuestion == null 
+//       ? Center(child: CircularProgressIndicator())
+//       : Container(
+//           color: Colors.white,
+//           padding: const EdgeInsets.all(20),
+//           child: LayoutBuilder(
+//             builder: (context, constraints) {
+//               return SingleChildScrollView(
+//                 child: ConstrainedBox(
+//                   constraints: BoxConstraints(minHeight: constraints.maxHeight),
+//                   child: Column(
+//                     crossAxisAlignment: CrossAxisAlignment.start,
+//                     children: [
+//                       const Text(
+//                         "Personaliza tus recomendaciones",
+//                         style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black),
+//                       ),
+//                       const SizedBox(height: 10),
+//                       const Text(
+//                         "Los alimentos restringidos son aquellos alimentos que por temas de alergias, intolerancia, temas de dieta, el usuario no puede comer.",
+//                         style: TextStyle(fontSize: 14, color: Color(0xFF121212)),
+//                       ),
+//                       const SizedBox(height: 20),
+//                       _buildSearchBar(),
+//                       const SizedBox(height: 10),
+//                       _buildCheckboxList(currentQuestion),
+//                       const SizedBox(height: 20),
+//                       _buildLoadMoreButton(currentQuestion),
+//                       const SizedBox(height: 20),
+//                       _buildNavigationButtons(context, questions.length),
+//                     ],
 //                   ),
-//                   const SizedBox(height: 10),
-//                   const Text(
-//                     "Los alimentos restringidos son aquellos alimentos que por temas de alergias, intolerancia, temas de dieta, el usuario no puede comer.",
-//                     style: TextStyle(fontSize: 14, color: Color(0xFF121212)),
-//                   ),
-//                   const SizedBox(height: 20),
-//                   _buildSearchBar(),
-//                   const SizedBox(height: 10),
-//                   _buildCheckboxList(currentQuestion),
-//                   const SizedBox(height: 20),
-//                   _buildLoadMoreButton(currentQuestion),
-//                   const SizedBox(height: 20),
-//                   _buildNavigationButtons(context, questions.length),
-//                 ],
-//               ),
-//             ),
-//           );
-//         },
-//       ),
-//     );
+//                 ),
+//               );
+//             },
+//           ),
+//         );
 //   }
 
 //   Widget _buildSearchBar() {
@@ -527,7 +533,6 @@
 //       ),
 //     );
 //   }
-
 //   Widget _buildCheckboxList(NutritionQuestion question) {
 //     final filteredOptions = question.options
 //         .where((option) => option.toLowerCase().contains(_searchQuery.toLowerCase()))

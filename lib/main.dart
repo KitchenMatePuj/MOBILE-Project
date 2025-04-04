@@ -85,15 +85,15 @@ class MyApp extends StatelessWidget {
         // '/login': (context) => const LoginScreen(),
         // '/forgot_password': (context) => const ForgotPasswordScreen(),
         // '/sign_up': (context) => const SignUpScreen(),
-        // '/dashboard': (context) => const DashboardScreen(),
+        '/dashboard': (context) => const DashboardScreen(),
         // '/recipe_search': (context) => const RecipeSearchScreen(),
-        // '/profile': (context) => const ProfileScreen(),
+        '/profile': (context) => const ProfileScreen(),
         // '/email_forgot_pass': (context) => const EmailForgotPassScreen(),
         // '/shopping_list': (context) => const ShoppingListScreen(),
         // '/create': (context) => const CreateRecipeScreen(),
         // '/recipe': (context) => const RecipeScreen(),
         // '/edit_profile': (context) => const EditprofileScreen(),
-        // '/reports': (context) => const ReportsScreen(),
+        '/reports': (context) => const ReportsScreen(),
       },
     );
   }
