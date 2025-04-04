@@ -4,13 +4,11 @@ import '../../models/Profiles/profile_request.dart';
 import '../../models/Profiles/profile_response.dart';
 
 class ProfileController {
-  final String baseUrl;
-
-  ProfileController({required this.baseUrl});
+  static const String _baseUrl = 'http://localhost:8001/profiles'; 
 
   /// GET: Obtener perfil por keycloak_user_id
   Future<ProfileResponse> getProfile(String keycloakUserId) async {
-    final response = await http.get(Uri.parse('$baseUrl/$keycloakUserId'));
+    final response = await http.get(Uri.parse('$_baseUrl/$keycloakUserId'));
 
     if (response.statusCode == 200) {
       return ProfileResponse.fromJson(json.decode(response.body));
@@ -21,7 +19,7 @@ class ProfileController {
 
   /// GET: Listar todos los perfiles
   Future<List<ProfileResponse>> listProfiles() async {
-    final response = await http.get(Uri.parse(baseUrl));
+    final response = await http.get(Uri.parse(_baseUrl));
 
     if (response.statusCode == 200) {
       final List<dynamic> body = json.decode(response.body);
@@ -34,7 +32,7 @@ class ProfileController {
   /// POST: Crear perfil
   Future<void> createProfile(ProfileRequest profile) async {
     final response = await http.post(
-      Uri.parse(baseUrl),
+      Uri.parse(_baseUrl),
       headers: {'Content-Type': 'application/json'},
       body: json.encode(profile.toJson()),
     );
@@ -47,7 +45,7 @@ class ProfileController {
   /// PUT: Actualizar perfil
   Future<void> updateProfile(String keycloakUserId, ProfileRequest updatedProfile) async {
     final response = await http.put(
-      Uri.parse('$baseUrl/$keycloakUserId'),
+      Uri.parse('$_baseUrl/$keycloakUserId'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode(updatedProfile.toJson()),
     );
@@ -59,11 +57,10 @@ class ProfileController {
 
   /// DELETE: Eliminar perfil
   Future<void> deleteProfile(String keycloakUserId) async {
-    final response = await http.delete(Uri.parse('$baseUrl/$keycloakUserId'));
+    final response = await http.delete(Uri.parse('$_baseUrl/$keycloakUserId'));
 
     if (response.statusCode != 200 && response.statusCode != 204) {
       throw Exception('Failed to delete profile');
     }
   }
 }
-

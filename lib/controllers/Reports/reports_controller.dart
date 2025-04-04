@@ -4,9 +4,7 @@ import '../../models/Reports/report_request.dart';
 import '../../models/Reports/report_response.dart';
 
 class ReportsController {
-  final String baseUrl;
-
-  ReportsController({required this.baseUrl});
+  static const String baseUrl = 'http://localhost:8002/reports/'; 
 
   Future<List<ReportResponse>> fetchAllReports() async {
     final response = await http.get(Uri.parse(baseUrl));

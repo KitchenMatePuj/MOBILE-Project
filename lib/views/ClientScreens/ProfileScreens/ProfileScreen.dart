@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '/controllers/profile_controller.dart';
-import '/controllers/recipe_controller.dart';
-import '/models/recipe_model.dart';
-import '/models/profile_model.dart';
+import '/controllers/Profiles/profile_controller.dart';
+import '/controllers/Profiles/follow_controller.dart';
+import '/models/Profiles/profile_response.dart';
+import '/models/Profiles/follow_response.dart'; // Ensure FollowResponse is imported
 import '/providers/user_provider.dart';
-import '/models/user_model.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -16,18 +15,20 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   int selectedIndex = 0;
-  late Profile profile;
+  late Future<ProfileResponse> _profileFuture;
+  late Future<List<FollowResponse>> _followersFuture;
+  late Future<List<FollowResponse>> _followingFuture;
+  late ProfileController _profileController;
+  late FollowController _followController;
 
   @override
   void initState() {
     super.initState();
-    final profileController = ProfileController();
-    final user = Provider.of<UserProvider>(context, listen: false).user;
-    if (user != null) {
-      profile = profileController.recommendedProfiles.firstWhere((p) => p.email == user.email);
-    } else {
-      profile = profileController.recommendedProfiles.firstWhere((profile) => profile.keycloak_user_id == 11);
-    }
+    _profileController = ProfileController();
+    _followController = FollowController();
+    _profileFuture = _profileController.getProfile('12'); // Reemplaza '12' con el keycloak_user_id correcto
+    _followersFuture = _followController.listFollowers(2); // Reemplaza '12' con el profileId correcto
+    _followingFuture = _followController.listFollowed(2); // Reemplaza '12' con el profileId correcto
   }
 
   @override
@@ -98,47 +99,94 @@ class _ProfileScreenState extends State<ProfileScreen> {
         automaticallyImplyLeading: false,
       ),
       backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 23),
-            child: Column(
-              children: [
-                ProfileStats(profile: profile, keycloakUserId: profile.keycloak_user_id), // Estadísticas del usuario
-                const SizedBox(height: 16),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    profile.name,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+      body: FutureBuilder<ProfileResponse>(
+        future: _profileFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return CircularProgressIndicator();
+          } else if (snapshot.hasError) {
+            return Text('Error: ${snapshot.error}');
+          } else if (!snapshot.hasData) {
+            return Text('No data found');
+          }
+
+          final profile = snapshot.data!;
+          return Column(
+            children: [
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 23),
+                child: Column(
+                  children: [
+                    FutureBuilder<List<FollowResponse>>(
+                      future: _followersFuture,
+                      builder: (context, followersSnapshot) {
+                        if (followersSnapshot.connectionState == ConnectionState.waiting) {
+                          return CircularProgressIndicator();
+                        } else if (followersSnapshot.hasError) {
+                          return Text('Error: ${followersSnapshot.error}');
+                        }
+
+                        final followers = followersSnapshot.data ?? [];
+                        return FutureBuilder<List<FollowResponse>>(
+                          future: _followingFuture,
+                          builder: (context, followingSnapshot) {
+                            if (followingSnapshot.connectionState == ConnectionState.waiting) {
+                              return CircularProgressIndicator();
+                            } else if (followingSnapshot.hasError) {
+                              return Text('Error: ${followingSnapshot.error}');
+                            }
+
+                            final following = followingSnapshot.data ?? [];
+                            return ProfileStats(
+                              profile: profile,
+                              followersCount: followers.length,
+                              followingCount: following.length,
+                            );
+                          },
+                        );
+                      },
                     ),
+                    const SizedBox(height: 16),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        profile.firstName ?? 'Nombre no disponible',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ProfileBio(description: 'Aquí va una descripción genérica del usuario.'), // Descripción quemada
+                    const SizedBox(height: 16),
+                    ProfileTabs(
+                      selectedIndex: selectedIndex,
+                      onTabSelected: (index) {
+                        setState(() {
+                          selectedIndex = index;
+                        });
+                      },
+                    ), // Pestañas para publicaciones y guardados
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Container(
+                  child: Center(
+                    child: Text('Aquí irá el contenido de las recetas guardadas y publicadas.'),
                   ),
                 ),
-                const SizedBox(height: 8),
-                ProfileBio(description: profile.description), // Biografía
-                const SizedBox(height: 16),
-                ProfileTabs(
-                  selectedIndex: selectedIndex,
-                  onTabSelected: (index) {
-                    setState(() {
-                      selectedIndex = index;
-                    });
-                  },
-                ), // Pestañas para publicaciones y guardados
-              ],
-            ),
-          ),
-          Expanded(
-            child: SavedRecipesGrid(
-              selectedIndex: selectedIndex,
-              profile: profile,
-            ), // Recetas guardadas
-          ),
-        ],
+                // child: SavedRecipesGrid(
+                //   selectedIndex: selectedIndex,
+                //   profile: profile,
+                // ), // Recetas guardadas
+              ),
+            ],
+          );
+        },
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
@@ -177,10 +225,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 class ProfileStats extends StatelessWidget {
-  final Profile profile;
-  final int keycloakUserId;
+  final ProfileResponse profile;
+  final int followersCount;
+  final int followingCount;
 
-  const ProfileStats({required this.profile, required this.keycloakUserId, super.key});
+  const ProfileStats({
+    required this.profile,
+    required this.followersCount,
+    required this.followingCount,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -189,7 +243,7 @@ class ProfileStats extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 45,
-          backgroundImage: AssetImage(profile.imageUrl),
+          backgroundImage: NetworkImage(profile.profilePhoto ?? 'default_image_url'), // Utilizamos NetworkImage para imágenes desde una URL
         ),
         const SizedBox(width: 2),
         GestureDetector(
@@ -197,30 +251,30 @@ class ProfileStats extends StatelessWidget {
             Navigator.pushNamed(
               context,
               '/followers_and_following',
-              arguments: {'keycloak_user_id': keycloakUserId, 'type': 'recipes'},
+              arguments: {'keycloak_user_id': profile.keycloakUserId, 'type': 'recipes'},
             );
           },
-          child: _buildStatItem('Recetas', profile.published_recipes.length.toString()),
+          child: _buildStatItem('Recetas', '0'), // Placeholder for the actual recipe count
         ),
         GestureDetector(
           onTap: () {
             Navigator.pushNamed(
               context,
               '/followers_and_following',
-              arguments: {'keycloak_user_id': keycloakUserId, 'type': 'followers'},
+              arguments: {'keycloak_user_id': profile.keycloakUserId, 'type': 'followers'},
             );
           },
-          child: _buildStatItem('Seguidores', profile.followers.length.toString()),
+          child: _buildStatItem('Seguidores', followersCount.toString()),
         ),
         GestureDetector(
           onTap: () {
             Navigator.pushNamed(
               context,
               '/followers_and_following',
-              arguments: {'keycloak_user_id': keycloakUserId, 'type': 'following'},
+              arguments: {'keycloak_user_id': profile.keycloakUserId, 'type': 'following'},
             );
           },
-          child: _buildStatItem('Siguiendo', profile.following.length.toString()),
+          child: _buildStatItem('Siguiendo', followingCount.toString()),
         ),
       ],
     );
@@ -315,149 +369,149 @@ class ProfileTabs extends StatelessWidget {
   }
 }
 
-class SavedRecipesGrid extends StatelessWidget {
-  final int selectedIndex;
-  final Profile profile;
+// class SavedRecipesGrid extends StatelessWidget {
+//   final int selectedIndex;
+//   final Profile profile;
 
-  const SavedRecipesGrid({
-    required this.selectedIndex,
-    required this.profile,
-  });
+//   const SavedRecipesGrid({
+//     required this.selectedIndex,
+//     required this.profile,
+//   });
 
-  @override
-  Widget build(BuildContext context) {
-    final recipeController = RecipeController();
-    final savedRecipes = profile.saved_recipes
-        .map((recipeId) =>
-            recipeController.allRecipes.firstWhere((recipe) => recipe.recipeId == '$recipeId'))
-        .toList();
-    final publishedRecipes = profile.published_recipes
-        .map((recipeId) =>
-            recipeController.allRecipes.firstWhere((recipe) => recipe.recipeId == '$recipeId'))
-        .toList();
+//   @override
+//   Widget build(BuildContext context) {
+//     final recipeController = RecipeController();
+//     final savedRecipes = profile.saved_recipes
+//         .map((recipeId) =>
+//             recipeController.allRecipes.firstWhere((recipe) => recipe.recipeId == '$recipeId'))
+//         .toList();
+//     final publishedRecipes = profile.published_recipes
+//         .map((recipeId) =>
+//             recipeController.allRecipes.firstWhere((recipe) => recipe.recipeId == '$recipeId'))
+//         .toList();
 
-    final recipesToShow = selectedIndex == 0 ? publishedRecipes : savedRecipes;
+//     final recipesToShow = selectedIndex == 0 ? publishedRecipes : savedRecipes;
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 23, vertical: 16),
-      itemCount: recipesToShow.length,
-      itemBuilder: (context, index) {
-        final recipe = recipesToShow[index];
-        return GestureDetector(
-          onTap: () {
-            Navigator.pushNamed(
-              context,
-              '/recipe',
-              arguments: {'recipeId': recipe.recipeId},
-            );
-          },
-          child: RecipeCard(
-            title: recipe.title,
-            chef: recipe.chef,
-            duration: recipe.duration,
-            imageUrl: recipe.imageUrl,
-            rating: recipe.rating,
-          ),
-        );
-      },
-    );
-  }
-}
+//     return ListView.builder(
+//       padding: const EdgeInsets.symmetric(horizontal: 23, vertical: 16),
+//       itemCount: recipesToShow.length,
+//       itemBuilder: (context, index) {
+//         final recipe = recipesToShow[index];
+//         return GestureDetector(
+//           onTap: () {
+//             Navigator.pushNamed(
+//               context,
+//               '/recipe',
+//               arguments: {'recipeId': recipe.recipeId},
+//             );
+//           },
+//           child: RecipeCard(
+//             title: recipe.title,
+//             chef: recipe.chef,
+//             duration: recipe.duration,
+//             imageUrl: recipe.imageUrl,
+//             rating: recipe.rating,
+//           ),
+//         );
+//       },
+//     );
+//   }
+// }
 
-class RecipeCard extends StatelessWidget {
-  final String title;
-  final String chef;
-  final String duration;
-  final String imageUrl;
-  final int? rating;
+// class RecipeCard extends StatelessWidget {
+//   final String title;
+//   final String chef;
+//   final String duration;
+//   final String imageUrl;
+//   final int? rating;
 
-  const RecipeCard({
-    Key? key,
-    required this.title,
-    required this.chef,
-    required this.duration,
-    required this.imageUrl,
-    this.rating,
-  }) : super(key: key);
+//   const RecipeCard({
+//     Key? key,
+//     required this.title,
+//     required this.chef,
+//     required this.duration,
+//     required this.imageUrl,
+//     this.rating,
+//   }) : super(key: key);
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Image.asset(
-              imageUrl,
-              height: 120,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 12,
-                      backgroundImage: AssetImage('assets/chefs/$chef.jpg'),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      chef,
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '$duration mins',
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                    Row(
-                      children: List.generate(5, (index) {
-                        return Icon(
-                          index < (rating ?? 0) ? Icons.star : Icons.star_border,
-                          color: Colors.amber,
-                          size: 12,
-                        );
-                      }),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       margin: const EdgeInsets.symmetric(vertical: 8),
+//       width: double.infinity,
+//       decoration: BoxDecoration(
+//         color: Colors.white,
+//         borderRadius: BorderRadius.circular(12),
+//         boxShadow: [
+//           BoxShadow(
+//             color: Colors.black.withOpacity(0.1),
+//             blurRadius: 8,
+//             offset: const Offset(0, 2),
+//           ),
+//         ],
+//       ),
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           ClipRRect(
+//             borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+//             child: Image.asset(
+//               imageUrl,
+//               height: 120,
+//               width: double.infinity,
+//               fit: BoxFit.cover,
+//             ),
+//           ),
+//           Padding(
+//             padding: const EdgeInsets.all(12),
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 Text(
+//                   title,
+//                   style: const TextStyle(
+//                     fontSize: 16,
+//                     fontWeight: FontWeight.w600,
+//                   ),
+//                 ),
+//                 const SizedBox(height: 8),
+//                 Row(
+//                   children: [
+//                     CircleAvatar(
+//                       radius: 12,
+//                       backgroundImage: AssetImage('assets/chefs/$chef.jpg'),
+//                     ),
+//                     const SizedBox(width: 8),
+//                     Text(
+//                       chef,
+//                       style: const TextStyle(fontSize: 14),
+//                     ),
+//                   ],
+//                 ),
+//                 const SizedBox(height: 8),
+//                 Row(
+//                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                   children: [
+//                     Text(
+//                       '$duration mins',
+//                       style: const TextStyle(color: Colors.grey),
+//                     ),
+//                     Row(
+//                       children: List.generate(5, (index) {
+//                         return Icon(
+//                           index < (rating ?? 0) ? Icons.star : Icons.star_border,
+//                           color: Colors.amber,
+//                           size: 12,
+//                         );
+//                       }),
+//                     ),
+//                   ],
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }

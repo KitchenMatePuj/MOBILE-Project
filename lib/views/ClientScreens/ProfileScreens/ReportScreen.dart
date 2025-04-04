@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '/controllers/profile_controller.dart';
-import '/controllers/report_controller.dart';
-import '/models/profile_model.dart';
-import '/models/report_model.dart';
+import '/controllers/Profiles/profile_controller.dart';
+import '/controllers/Reports/reports_controller.dart';
+import '/models/Profiles/profile_response.dart';
+import '/models/Reports/report_response.dart';
+import '/models/Reports/report_request.dart';
 import '/providers/user_provider.dart';
 
 class ReportsScreen extends StatefulWidget {
@@ -16,19 +17,18 @@ class ReportsScreen extends StatefulWidget {
 
 class _ReportsScreenState extends State<ReportsScreen> {
   final List<int> _expandedReports = [];
+  late Future<List<ReportResponse>> _reportsFuture;
+  late ReportsController _reportsController;
+
+  @override
+  void initState() {
+    super.initState();
+    _reportsController = ReportsController();
+    _reportsFuture = _reportsController.fetchAllReports();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<UserProvider>(context).user;
-    final profileController = ProfileController();
-    final reportController = ReportController();
-
-    final profile = user != null
-        ? profileController.recommendedProfiles.firstWhere((p) => p.email == user.email)
-        : profileController.recommendedProfiles.firstWhere((profile) => profile.keycloak_user_id == 11);
-
-    final userReports = reportController.getReportsByUserId(profile.keycloak_user_id);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Reportes'),
@@ -54,8 +54,15 @@ class _ReportsScreenState extends State<ReportsScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            userReports.isEmpty
-                ? const Expanded(
+            FutureBuilder<List<ReportResponse>>(
+              future: _reportsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return CircularProgressIndicator();
+                } else if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Expanded(
                     child: Center(
                       child: Text(
                         'Sin Reportes Realizados',
@@ -65,118 +72,120 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         ),
                       ),
                     ),
-                  )
-                : Expanded(
-                  child: ListView.builder(
-                  itemCount: userReports.length,
-                  itemBuilder: (context, index) {
-                  final report = userReports[index];
-                  final formattedDate = DateFormat('dd-MM-yyyy').format(report.creationDate);
-                  final isExpanded = _expandedReports.contains(report.reportId);
-                  final statusColor = report.status == 'Resuelto'
-                    ? const Color(0xFF129575)
-                    : report.status == 'Eliminado'
-                    ? Colors.red
-                    : const Color.fromARGB(255, 237, 170, 69);
-
-                  return GestureDetector(
-                    onTap: () {
-                    setState(() {
-                    if (isExpanded) {
-                    _expandedReports.remove(report.reportId);
-                    } else {
-                    _expandedReports.add(report.reportId);
-                    }
-                    });
-                    },
-                    child: Container(
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                    ],
-                    ),
-                    child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                      Text(
-                      'Reporte ($formattedDate):',
-                      style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                      ),
-                      ),
-                      Text(
-                      '${report.status}',
-                      style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: statusColor,
-                      ),
-                      ),
-                      ],
-                    ),
-                    if (isExpanded) ...[
-                      const SizedBox(height: 8),
-                      RichText(
-                      text: TextSpan(
-                      text: 'Descripción de Reporte: ',
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-                      children: [
-                      TextSpan(
-                        text: '${report.description}',
-                        style: const TextStyle(fontWeight: FontWeight.normal),
-                      ),
-                      ],
-                      ),
-                      ),
-                      RichText(
-                      text: TextSpan(
-                      text: 'Tipo de Reporte: ',
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-                      children: [
-                      TextSpan(
-                        text: report.reportedRecipeId != 0
-                        ? 'Receta'
-                        : report.reportedProfileId != 0
-                          ? 'Perfil'
-                          : 'Comentario',
-                        style: const TextStyle(fontWeight: FontWeight.normal),
-                      ),
-                      ],
-                      ),
-                      ),
-                      RichText(
-                      text: TextSpan(
-                      text: 'ID de Reporte: ',
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-                      children: [
-                      TextSpan(
-                        text: '${report.reportId}',
-                        style: const TextStyle(fontWeight: FontWeight.normal),
-                      ),
-                      ],
-                      ),
-                      ),
-                    ],
-                    ],
-                    ),
-                    ),
                   );
-                  },
+                }
+
+                final userReports = snapshot.data!.where((report) => report.reporterUserId == '2').toList();
+
+                return Expanded(
+                  child: ListView.builder(
+                    itemCount: userReports.length,
+                    itemBuilder: (context, index) {
+                      final report = userReports[index];
+                      final formattedDate = DateFormat('dd-MM-yyyy').format(report.createdAt);
+                      final isExpanded = _expandedReports.contains(report.reportId);
+                      final statusColor = report.status == 'Resuelto'
+                          ? const Color(0xFF129575)
+                          : report.status == 'Eliminado'
+                              ? Colors.red
+                              : const Color.fromARGB(255, 237, 170, 69);
+
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            if (isExpanded) {
+                              _expandedReports.remove(report.reportId);
+                            } else {
+                              _expandedReports.add(report.reportId);
+                            }
+                          });
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Reporte ($formattedDate):',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  Text(
+                                    report.status,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: statusColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (isExpanded) ...[
+                                const SizedBox(height: 8),
+                                RichText(
+                                  text: TextSpan(
+                                    text: 'Descripción de Reporte: ',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                                    children: [
+                                      TextSpan(
+                                        text: report.description ?? 'No disponible',
+                                        style: const TextStyle(fontWeight: FontWeight.normal),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                RichText(
+                                  text: TextSpan(
+                                    text: 'Tipo de Reporte: ',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                                    children: [
+                                      TextSpan(
+                                        text: report.resourceType,
+                                        style: const TextStyle(fontWeight: FontWeight.normal),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                RichText(
+                                  text: TextSpan(
+                                    text: 'ID de Reporte: ',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                                    children: [
+                                      TextSpan(
+                                        text: report.reportId.toString(),
+                                        style: const TextStyle(fontWeight: FontWeight.normal),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                  ),
+                );
+              },
+            ),
           ],
         ),
       ),
