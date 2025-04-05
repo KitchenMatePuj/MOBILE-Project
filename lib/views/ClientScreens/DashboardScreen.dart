@@ -16,9 +16,6 @@ import 'package:mobile_kitchenmate/controllers/recommendations/recommendations_c
 import 'package:provider/provider.dart';
 import '/providers/user_provider.dart';
 
-import 'package:provider/provider.dart';
-import '/providers/user_provider.dart';
-
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -34,6 +31,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late RecommendationsController _recommendationController;
 
   List<RecipeResponse> _savedRecipeDetails = [];
+  List<RecipeResponse> _publishedRecipes = [];
   List<RecommendationResponse> _recommendations = [];
   Map<int, CategoryResponse> _categoriesById = {};
 
@@ -81,6 +79,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         setState(() {
           _recommendations = recs;
         });
+
+        await _loadPublishedRecipes(keycloakUserId);
       });
   }
 
@@ -107,11 +107,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
           final category =
               await _categoryController.getCategoryById(categoryId);
           _categoriesById[categoryId] = category;
-          print('📦 Categoría cargada: ${category.name}');
         } catch (e) {
           continue;
         }
       }
+    }
+  }
+
+  Future<void> _loadPublishedRecipes(String userId) async {
+    try {
+      final recipes = await _recipeController.getRecipesByUser(userId);
+      setState(() {
+        _publishedRecipes = recipes;
+      });
+    } catch (e) {
+      print('❌ Error al cargar publicaciones: \$e');
     }
   }
 
@@ -143,7 +153,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   }
 
                   final profile = snapshot.data!;
-                  return UserHeader(user: profile);
+                  return UserHeader(
+                      user: profile); // AQUÍ SE MUESTRA BIENVENIDO
                 },
               ),
             ),
@@ -182,13 +193,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: selectedIndex == 0
                   ? _recommendations.isEmpty
                       ? Center(
-                          child: Text(
-                            'No hay recomendaciones por el momento.',
-                            style: TextStyle(
-                                color: Colors.grey,
-                                fontStyle: FontStyle.italic),
-                          ),
-                        )
+                          child: Text('No hay recomendaciones por el momento.',
+                              style: TextStyle(
+                                  color: Colors.grey,
+                                  fontStyle: FontStyle.italic)))
                       : ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           itemCount: _recommendations.length,
@@ -206,34 +214,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             );
                           },
                         )
-                  : _savedRecipeDetails.isEmpty
+                  : _publishedRecipes.isEmpty
                       ? Center(
-                          child: Text(
-                            'Aún no tienes recetas guardadas.',
-                            style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 16,
-                                fontStyle: FontStyle.italic),
-                          ),
-                        )
+                          child: Text('Aún no has publicado recetas.',
+                              style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 16,
+                                  fontStyle: FontStyle.italic)))
                       : ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: _savedRecipeDetails.length,
+                          itemCount: _publishedRecipes.length,
                           itemBuilder: (context, index) {
-                            final recipe = _savedRecipeDetails[index];
+                            final recipe = _publishedRecipes[index];
                             return Padding(
                               padding: const EdgeInsets.symmetric(vertical: 8),
                               child: GestureDetector(
                                 onTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    '/recipe',
-                                    arguments: {'recipeId': recipe.recipeId},
-                                  );
+                                  Navigator.pushNamed(context, '/recipe',
+                                      arguments: {'recipeId': recipe.recipeId});
                                 },
                                 child: RecipeCard(
                                   title: recipe.title,
-                                  chef: 'Chef',
+                                  chef: 'Tú',
                                   duration: '${recipe.cookingTime}',
                                   imageUrl: 'assets/images/default.jpg',
                                   rating: recipe.ratingAvg.round(),
@@ -281,6 +283,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 }
+
+// Nota: Se mantuvieron las clases RecipeCard, UserHeader, ProfileCard y ProfileTabs sin cambios.
 
 class RecipeCard extends StatelessWidget {
   final String title;
