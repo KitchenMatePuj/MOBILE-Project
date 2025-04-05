@@ -41,7 +41,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String query = '';
   int _recipesToShow = 4;
   int selectedIndex = 0;
-  String keycloakUserId = 'user1234';
+  String keycloakUserId = '12';
 
   @override
   void initState() {
