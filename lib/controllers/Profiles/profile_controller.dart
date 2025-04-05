@@ -17,6 +17,17 @@ class ProfileController {
     }
   }
 
+  /// GET: Obtener perfil por profile_id
+  Future<ProfileResponse> getProfilebyid(String profile_id) async {
+    final response = await http.get(Uri.parse('$_baseUrl/$profile_id'));
+
+    if (response.statusCode == 200) {
+      return ProfileResponse.fromJson(json.decode(response.body));
+    } else {
+      throw Exception('Failed to fetch profile');
+    }
+  }
+
   /// GET: Listar todos los perfiles
   Future<List<ProfileResponse>> listProfiles() async {
     final response = await http.get(Uri.parse(_baseUrl));

@@ -5,7 +5,6 @@ import '/controllers/Profiles/profile_controller.dart';
 import '/controllers/Reports/reports_controller.dart';
 import '/models/Profiles/profile_response.dart';
 import '/models/Reports/report_response.dart';
-import '/models/Reports/report_request.dart';
 import '/providers/user_provider.dart';
 
 class ReportsScreen extends StatefulWidget {
@@ -19,6 +18,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
   final List<int> _expandedReports = [];
   late Future<List<ReportResponse>> _reportsFuture;
   late ReportsController _reportsController;
+  String reporterUserIdd = "2"; // Cambiar segun necesitemos Probar
 
   @override
   void initState() {
@@ -75,7 +75,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   );
                 }
 
-                final userReports = snapshot.data!.where((report) => report.reporterUserId == '2').toList();
+                final userReports = snapshot.data!.where((report) => report.reporterUserId == reporterUserIdd).toList();
 
                 return Expanded(
                   child: ListView.builder(

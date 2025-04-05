@@ -21,7 +21,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late ProfileController _profileController;
   late FollowController _followController;
   String keycloakUserId =
-      'user1234'; // Reemplaza '12' con el keycloak_user_id correcto
+      '12'; // Reemplaza '12' con el keycloak_user_id correcto
 
   @override
   void initState() {
@@ -263,13 +263,12 @@ class ProfileStats extends StatelessWidget {
               context,
               '/followers_and_following',
               arguments: {
-                'keycloak_user_id': profile.keycloakUserId,
+                'profile_id': profile.profileId, // Asegúrate de que profileId es un int válido
                 'type': 'recipes'
               },
             );
           },
-          child: _buildStatItem(
-              'Recetas', '0'), // Placeholder for the actual recipe count
+          child: _buildStatItem('Recetas', '0'), // Placeholder for the actual recipe count
         ),
         GestureDetector(
           onTap: () {
@@ -277,7 +276,7 @@ class ProfileStats extends StatelessWidget {
               context,
               '/followers_and_following',
               arguments: {
-                'keycloak_user_id': profile.keycloakUserId,
+                'profile_id': profile.profileId, // Asegúrate de que profileId es un int válido
                 'type': 'followers'
               },
             );
@@ -290,7 +289,7 @@ class ProfileStats extends StatelessWidget {
               context,
               '/followers_and_following',
               arguments: {
-                'keycloak_user_id': profile.keycloakUserId,
+                'profile_id': profile.profileId, // Asegúrate de que profileId es un int válido
                 'type': 'following'
               },
             );
