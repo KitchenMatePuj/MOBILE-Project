@@ -20,9 +20,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late Future<List<FollowResponse>> _followingFuture;
   late ProfileController _profileController;
   late FollowController _followController;
-  String query = '';
-  int _recipesToShow = 4;
-
   String keycloakUserId =
       'user1234'; // Reemplaza '12' con el keycloak_user_id correcto
 
@@ -42,155 +39,164 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(''),
+        title: const Text(
+          'Mi Perfil',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: const Color(0xFF129575),
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.settings, color: Colors.white),
+            color: Colors.white,
+            onSelected: (String value) {
+              switch (value) {
+                case 'Editar Perfil':
+                  Navigator.pushNamed(context, '/edit_profile');
+                  break;
+                case 'Reportes':
+                  Navigator.pushNamed(context, '/reports');
+                  break;
+                case 'Cerrar sesión':
+                  Navigator.pushNamed(context, '/');
+                  break;
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return [
+                PopupMenuItem(
+                  value: 'Editar Perfil',
+                  child: Row(
+                    children: const [
+                      Icon(Icons.edit, color: Colors.black),
+                      SizedBox(width: 8),
+                      Text('Editar Perfil'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'Reportes',
+                  child: Row(
+                    children: const [
+                      Icon(Icons.report, color: Colors.black),
+                      SizedBox(width: 8),
+                      Text('Reportes'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'Cerrar sesión',
+                  child: Center(
+                    child: Text(
+                      'Cerrar sesión',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ),
+                ),
+              ];
+            },
+          ),
+        ],
         automaticallyImplyLeading: false,
       ),
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(
-                  left: 16, right: 16, top: 16, bottom: 10),
-              child: FutureBuilder<ProfileResponse>(
-                future: _profileFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return CircularProgressIndicator();
-                  } else if (snapshot.hasError) {
-                    return Text('Error: ${snapshot.error}');
-                  } else if (!snapshot.hasData) {
-                    return Text('No data found');
-                  }
+      backgroundColor: Colors.white,
+      body: FutureBuilder<ProfileResponse>(
+        future: _profileFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return CircularProgressIndicator();
+          } else if (snapshot.hasError) {
+            return Text('Error: ${snapshot.error}');
+          } else if (!snapshot.hasData) {
+            return Text('No data found');
+          }
 
-                  final profile = snapshot.data!;
-                  return UserHeader(user: profile);
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: TextField(
-                onChanged: (value) {
-                  setState(() {
-                    query = value;
-                  });
-                },
-                decoration: InputDecoration(
-                  hintText: 'Buscar receta',
-                  fillColor: Colors.white,
-                  prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF129575)),
-                  ),
-                  filled: true,
+          final profile = snapshot.data!;
+          return Column(
+            children: [
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 23),
+                child: Column(
+                  children: [
+                    FutureBuilder<List<FollowResponse>>(
+                      future: _followersFuture,
+                      builder: (context, followersSnapshot) {
+                        if (followersSnapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return CircularProgressIndicator();
+                        } else if (followersSnapshot.hasError) {
+                          return Text('Error: ${followersSnapshot.error}');
+                        }
+
+                        final followers = followersSnapshot.data ?? [];
+                        return FutureBuilder<List<FollowResponse>>(
+                          future: _followingFuture,
+                          builder: (context, followingSnapshot) {
+                            if (followingSnapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return CircularProgressIndicator();
+                            } else if (followingSnapshot.hasError) {
+                              return Text('Error: ${followingSnapshot.error}');
+                            }
+
+                            final following = followingSnapshot.data ?? [];
+                            return ProfileStats(
+                              profile: profile,
+                              followersCount: followers.length,
+                              followingCount: following.length,
+                            );
+                          },
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        profile.firstName ?? 'Nombre no disponible',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ProfileBio(
+                        description:
+                            'Aquí va una descripción genérica del usuario.'), // Descripción quemada
+                    const SizedBox(height: 16),
+                    ProfileTabs(
+                      selectedIndex: selectedIndex,
+                      onTabSelected: (index) {
+                        setState(() {
+                          selectedIndex = index;
+                        });
+                      },
+                    ), // Pestañas para publicaciones y guardados
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            ProfileTabs(
-              selectedIndex: selectedIndex,
-              onTabSelected: (index) {
-                setState(() {
-                  selectedIndex = index;
-                  _recipesToShow =
-                      4; // Reset the number of recipes to show whenever the tab changes
-                });
-              },
-            ), // Opciones de "Recomendaciones Personalizadas" y "Publicaciones de Amigos"
-            const SizedBox(height: 10),
-            Expanded(
-              child: Center(
-                child: Text(
-                  selectedIndex == 0
-                      ? 'Aquí irá el contenido de recomendaciones.'
-                      : 'Aquí irá el contenido de publicaciones.',
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 16,
-                    fontStyle: FontStyle.italic,
+              Expanded(
+                child: Container(
+                  child: Center(
+                    child: Text(
+                        'Aquí irá el contenido de las recetas guardadas y publicadas.'),
                   ),
                 ),
+                // child: SavedRecipesGrid(
+                //   selectedIndex: selectedIndex,
+                //   profile: profile,
+                // ), // Recetas guardadas
               ),
-              // child: selectedIndex == 1 && followingRecipes.isEmpty
-              //     ? Center(
-              //         child: Text(
-              //           '¡Sigue a algunas personas para ver sus publicaciones!',
-              //           style: TextStyle(
-              //             color: Colors.grey,
-              //             fontSize: 16,
-              //             fontStyle: FontStyle.italic,
-              //           ),
-              //           textAlign: TextAlign.center,
-              //         ),
-              //       )
-              //     : ListView(
-              //         padding: const EdgeInsets.symmetric(horizontal: 25), // Agregar margen horizontal
-              //         children: [
-              //           ...filteredRecipes.map((recipe) => Padding(
-              //                 padding: const EdgeInsets.symmetric(vertical: 8), // Margen vertical
-              //                 child: SizedBox(
-              //                   width: double.infinity,
-              //                   child: GestureDetector(
-              //                     onTap: () {
-              //                       Navigator.pushNamed(
-              //                         context,
-              //                         '/recipe',
-              //                         arguments: {'recipeId': recipe.recipeId},
-              //                       );
-              //                     },
-              //                     child: RecipeCard(
-              //                       title: recipe.title,
-              //                       chef: recipe.chef,
-              //                       duration: recipe.duration,
-              //                       imageUrl: recipe.imageUrl,
-              //                       rating: recipe.rating,
-              //                     ),
-              //                   ),
-              //                 ),
-              //               )),
-              //           if ((selectedIndex == 0 && _recipesToShow < recipesFromUser1.length) ||
-              //               (selectedIndex == 1 && _recipesToShow < followingRecipes.length))
-              //             Center(
-              //               child: ElevatedButton(
-              //                 style: ElevatedButton.styleFrom(
-              //                   backgroundColor: const Color(0xFF129575),
-              //                 ),
-              //                 onPressed: () {
-              //                   setState(() {
-              //                     _recipesToShow += 4;
-              //                   });
-              //                 },
-              //                 child: const Text(
-              //                   'Cargar más',
-              //                   style: TextStyle(color: Colors.white),
-              //                 ),
-              //               ),
-              //             ),
-              //           const SizedBox(height: 16),
-              //           SingleChildScrollView(
-              //             scrollDirection: Axis.horizontal,
-              //             padding: const EdgeInsets.symmetric(horizontal: 16),
-              //             child: Row(
-              //               children: recommendedProfiles.map((profile) => Padding(
-              //                     padding: const EdgeInsets.only(right: 16),
-              //                     child: ProfileCard(
-              //                       name: profile.name,
-              //                       description: profile.description,
-              //                       imageUrl: profile.imageUrl,
-              //                     ),
-              //                   )).toList(),
-              //             ),
-              //           ),
-              //         ],
-              //       ),
-            ),
-          ],
-        ),
+            ],
+          );
+        },
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
@@ -332,89 +338,6 @@ class ProfileBio extends StatelessWidget {
           fontSize: 14,
           color: Colors.grey,
         ),
-      ),
-    );
-  }
-}
-
-class UserHeader extends StatelessWidget {
-  final ProfileResponse user;
-
-  const UserHeader({Key? key, required this.user}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Bienvenido ${user.firstName}',
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              '¿Qué deseas cocinar hoy?',
-              style: TextStyle(
-                fontSize: 16,
-                color: Color.fromARGB(255, 83, 83, 83),
-              ),
-            ),
-          ],
-        ),
-        GestureDetector(
-          onTap: () {
-            Navigator.pushNamed(context, '/profile');
-          },
-          child: Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              image: DecorationImage(
-                image: NetworkImage(user.profilePhoto ??
-                    'default_image_url'), // Utilizamos NetworkImage para imágenes desde una URL
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class ProfileCard extends StatelessWidget {
-  final String name;
-  final String description;
-  final String imageUrl;
-
-  const ProfileCard({
-    Key? key,
-    required this.name,
-    required this.description,
-    required this.imageUrl,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 160,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
     );
   }
