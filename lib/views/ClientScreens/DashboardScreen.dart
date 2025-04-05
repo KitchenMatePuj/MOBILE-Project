@@ -1,12 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-//import '/controllers/recipe_controller.dart';
-import '/controllers/Profiles/profile_controller.dart';
-import '/providers/user_provider.dart';
-//import '/models/recipe_model.dart';
-//import '/models/user_model.dart'; // Asegúrate de importar el archivo que define la clase UserModel
+import 'package:mobile_kitchenmate/controllers/Recipes/categories.dart';
+import 'package:mobile_kitchenmate/controllers/Recipes/recipes.dart';
+import 'package:mobile_kitchenmate/models/Recipes/categories_response.dart';
+import 'package:mobile_kitchenmate/models/Recipes/recipes_response.dart';
 
-import '/models/Profiles/profile_response.dart';
+import 'package:mobile_kitchenmate/controllers/Profiles/profile_controller.dart';
+import 'package:mobile_kitchenmate/controllers/Profiles/sumary_controller.dart';
+import 'package:mobile_kitchenmate/models/Profiles/profile_response.dart';
+import 'package:mobile_kitchenmate/models/Profiles/summary_response.dart';
+
+import 'package:mobile_kitchenmate/models/Recommendations/recommendation_request.dart';
+import 'package:mobile_kitchenmate/models/Recommendations/recommendation_response.dart';
+import 'package:mobile_kitchenmate/controllers/recommendations/recommendations_controller.dart';
+
+import 'package:provider/provider.dart';
+import '/providers/user_provider.dart';
+
+import 'package:provider/provider.dart';
+import '/providers/user_provider.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -16,19 +27,92 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  //late RecipeController _recipeController;
   late ProfileController _profileController;
+  late SumaryController _summaryController;
+  late RecipeController _recipeController;
+  late CategoryController _categoryController;
+  late RecommendationsController _recommendationController;
+
+  List<RecipeResponse> _savedRecipeDetails = [];
+  List<RecommendationResponse> _recommendations = [];
+  Map<int, CategoryResponse> _categoriesById = {};
+
+  late Future<ProfileSummaryResponse> _summaryFuture;
   late Future<ProfileResponse> _profileFuture;
+
   String query = '';
   int _recipesToShow = 4;
   int selectedIndex = 0;
+  String keycloakUserId = 'user1234';
 
   @override
   void initState() {
     super.initState();
-    //_recipeController = RecipeController();
+
+    _recipeController = RecipeController(baseUrl: 'http://localhost:8004');
+    _categoryController = CategoryController(baseUrl: 'http://localhost:8004');
+    _summaryController = SumaryController();
     _profileController = ProfileController();
-    _profileFuture = _profileController.getProfile('12'); // Reemplaza '12' con el keycloak_user_id correcto
+    _recommendationController =
+        RecommendationsController(baseUrl: 'http://localhost:8007');
+
+    _profileFuture = _profileController.getProfile(keycloakUserId);
+
+    _summaryFuture = _summaryController.getProfileSummary(keycloakUserId)
+      ..then((summary) async {
+        await _loadSavedRecipes(summary.savedRecipes);
+        await _loadCategoriesForRecipes(_savedRecipeDetails);
+
+        final categoryNames = _savedRecipeDetails
+            .map((r) => r.categoryId)
+            .where((id) => _categoriesById.containsKey(id))
+            .map((id) => _categoriesById[id]!.name)
+            .toList();
+
+        final recommendationRequest = RecommendationRequest(
+          keycloakUserId: keycloakUserId,
+          favoriteCategories: categoryNames,
+          allergies: summary.ingredientAllergies,
+          cookingTime: summary.cookingTime,
+        );
+
+        final recs = await _recommendationController
+            .fetchRecommendations(recommendationRequest);
+        setState(() {
+          _recommendations = recs;
+        });
+      });
+  }
+
+  Future<void> _loadSavedRecipes(List<int> recipeIds) async {
+    final List<RecipeResponse> loaded = [];
+    for (int id in recipeIds) {
+      try {
+        final recipe = await _recipeController.getRecipeById(id);
+        loaded.add(recipe);
+      } catch (_) {
+        continue;
+      }
+    }
+    setState(() {
+      _savedRecipeDetails = loaded;
+    });
+  }
+
+  Future<void> _loadCategoriesForRecipes(List<RecipeResponse> recipes) async {
+    for (var recipe in recipes) {
+      final categoryId = recipe.categoryId;
+      if (!_categoriesById.containsKey(categoryId)) {
+        try {
+          final category =
+              await _categoryController.getCategoryById(categoryId);
+          _categoriesById[categoryId] = category;
+          print('📦 Categoría cargada: ${category.name}');
+        } catch (e) {
+          continue;
+        }
+      }
+    }
   }
 
   @override
@@ -45,7 +129,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 10),
+              padding: const EdgeInsets.only(
+                  left: 16, right: 16, top: 16, bottom: 10),
               child: FutureBuilder<ProfileResponse>(
                 future: _profileFuture,
                 builder: (context, snapshot) {
@@ -88,96 +173,75 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onTabSelected: (index) {
                 setState(() {
                   selectedIndex = index;
-                  _recipesToShow = 4; // Reset the number of recipes to show whenever the tab changes
+                  _recipesToShow = 4;
                 });
               },
-            ), // Opciones de "Recomendaciones Personalizadas" y "Publicaciones de Amigos"
+            ),
             const SizedBox(height: 10),
             Expanded(
-              child: Center(
-                child: Text(
-                  selectedIndex == 0 
-                    ? 'Aquí irá el contenido de recomendaciones.'
-                    : 'Aquí irá el contenido de publicaciones.',
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 16,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ),
-              // child: selectedIndex == 1 && followingRecipes.isEmpty
-              //     ? Center(
-              //         child: Text(
-              //           '¡Sigue a algunas personas para ver sus publicaciones!',
-              //           style: TextStyle(
-              //             color: Colors.grey,
-              //             fontSize: 16,
-              //             fontStyle: FontStyle.italic,
-              //           ),
-              //           textAlign: TextAlign.center,
-              //         ),
-              //       )
-              //     : ListView(
-              //         padding: const EdgeInsets.symmetric(horizontal: 25), // Agregar margen horizontal
-              //         children: [
-              //           ...filteredRecipes.map((recipe) => Padding(
-              //                 padding: const EdgeInsets.symmetric(vertical: 8), // Margen vertical
-              //                 child: SizedBox(
-              //                   width: double.infinity,
-              //                   child: GestureDetector(
-              //                     onTap: () {
-              //                       Navigator.pushNamed(
-              //                         context,
-              //                         '/recipe',
-              //                         arguments: {'recipeId': recipe.recipeId},
-              //                       );
-              //                     },
-              //                     child: RecipeCard(
-              //                       title: recipe.title,
-              //                       chef: recipe.chef,
-              //                       duration: recipe.duration,
-              //                       imageUrl: recipe.imageUrl,
-              //                       rating: recipe.rating,
-              //                     ),
-              //                   ),
-              //                 ),
-              //               )),
-              //           if ((selectedIndex == 0 && _recipesToShow < recipesFromUser1.length) ||
-              //               (selectedIndex == 1 && _recipesToShow < followingRecipes.length))
-              //             Center(
-              //               child: ElevatedButton(
-              //                 style: ElevatedButton.styleFrom(
-              //                   backgroundColor: const Color(0xFF129575),
-              //                 ),
-              //                 onPressed: () {
-              //                   setState(() {
-              //                     _recipesToShow += 4;
-              //                   });
-              //                 },
-              //                 child: const Text(
-              //                   'Cargar más',
-              //                   style: TextStyle(color: Colors.white),
-              //                 ),
-              //               ),
-              //             ),
-              //           const SizedBox(height: 16),
-              //           SingleChildScrollView(
-              //             scrollDirection: Axis.horizontal,
-              //             padding: const EdgeInsets.symmetric(horizontal: 16),
-              //             child: Row(
-              //               children: recommendedProfiles.map((profile) => Padding(
-              //                     padding: const EdgeInsets.only(right: 16),
-              //                     child: ProfileCard(
-              //                       name: profile.name,
-              //                       description: profile.description,
-              //                       imageUrl: profile.imageUrl,
-              //                     ),
-              //                   )).toList(),
-              //             ),
-              //           ),
-              //         ],
-              //       ),
+              child: selectedIndex == 0
+                  ? _recommendations.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No hay recomendaciones por el momento.',
+                            style: TextStyle(
+                                color: Colors.grey,
+                                fontStyle: FontStyle.italic),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: _recommendations.length,
+                          itemBuilder: (context, index) {
+                            final rec = _recommendations[index];
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: RecipeCard(
+                                title: rec.title,
+                                chef: 'Chef',
+                                duration: '${rec.cookingTime}',
+                                imageUrl: 'assets/images/default.jpg',
+                                rating: rec.ratingAvg.round(),
+                              ),
+                            );
+                          },
+                        )
+                  : _savedRecipeDetails.isEmpty
+                      ? Center(
+                          child: Text(
+                            'Aún no tienes recetas guardadas.',
+                            style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 16,
+                                fontStyle: FontStyle.italic),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: _savedRecipeDetails.length,
+                          itemBuilder: (context, index) {
+                            final recipe = _savedRecipeDetails[index];
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/recipe',
+                                    arguments: {'recipeId': recipe.recipeId},
+                                  );
+                                },
+                                child: RecipeCard(
+                                  title: recipe.title,
+                                  chef: 'Chef',
+                                  duration: '${recipe.cookingTime}',
+                                  imageUrl: 'assets/images/default.jpg',
+                                  rating: recipe.ratingAvg.round(),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
             ),
           ],
         ),
@@ -207,26 +271,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           }
         },
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Inicio',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Buscar',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.add),
-            label: 'Publicar',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list),
-            label: 'Compras',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Perfil',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Buscar'),
+          BottomNavigationBarItem(icon: Icon(Icons.add), label: 'Publicar'),
+          BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Compras'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
         ],
       ),
     );
@@ -284,9 +333,7 @@ class RecipeCard extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                      fontSize: 16, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -296,24 +343,21 @@ class RecipeCard extends StatelessWidget {
                       backgroundImage: AssetImage('assets/chefs/$chef.jpg'),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      chef,
-                      style: const TextStyle(fontSize: 14),
-                    ),
+                    Text(chef, style: const TextStyle(fontSize: 14)),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      '$duration mins',
-                      style: const TextStyle(color: Colors.grey),
-                    ),
+                    Text('$duration mins',
+                        style: const TextStyle(color: Colors.grey)),
                     Row(
                       children: List.generate(5, (index) {
                         return Icon(
-                          index < (rating ?? 0) ? Icons.star : Icons.star_border,
+                          index < (rating ?? 0)
+                              ? Icons.star
+                              : Icons.star_border,
                           color: Colors.amber,
                           size: 12,
                         );
@@ -370,7 +414,8 @@ class UserHeader extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               image: DecorationImage(
-                image: NetworkImage(user.profilePhoto ?? 'default_image_url'), // Utilizamos NetworkImage para imágenes desde una URL
+                image: NetworkImage(user.profilePhoto ??
+                    'default_image_url'), // Utilizamos NetworkImage para imágenes desde una URL
                 fit: BoxFit.cover,
               ),
             ),
@@ -427,7 +472,7 @@ class ProfileTabs extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _buildTab('Recomendaciones', 0),
-        const SizedBox(width: 45), 
+        const SizedBox(width: 45),
         _buildTab('Publicaciones', 1),
       ],
     );
@@ -444,7 +489,9 @@ class ProfileTabs extends StatelessWidget {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: selectedIndex == index ? const Color(0xFF129575) : Colors.grey,
+              color: selectedIndex == index
+                  ? const Color(0xFF129575)
+                  : Colors.grey,
             ),
           ),
           if (selectedIndex == index)
