@@ -207,7 +207,7 @@ class FollowersFollowingContent extends StatelessWidget {
               Navigator.pushNamed(
                 context,
                 '/public_profile',
-                arguments: {'keycloak_user_id': user.keycloakUserId},
+                arguments: {'profile_id': user.profileId},
               );
             },
             child: const Text('Ver perfil'),
