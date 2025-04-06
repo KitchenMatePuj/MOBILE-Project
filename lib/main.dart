@@ -77,7 +77,18 @@ class MyApp extends StatelessWidget {
             },
           );
         }
+
         // else if (settings.name == '/comments') {
+
+        //  else if (settings.name == '/public_profile') {
+        //   final args = settings.arguments as Map<String, dynamic>;
+        //   return MaterialPageRoute(
+        //     builder: (context) {
+        //       return PublicProfileScreen(keycloakUserId: args['keycloak_user_id']);
+        //     },
+        //   );
+        // } else if (settings.name == '/comments') {
+
         //   final args = settings.arguments as Map<String, dynamic>;
         //   return MaterialPageRoute(
         //     builder: (context) {
@@ -95,12 +106,13 @@ class MyApp extends StatelessWidget {
         // '/sign_up': (context) => const SignUpScreen(),
         '/dashboard': (context) => const DashboardScreen(),
         '/recipe_search': (context) => const RecipeSearchScreen(),
+        //'/recipe_search': (context) => const RecipeSearchScreen(),
         '/profile': (context) => const ProfileScreen(),
         // '/email_forgot_pass': (context) => const EmailForgotPassScreen(),
         // '/shopping_list': (context) => const ShoppingListScreen(),
-        // '/create': (context) => const CreateRecipeScreen(),
+        '/create': (context) => const CreateRecipeScreen(),
         // '/recipe': (context) => const RecipeScreen(),
-        // '/edit_profile': (context) => const EditprofileScreen(),
+        '/edit_profile': (context) => const EditprofileScreen(),
         '/reports': (context) => const ReportsScreen(),
       },
     );
