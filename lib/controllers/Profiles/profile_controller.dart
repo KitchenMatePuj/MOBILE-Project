@@ -19,7 +19,7 @@ class ProfileController {
 
   /// GET: Obtener perfil por profile_id
   Future<ProfileResponse> getProfilebyid(String profile_id) async {
-    final response = await http.get(Uri.parse('$_baseUrl/$profile_id'));
+    final response = await http.get(Uri.parse('$_baseUrl/id/$profile_id'));
 
     if (response.statusCode == 200) {
       return ProfileResponse.fromJson(json.decode(response.body));

@@ -55,8 +55,9 @@ class MyApp extends StatelessWidget {
         if (settings.name == '/followers_and_following') {
           final args = settings.arguments as Map<String, dynamic>;
           final int profileId = args['profile_id'] ?? 0; // Default to 0 if null
-          final String type = args['type'] ?? 'followers'; // Default to 'followers' if null
-          
+          final String type =
+              args['type'] ?? 'followers'; // Default to 'followers' if null
+
           return MaterialPageRoute(
             builder: (context) {
               return FollowersAndFollowingScreen(
@@ -65,14 +66,41 @@ class MyApp extends StatelessWidget {
               );
             },
           );
+        } else if (settings.name == '/public_profile') {
+          final args = settings.arguments as Map<String, dynamic>;
+          final int profileId = args['profile_id'] ?? 3; // Default to 0 if null
+
+          return MaterialPageRoute(
+            builder: (context) {
+              return PublicProfileScreen(
+                  profileId: profileId);
+            },
+          );
         }
+        // else if (settings.name == '/comments') {
+        //   final args = settings.arguments as Map<String, dynamic>;
+        //   return MaterialPageRoute(
+        //     builder: (context) {
+        //       return CommentsScreen(recipeId: args['recipeId']);
+        //     },
+        //   );
+        // }
         // Define other routes here if needed
         return null;
       },
       routes: {
         '/': (context) => const HomeScreen(),
+        // '/login': (context) => const LoginScreen(),
+        // '/forgot_password': (context) => const ForgotPasswordScreen(),
+        // '/sign_up': (context) => const SignUpScreen(),
         '/dashboard': (context) => const DashboardScreen(),
+        '/recipe_search': (context) => const RecipeSearchScreen(),
         '/profile': (context) => const ProfileScreen(),
+        // '/email_forgot_pass': (context) => const EmailForgotPassScreen(),
+        // '/shopping_list': (context) => const ShoppingListScreen(),
+        // '/create': (context) => const CreateRecipeScreen(),
+        // '/recipe': (context) => const RecipeScreen(),
+        // '/edit_profile': (context) => const EditprofileScreen(),
         '/reports': (context) => const ReportsScreen(),
       },
     );
