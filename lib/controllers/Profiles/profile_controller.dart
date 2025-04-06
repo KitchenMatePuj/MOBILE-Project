@@ -4,7 +4,7 @@ import '../../models/Profiles/profile_request.dart';
 import '../../models/Profiles/profile_response.dart';
 
 class ProfileController {
-  static const String _baseUrl = 'http://localhost:8001/profiles'; 
+  static const String _baseUrl = 'http://localhost:8001/profiles';
 
   /// GET: Obtener perfil por keycloak_user_id
   Future<ProfileResponse> getProfile(String keycloakUserId) async {
@@ -19,7 +19,7 @@ class ProfileController {
 
   /// GET: Obtener perfil por profile_id
   Future<ProfileResponse> getProfilebyid(String profile_id) async {
-    final response = await http.get(Uri.parse('$_baseUrl/$profile_id'));
+    final response = await http.get(Uri.parse('$_baseUrl/id/$profile_id'));
 
     if (response.statusCode == 200) {
       return ProfileResponse.fromJson(json.decode(response.body));
@@ -54,7 +54,8 @@ class ProfileController {
   }
 
   /// PUT: Actualizar perfil
-  Future<void> updateProfile(String keycloakUserId, ProfileRequest updatedProfile) async {
+  Future<void> updateProfile(
+      String keycloakUserId, ProfileRequest updatedProfile) async {
     final response = await http.put(
       Uri.parse('$_baseUrl/$keycloakUserId'),
       headers: {'Content-Type': 'application/json'},

@@ -20,8 +20,10 @@ class IngredientAllergyController {
   }
 
   /// GET: Listar todas las alergias de un perfil
-  Future<List<IngredientAllergyResponse>> listAllergiesByProfile(int profileId) async {
-    final response = await http.get(Uri.parse('$baseUrl/profile/$profileId'));
+  Future<List<IngredientAllergyResponse>> listAllergiesByProfile(
+      int profileId) async {
+    final response = await http
+        .get(Uri.parse('$baseUrl/ingredient_allergies/profile/$profileId'));
 
     if (response.statusCode == 200) {
       final List<dynamic> body = json.decode(response.body);
@@ -45,7 +47,8 @@ class IngredientAllergyController {
   }
 
   /// PUT: Actualizar una alergia
-  Future<void> updateAllergy(int allergyId, Map<String, dynamic> updates) async {
+  Future<void> updateAllergy(
+      int allergyId, Map<String, dynamic> updates) async {
     final response = await http.put(
       Uri.parse('$baseUrl/$allergyId'),
       headers: {'Content-Type': 'application/json'},

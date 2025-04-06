@@ -19,7 +19,9 @@ class RecipeController {
     if (response.statusCode == 200 || response.statusCode == 201) {
       return RecipeResponse.fromJson(jsonDecode(response.body));
     } else {
-      throw Exception('Failed to create recipe');
+      // ¡IMPORTANTE! Lanza excepción si falla:
+      throw Exception(
+          'Failed to create recipe: ${response.statusCode}, ${response.body}');
     }
   }
 
@@ -47,14 +49,16 @@ class RecipeController {
   }
 
   /// Buscar recetas (GET /recipes/search?title=&cooking_time=&ingredient=)
-  Future<List<RecipeResponse>> searchRecipes({String? title, int? cookingTime, String? ingredient}) async {
+  Future<List<RecipeResponse>> searchRecipes(
+      {String? title, int? cookingTime, String? ingredient}) async {
     final queryParams = {
       if (title != null) 'title': title,
       if (cookingTime != null) 'cooking_time': cookingTime.toString(),
       if (ingredient != null) 'ingredient': ingredient,
     };
 
-    final uri = Uri.parse('$baseUrl/recipes/search').replace(queryParameters: queryParams);
+    final uri = Uri.parse('$baseUrl/recipes/search')
+        .replace(queryParameters: queryParams);
 
     final response = await http.get(uri);
 
@@ -103,8 +107,10 @@ class RecipeController {
   }
 
   /// Filtrar recetas por rating (GET /recipes/ratings/filter?min_rating=x&max_rating=y)
-  Future<List<RecipeResponse>> filterRecipesByRating(double minRating, double maxRating) async {
-    final uri = Uri.parse('$baseUrl/recipes/ratings/filter?min_rating=$minRating&max_rating=$maxRating');
+  Future<List<RecipeResponse>> filterRecipesByRating(
+      double minRating, double maxRating) async {
+    final uri = Uri.parse(
+        '$baseUrl/recipes/ratings/filter?min_rating=$minRating&max_rating=$maxRating');
 
     final response = await http.get(uri);
 
@@ -118,7 +124,8 @@ class RecipeController {
 
   /// Obtener estadísticas por tiempo de cocción (GET /recipes/statistics/cooking-time)
   Future<List<Map<String, dynamic>>> getCookingTimeStats() async {
-    final response = await http.get(Uri.parse('$baseUrl/recipes/statistics/cooking-time'));
+    final response =
+        await http.get(Uri.parse('$baseUrl/recipes/statistics/cooking-time'));
 
     if (response.statusCode == 200) {
       return List<Map<String, dynamic>>.from(jsonDecode(response.body));
@@ -129,7 +136,8 @@ class RecipeController {
 
   /// Obtener número total de recetas (GET /recipes/statistics/total)
   Future<int> getTotalRecipeCount() async {
-    final response = await http.get(Uri.parse('$baseUrl/recipes/statistics/total'));
+    final response =
+        await http.get(Uri.parse('$baseUrl/recipes/statistics/total'));
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> json = jsonDecode(response.body);

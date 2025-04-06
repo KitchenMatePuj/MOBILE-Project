@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../controllers/Profiles/saved_recipe_controller.dart';
+import '../../../models/Recipes/recipes_response.dart';
 import '/controllers/Profiles/profile_controller.dart';
 import '/controllers/Profiles/follow_controller.dart';
 import '/models/Profiles/profile_response.dart';
@@ -20,8 +22,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late Future<List<FollowResponse>> _followingFuture;
   late ProfileController _profileController;
   late FollowController _followController;
+  late Future<List<RecipeResponse>> _publishedRecipesFuture;
+  late Future<List<RecipeResponse>> _savedRecipesFuture;
+
   String keycloakUserId =
-      '12'; // Reemplaza '12' con el keycloak_user_id correcto
+      'user1234'; // Reemplaza '12' con el keycloak_user_id correcto
 
   @override
   void initState() {
@@ -263,12 +268,14 @@ class ProfileStats extends StatelessWidget {
               context,
               '/followers_and_following',
               arguments: {
-                'profile_id': profile.profileId, // Asegúrate de que profileId es un int válido
+                'profile_id': profile
+                    .profileId, // Asegúrate de que profileId es un int válido
                 'type': 'recipes'
               },
             );
           },
-          child: _buildStatItem('Recetas', '0'), // Placeholder for the actual recipe count
+          child: _buildStatItem(
+              'Recetas', '0'), // Placeholder for the actual recipe count
         ),
         GestureDetector(
           onTap: () {
@@ -276,7 +283,8 @@ class ProfileStats extends StatelessWidget {
               context,
               '/followers_and_following',
               arguments: {
-                'profile_id': profile.profileId, // Asegúrate de que profileId es un int válido
+                'profile_id': profile
+                    .profileId, // Asegúrate de que profileId es un int válido
                 'type': 'followers'
               },
             );
@@ -289,7 +297,8 @@ class ProfileStats extends StatelessWidget {
               context,
               '/followers_and_following',
               arguments: {
-                'profile_id': profile.profileId, // Asegúrate de que profileId es un int válido
+                'profile_id': profile
+                    .profileId, // Asegúrate de que profileId es un int válido
                 'type': 'following'
               },
             );
