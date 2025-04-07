@@ -79,7 +79,6 @@ class MyApp extends StatelessWidget {
         }
 
         // else if (settings.name == '/comments') {
-
         //  else if (settings.name == '/public_profile') {
         //   final args = settings.arguments as Map<String, dynamic>;
         //   return MaterialPageRoute(
