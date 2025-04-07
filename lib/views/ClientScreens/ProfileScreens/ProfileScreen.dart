@@ -37,7 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String recipeBaseUrl = 'http://localhost:8004';
 
   // keycloakUserId del usuario que consultamos
-  String keycloakUserId = 'user1234';
+  String keycloakUserId = '12';
   String images = 'assets/images/default.jpg';
   @override
   void initState() {
