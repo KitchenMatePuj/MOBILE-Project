@@ -78,7 +78,6 @@ class MyApp extends StatelessWidget {
         }
 
         // else if (settings.name == '/comments') {
-
         //  else if (settings.name == '/public_profile') {
         //   final args = settings.arguments as Map<String, dynamic>;
         //   return MaterialPageRoute(
@@ -108,7 +107,7 @@ class MyApp extends StatelessWidget {
         //'/recipe_search': (context) => const RecipeSearchScreen(),
         '/profile': (context) => const ProfileScreen(),
         // '/email_forgot_pass': (context) => const EmailForgotPassScreen(),
-        // '/shopping_list': (context) => const ShoppingListScreen(),
+        '/shopping_list': (context) => const ShoppingListScreen(),
         '/create': (context) => const CreateRecipeScreen(),
         // '/recipe': (context) => const RecipeScreen(),
         '/edit_profile': (context) => const EditprofileScreen(),

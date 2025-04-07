@@ -23,7 +23,7 @@ const List<String> defaultUnits = [
   'Pizca'
 ];
 
-const String keycloakUserId = 'user1234';
+const String keycloakUserId = '12';
 
 class CreateRecipeScreen extends StatefulWidget {
   const CreateRecipeScreen({super.key});

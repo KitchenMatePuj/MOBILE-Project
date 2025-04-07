@@ -21,7 +21,7 @@ class ShoppingListController {
 
   /// GET: Listar todas las listas de compras de un perfil
   Future<List<ShoppingListResponse>> listShoppingListsByProfile(int profileId) async {
-    final response = await http.get(Uri.parse('$baseUrl/profile/$profileId'));
+    final response = await http.get(Uri.parse('$baseUrl/shopping_lists/profile/$profileId'));
 
     if (response.statusCode == 200) {
       final List<dynamic> body = json.decode(response.body);

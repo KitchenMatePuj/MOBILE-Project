@@ -21,7 +21,7 @@ class IngredientController {
 
   /// GET: Listar todos los ingredientes de una lista de compras
   Future<List<IngredientResponse>> listIngredientsByShoppingList(int shoppingListId) async {
-    final response = await http.get(Uri.parse('$baseUrl/shopping_list/$shoppingListId'));
+    final response = await http.get(Uri.parse('$baseUrl/ingredients/shopping_list/$shoppingListId'));
 
     if (response.statusCode == 200) {
       final List<dynamic> body = json.decode(response.body);
