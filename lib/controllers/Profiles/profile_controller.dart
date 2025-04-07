@@ -45,15 +45,17 @@ class ProfileController {
   }
 
   /// POST: Crear perfil
-  Future<void> createProfile(ProfileRequest profile) async {
+  Future<ProfileResponse> createProfile(ProfileRequest request) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/profiles/'),
+      Uri.parse('$baseUrl/profiles'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode(profile.toJson()),
+      body: jsonEncode(request.toJson()),
     );
 
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to create profile');
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      return ProfileResponse.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Error al crear perfil: ${response.body}');
     }
   }
 

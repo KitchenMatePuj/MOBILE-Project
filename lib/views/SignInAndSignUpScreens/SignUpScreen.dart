@@ -1,702 +1,304 @@
-// import 'package:flutter/material.dart';
-// import 'package:flutter/gestures.dart';
-// import '../../controllers/profiles/profile_controller.dart';
-// import '../../models/Profiles/profile_request.dart'; // Import the ProfileRequest model
-// import 'package:http/http.dart' as http;
-// import '../../controllers/nutrition_controller.dart';
-// import '../../models/nutrition_model.dart';
-// import '../../controllers/Recipes/ingredients.dart'; // Import the IngredientController
-// import '../../models/Recipes/ingredients_response.dart'; // Import the IngredientResponse model
+// ===========================
+// SignUpScreen.dart (flujo corregido sin nutritionController)
+// ===========================
 
-// class SignUpScreen extends StatefulWidget {
-//   const SignUpScreen({super.key});
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:mobile_kitchenmate/controllers/Profiles/ingredient_allergy_controller.dart';
+import 'package:mobile_kitchenmate/controllers/authentication/auth_controller.dart';
+import 'package:mobile_kitchenmate/models/Profiles/ingredientAllery_request.dart';
+import 'package:mobile_kitchenmate/models/authentication/register_request.dart';
+import '../../controllers/profiles/profile_controller.dart';
+import '../../models/Profiles/profile_request.dart';
+import '../../models/Profiles/profile_response.dart';
+import '../../controllers/Recipes/ingredients.dart';
+import '../../models/Recipes/ingredients_response.dart';
+import '../../models/Profiles/ingredientAllery_response.dart';
 
-//   @override
-//   SignUpScreenState createState() => SignUpScreenState();
-// }
+class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({super.key});
 
-// class SignUpScreenState extends State<SignUpScreen> {
-//   final _firstNameController = TextEditingController();
-//   final _lastNameController = TextEditingController();
-//   final _emailController = TextEditingController();
-//   final _passwordController = TextEditingController();
-//   final _confirmPasswordController = TextEditingController();
-//   bool _isFirstNameValid = true;
-//   bool _isLastNameValid = true;
-//   bool _isPasswordValid = true;
-//   bool _isConfirmPasswordValid = true;
-//   bool _isEmailValid = true;
-//   bool _canContinue = false;
-//   String? _firstNameError;
-//   String? _lastNameError;
-//   String? _passwordError;
-//   String? _confirmPasswordError;
-//   String? _emailError;
+  @override
+  SignUpScreenState createState() => SignUpScreenState();
+}
 
-//   bool _isSignUpScreen = true; // Flag to switch between screens
-//   late ProfileController _profileController;
-//   late NutritionController _nutritionController;
-//   late IngredientController _ingredientController; // Add IngredientController
-//   int _currentQuestionIndex = 0;
-//   String _searchQuery = '';
-//   int _ingredientsToShow = 10;
-//   List<String> _allIngredients = []; // List to hold all ingredient names
+class SignUpScreenState extends State<SignUpScreen> {
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _cookingTimeController = TextEditingController();
 
-//   @override
-//   void initState() {
-//     super.initState();
-//     _profileController = ProfileController(baseUrl: 'https://api.example.com/profiles'); // Update with your actual base URL
-//     _ingredientController = IngredientController(baseUrl: 'https://api.example.com'); // Update with your actual base URL
-//     _fetchIngredients(); // Fetch ingredients from backend
-//   }
+  bool _isFirstNameValid = true;
+  bool _isLastNameValid = true;
+  bool _isPasswordValid = true;
+  bool _isConfirmPasswordValid = true;
+  bool _isEmailValid = true;
 
-//   void _validateForm() {
-//     final fullName = _firstNameController.text;
-//     final alias = _lastNameController.text;
-//     final email = _emailController.text;
-//     final password = _passwordController.text;
-//     final confirmPassword = _confirmPasswordController.text;
+  String? _firstNameError;
+  String? _lastNameError;
+  String? _passwordError;
+  String? _confirmPasswordError;
+  String? _emailError;
 
-//     setState(() {
-//       _firstNameError = fullName.isEmpty ? 'Nombre es requerido' : null;
-//       _isFirstNameValid = _firstNameError == null;
+  late AuthController _authController;
+  late ProfileController _profileController;
+  late IngredientController _ingredientController;
+  late IngredientAllergyController _ingredientAllergyController;
 
-//       _lastNameError = alias.isEmpty ? 'Apellido es requerido' : null;
-//       _isLastNameValid = _lastNameError == null;
+  List<String> _selectedIngredients = [];
+  List<String> _allIngredients = [];
 
-//       _emailError = email.isEmpty ? 'Correo es requerido' : null;
-//       _isEmailValid = _emailError == null;
+  bool _canContinue = false;
 
-//       _passwordError = password.isEmpty ? 'Contraseña es requerida' : null;
-//       _isPasswordValid = _passwordError == null;
+  @override
+  void initState() {
+    super.initState();
+    _authController = AuthController(baseUrl: 'http://localhost:8008');
+    _profileController = ProfileController(baseUrl: 'http://localhost:8001');
+    _ingredientController =
+        IngredientController(baseUrl: 'http://localhost:8004');
+    _ingredientAllergyController =
+        IngredientAllergyController(baseUrl: 'http://localhost:8001');
+    _fetchIngredients();
+  }
 
-//       _confirmPasswordError = confirmPassword != password ? 'Las contraseñas deben coincidir' : null;
-//       _isConfirmPasswordValid = _confirmPasswordError == null;
+  Future<void> _fetchIngredients() async {
+    try {
+      List<IngredientResponse> ingredients =
+          await _ingredientController.fetchIngredients();
+      setState(() {
+        _allIngredients =
+            ingredients.map((ingredient) => ingredient.name).toSet().toList();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al cargar ingredientes: \$e')),
+      );
+    }
+  }
 
-//       _canContinue = _isFirstNameValid && _isLastNameValid && _isEmailValid && _isPasswordValid && _isConfirmPasswordValid;
-//     });
-//   }
+  Future<void> _createAccount() async {
+    try {
+      final email = _emailController.text;
+      final password = _passwordController.text;
+      final firstName = _firstNameController.text;
+      final lastName = _lastNameController.text;
+      final phone = _phoneController.text;
+      final cookingTime = int.tryParse(_cookingTimeController.text) ?? 30;
 
-//   Future<void> _fetchIngredients() async {
-//     try {
-//       List<IngredientResponse> ingredients = await _ingredientController.fetchIngredients();
-//       setState(() {
-//         _allIngredients = ingredients.map((ingredient) => ingredient.name).toList();
-//         final nutritionModel = NutritionModel(_allIngredients);
-//         _nutritionController = NutritionController(model: nutritionModel);
-//       });
-//     } catch (e) {
-//       // Handle error
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(content: Text('Failed to load ingredients: $e')),
-//       );
-//     }
-//   }
+      final keycloakUserId = await _authController.registerUser(
+        username: email,
+        password: password,
+        email: email,
+        firstName: firstName,
+        lastName: lastName,
+      );
 
-//   Future<void> _createAccount() async {
-//     final profileRequest = ProfileRequest(
-//       keycloakUserId: '12345', // Hardcoded or dynamically generated
-//       firstName: _firstNameController.text,
-//       lastName: _lastNameController.text,
-//       email: _emailController.text,
-//       phone: '123-456-7890', // Hardcoded or dynamically generated
-//       profilePhoto: 'https://example.com/photo.jpg', // Hardcoded or dynamically generated
-//       accountStatus: 'active', // Hardcoded or dynamically generated
-//       cookingTime: 30, // Hardcoded or dynamically generated
-//     );
+      final profileRequest = ProfileRequest(
+        keycloakUserId: keycloakUserId,
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        phone: phone,
+        profilePhoto: 'https://example.com/photo.jpg',
+        accountStatus: 'active',
+        cookingTime: cookingTime,
+      );
 
-//     try {
-//       await _profileController.createProfile(profileRequest);
-//       // Navigate to the next screen or show success message
-//       Navigator.pushNamed(context, '/login');
-//     } catch (e) {
-//       // Show error message
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(content: Text('Failed to create account: $e')),
-//       );
-//     }
-//   }
+      final profileResponse =
+          await _profileController.createProfile(profileRequest);
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: Text(_isSignUpScreen ? 'Creación de Cuenta' : 'Formulario de Nutrición'),
-//         backgroundColor: const Color(0xFF129575),
-//         foregroundColor: Colors.white,
-//         leading: IconButton(
-//           icon: const Icon(Icons.arrow_back, color: Colors.white),
-//           onPressed: () {
-//             Navigator.pop(context);
-//           },
-//         ),
-//       ),
-//       body: _isSignUpScreen ? _buildSignUpScreen(context) : _buildNutritionFormScreen(context),
-//     );
-//   }
+      for (final ingredientName in _selectedIngredients) {
+        final allergyRequest = IngredientAllergyRequest(
+          profileId: profileResponse.profileId,
+          allergyName: ingredientName,
+        );
+        await _ingredientAllergyController.createAllergy(allergyRequest);
+      }
 
-//   Widget _buildSignUpScreen(BuildContext context) {
-//     return SingleChildScrollView(
-//       child: ConstrainedBox(
-//         constraints: BoxConstraints(
-//           minHeight: MediaQuery.of(context).size.height,
-//         ),
-//         child: Container(
-//           decoration: BoxDecoration(
-//             borderRadius: BorderRadius.circular(30),
-//             color: Colors.white,
-//           ),
-//           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-//           child: Column(
-//             crossAxisAlignment: CrossAxisAlignment.start,
-//             children: [
-//               const SizedBox(height: 20),
-//               const Text(
-//                 "Crear una Cuenta",
-//                 style: TextStyle(
-//                   fontSize: 25,
-//                   fontWeight: FontWeight.bold,
-//                   color: Colors.black,
-//                 ),
-//               ),
-//               const SizedBox(height: 8),
-//               const Text(
-//                 "Permítanos ayudarle con la creación de su cuenta, no le llevará mucho tiempo.",
-//                 style: TextStyle(
-//                   fontSize: 14,
-//                   color: Color(0xFF121212),
-//                 ),
-//               ),
-//               const SizedBox(height: 20),
-//               _buildUsersFirstNameInput(),
-//               _buildUsersLastNameInput(),
-//               _buildEmailInput(),
-//               _buildPasswordInput(),
-//               _buildConfirmPasswordInput(),
-//               _buildLoginButton(context),
-//               const SizedBox(height: 30),
-//               _buildSignUpWith(context),
-//               _buildRegisterPrompt(context),
-//               const SizedBox(height: 20),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
+      Navigator.pushNamed(context, '/login');
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al crear cuenta: \$e')),
+      );
+    }
+  }
 
-//   Widget _buildUsersFirstNameInput() {
-//     return Column(
-//       crossAxisAlignment: CrossAxisAlignment.start,
-//       children: [
-//         const Text(
-//           "Nombres Completo",
-//           style: TextStyle(fontSize: 14, color: Color(0xFF121212)),
-//         ),
-//         const SizedBox(height: 5),
-//         TextField(
-//           controller: _firstNameController,
-//           decoration: InputDecoration(
-//             hintText: "Escribe tus nombres completos",
-//             errorText: _firstNameError,
-//             border: OutlineInputBorder(
-//               borderRadius: BorderRadius.circular(10),
-//               borderSide: const BorderSide(
-//                 color: Color(0xFFD9D9D9),
-//                 width: 1.5,
-//               ),
-//             ),
-//             contentPadding: const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
-//           ),
-//           onChanged: (value) => _validateForm(),
-//         ),
-//         const SizedBox(height: 15),
-//       ],
-//     );
-//   }
+  void _validateForm() {
+    final fullName = _firstNameController.text.trim();
+    final alias = _lastNameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+    final phone = _phoneController.text.trim();
+    final cookingTimeText = _cookingTimeController.text.trim();
+    final cookingTime = int.tryParse(cookingTimeText);
 
-//   Widget _buildUsersLastNameInput() {
-//     return Column(
-//       crossAxisAlignment: CrossAxisAlignment.start,
-//       children: [
-//         const Text(
-//           "Escribe tus apellidos completos",
-//           style: TextStyle(fontSize: 14, color: Color(0xFF121212)),
-//         ),
-//         const SizedBox(height: 5),
-//         TextField(
-//           controller: _lastNameController,
-//           decoration: InputDecoration(
-//             hintText: "Escribe tu apellido",
-//             errorText: _lastNameError,
-//             border: OutlineInputBorder(
-//               borderRadius: BorderRadius.circular(10),
-//               borderSide: const BorderSide(
-//                 color: Color(0xFFD9D9D9),
-//                 width: 1.5,
-//               ),
-//             ),
-//             contentPadding: const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
-//           ),
-//           onChanged: (value) => _validateForm(),
-//         ),
-//         const SizedBox(height: 15),
-//       ],
-//     );
-//   }
+    setState(() {
+      _firstNameError = fullName.isEmpty ? 'Nombre es requerido' : null;
+      _isFirstNameValid = _firstNameError == null;
 
-//   Widget _buildEmailInput() {
-//     return Column(
-//       crossAxisAlignment: CrossAxisAlignment.start,
-//       children: [
-//         const Text(
-//           "Correo Electrónico",
-//           style: TextStyle(fontSize: 14, color: Color(0xFF121212)),
-//         ),
-//         const SizedBox(height: 5),
-//         TextField(
-//           controller: _emailController,
-//           decoration: InputDecoration(
-//             hintText: "Escribe tu correo electrónico",
-//             errorText: _emailError,
-//             border: OutlineInputBorder(
-//               borderRadius: BorderRadius.circular(10),
-//               borderSide: const BorderSide(
-//                 color: Color(0xFFD9D9D9),
-//                 width: 1.5,
-//               ),
-//             ),
-//             contentPadding: const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
-//           ),
-//           onChanged: (value) => _validateForm(),
-//         ),
-//         const SizedBox(height: 15),
-//       ],
-//     );
-//   }
+      _lastNameError = alias.isEmpty ? 'Apellido es requerido' : null;
+      _isLastNameValid = _lastNameError == null;
 
-//   Widget _buildPasswordInput() {
-//     return Column(
-//       crossAxisAlignment: CrossAxisAlignment.start,
-//       children: [
-//         const Text(
-//           "Contraseña",
-//           style: TextStyle(fontSize: 14, color: Color(0xFF121212)),
-//         ),
-//         const SizedBox(height: 5),
-//         TextField(
-//           controller: _passwordController,
-//           obscureText: true,
-//           onChanged: (value) => _validateForm(),
-//           decoration: InputDecoration(
-//             hintText: "Escribe tu contraseña",
-//             errorText: _passwordError,
-//             border: OutlineInputBorder(
-//               borderRadius: BorderRadius.circular(10),
-//               borderSide: const BorderSide(
-//                 color: Color(0xFFD9D9D9),
-//                 width: 1.5,
-//               ),
-//             ),
-//             contentPadding: const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
-//           ),
-//         ),
-//         const SizedBox(height: 15),
-//       ],
-//     );
-//   }
+      _emailError = email.isEmpty ? 'Correo es requerido' : null;
+      _isEmailValid = _emailError == null;
 
-//   Widget _buildConfirmPasswordInput() {
-//     return Column(
-//       crossAxisAlignment: CrossAxisAlignment.start,
-//       children: [
-//         const Text(
-//           "Confirma Contraseña",
-//           style: TextStyle(fontSize: 14, color: Color(0xFF121212)),
-//         ),
-//         const SizedBox(height: 5),
-//         TextField(
-//           controller: _confirmPasswordController,
-//           obscureText: true,
-//           onChanged: (value) => _validateForm(),
-//           decoration: InputDecoration(
-//             hintText: "Escribe nuevamente tu contraseña",
-//             errorText: _confirmPasswordError,
-//             border: OutlineInputBorder(
-//               borderRadius: BorderRadius.circular(10),
-//               borderSide: const BorderSide(
-//                 color: Color(0xFFD9D9D9),
-//                 width: 1.5,
-//               ),
-//             ),
-//             contentPadding: const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
-//           ),
-//         ),
-//         const SizedBox(height: 30),
-//       ],
-//     );
-//   }
+      _passwordError = password.isEmpty ? 'Contraseña es requerida' : null;
+      _isPasswordValid = _passwordError == null;
 
-//   Widget _buildLoginButton(BuildContext context) {
-//     return Center(
-//       child: ElevatedButton(
-//         style: ElevatedButton.styleFrom(
-//           padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 85),
-//           shape: RoundedRectangleBorder(
-//             borderRadius: BorderRadius.circular(10),
-//           ),
-//           backgroundColor: const Color(0xFF129575),
-//         ),
-//         onPressed: _canContinue
-//             ? () {
-//                 setState(() {
-//                   _isSignUpScreen = false; // Switch to the nutrition form screen
-//                 });
-//               }
-//             : null,
-//         child: Row(
-//           mainAxisSize: MainAxisSize.min,
-//           children: const [
-//             Text(
-//               "Continuar",
-//               style: TextStyle(
-//                 fontSize: 16,
-//                 fontWeight: FontWeight.bold,
-//                 color: Colors.white,
-//               ),
-//             ),
-//             SizedBox(width: 11),
-//             Icon(  // Uses an Icon instead of an asset
-//               Icons.arrow_forward,  // Forward arrow
-//               size: 20,  // Icon size
-//               color: Colors.white,  // Icon color (adjustable)
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
+      _confirmPasswordError = confirmPassword != password
+          ? 'Las contraseñas deben coincidir'
+          : null;
+      _isConfirmPasswordValid = _confirmPasswordError == null;
 
-//   // Builds the "Sign Up with" section
-//   Widget _buildSignUpWith(BuildContext context) {
-//     return Center(
-//       child: Column(
-//         children: [
-//           Row(
-//             mainAxisSize: MainAxisSize.min,
-//             children: const [
-//               Flexible(
-//                 child: Divider(
-//                   color: Color(0xFFD9D9D9),
-//                   thickness: 1,
-//                   endIndent: 12,
-//                 ),
-//               ),
-//               Text(
-//                 "O crear cuenta mediante",
-//                 style: TextStyle(
-//                   color: Color(0xFFD9D9D9),
-//                   fontWeight: FontWeight.w500,
-//                 ),
-//               ),
-//               Flexible(
-//                 child: Divider(
-//                   color: Color(0xFFD9D9D9),
-//                   thickness: 1,
-//                   indent: 12,
-//                 ),
-//               ),
-//             ],
-//           ),
-//           const SizedBox(height: 20),
-//           Row(  // Row to display icons together
-//             mainAxisSize: MainAxisSize.min,
-//             children: [
-//               // Google Icon with GestureDetector
-//               GestureDetector(
-//                 onTap: () {
-//                   setState(() {
-//                     _isSignUpScreen = false; // Switch to the nutrition form screen
-//                   });
-//                 },
-//                 child: Image.asset(
-//                   'assets/icons/googleIcon.png',
-//                   width: 55,
-//                   fit: BoxFit.contain,
-//                 ),
-//               ),
-//               const SizedBox(width: 20),  // Space between the icons
-//               // Facebook Icon with GestureDetector
-//               GestureDetector(
-//                 onTap: () {
-//                   setState(() {
-//                     _isSignUpScreen = false; // Switch to the nutrition form screen
-//                   });
-//                 },
-//                 child: Image.asset(
-//                   'assets/icons/facebookIcon.png', 
-//                   width: 55,
-//                   fit: BoxFit.contain,
-//                 ),
-//               ),
-//             ],
-//           ),
-//           const SizedBox(height: 15), // Space between email field and next widget
-//         ],
-//       ),
-//     );
-//   }
+      // Nueva lógica para habilitar el botón
+      _canContinue = _isFirstNameValid &&
+          _isLastNameValid &&
+          _isEmailValid &&
+          _isPasswordValid &&
+          _isConfirmPasswordValid &&
+          phone.isNotEmpty &&
+          cookingTime != null &&
+          cookingTime > 0;
+    });
+  }
 
-//   // Builds the register prompt text
-//   Widget _buildRegisterPrompt(BuildContext context) {
-//     return Center(
-//       child: RichText(
-//         text: TextSpan(
-//           text: "¿Ya estás registrado? ",
-//           style: const TextStyle(
-//             color: Color.fromARGB(255, 0, 0, 0),
-//             fontWeight: FontWeight.w500,
-//           ),
-//           children: [
-//             TextSpan(
-//               text: "Inicia Sesión aquí",
-//               style: const TextStyle(color: Color(0xFFFF9C00)),
-//               recognizer: TapGestureRecognizer()
-//                 ..onTap = () {
-//                   // Redirects to the "create account" screen
-//                   Navigator.pushNamed(context, '/login');
-//                 },
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
+  void _onIngredientSelected(String ingredient, bool selected) {
+    setState(() {
+      if (selected) {
+        _selectedIngredients.add(ingredient);
+      } else {
+        _selectedIngredients.remove(ingredient);
+      }
+      _validateForm();
+    });
+  }
 
-//   Widget _buildNutritionFormScreen(BuildContext context) {
-//     final questions = _nutritionController.getQuestions();
-//     final currentQuestion = questions.isNotEmpty ? questions[_currentQuestionIndex] : null;
+  Widget _buildIngredientSelection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: _allIngredients.map((ingredient) {
+        return CheckboxListTile(
+          title: Text(ingredient),
+          value: _selectedIngredients.contains(ingredient),
+          onChanged: (selected) {
+            _onIngredientSelected(ingredient, selected ?? false);
+          },
+        );
+      }).toList(),
+    );
+  }
 
-//     return currentQuestion == null 
-//       ? Center(child: CircularProgressIndicator())
-//       : Container(
-//           color: Colors.white,
-//           padding: const EdgeInsets.all(20),
-//           child: LayoutBuilder(
-//             builder: (context, constraints) {
-//               return SingleChildScrollView(
-//                 child: ConstrainedBox(
-//                   constraints: BoxConstraints(minHeight: constraints.maxHeight),
-//                   child: Column(
-//                     crossAxisAlignment: CrossAxisAlignment.start,
-//                     children: [
-//                       const Text(
-//                         "Personaliza tus recomendaciones",
-//                         style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black),
-//                       ),
-//                       const SizedBox(height: 10),
-//                       const Text(
-//                         "Los alimentos restringidos son aquellos alimentos que por temas de alergias, intolerancia, temas de dieta, el usuario no puede comer.",
-//                         style: TextStyle(fontSize: 14, color: Color(0xFF121212)),
-//                       ),
-//                       const SizedBox(height: 20),
-//                       _buildSearchBar(),
-//                       const SizedBox(height: 10),
-//                       _buildCheckboxList(currentQuestion),
-//                       const SizedBox(height: 20),
-//                       _buildLoadMoreButton(currentQuestion),
-//                       const SizedBox(height: 20),
-//                       _buildNavigationButtons(context, questions.length),
-//                     ],
-//                   ),
-//                 ),
-//               );
-//             },
-//           ),
-//         );
-//   }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Creación de Cuenta'),
+        backgroundColor: const Color(0xFF129575),
+        foregroundColor: Colors.white,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        child: ListView(
+          children: [
+            const Text(
+              "Crear una Cuenta",
+              style: TextStyle(
+                  fontSize: 25,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              "Permítanos ayudarle con la creación de su cuenta, no le llevará mucho tiempo.",
+              style: TextStyle(fontSize: 14, color: Color(0xFF121212)),
+            ),
+            const SizedBox(height: 20),
+            _buildTextInput(_firstNameController, 'Nombres Completos'),
+            _buildTextInput(_lastNameController, 'Apellidos Completos'),
+            _buildTextInput(_emailController, 'Correo Electrónico'),
+            _buildTextInput(_phoneController, 'Teléfono'),
+            _buildTextInput(_cookingTimeController, 'Tiempo de cocina (min)',
+                keyboardType: TextInputType.number),
+            _buildTextInput(_passwordController, 'Contraseña', obscure: true),
+            _buildTextInput(_confirmPasswordController, 'Confirmar Contraseña',
+                obscure: true),
+            const SizedBox(height: 20),
+            const Text('Selecciona ingredientes a los que eres alérgico:'),
+            Wrap(
+              spacing: 8.0,
+              children: _allIngredients.map((ingredient) {
+                final isSelected = _selectedIngredients.contains(ingredient);
+                return FilterChip(
+                  label: Text(ingredient),
+                  selected: isSelected,
+                  onSelected: (bool selected) {
+                    _onIngredientSelected(ingredient, selected);
+                  },
+                  selectedColor: const Color(0xFF129575),
+                  checkmarkColor: Colors.white,
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 30),
+            ElevatedButton(
+              onPressed: _canContinue ? _createAccount : null,
+              style: ElevatedButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 18, horizontal: 85),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                backgroundColor: const Color(0xFF129575),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Text("Crear Cuenta",
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white)),
+                  SizedBox(width: 11),
+                  Icon(Icons.arrow_forward, size: 20, color: Colors.white),
+                ],
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
 
-//   Widget _buildSearchBar() {
-//     return TextField(
-//       onChanged: (value) {
-//         setState(() {
-//           _searchQuery = value;
-//           _ingredientsToShow = 10;
-//         });
-//       },
-//       decoration: InputDecoration(
-//         labelText: 'Buscar alimentos',
-//         border: OutlineInputBorder(
-//           borderRadius: BorderRadius.circular(10),
-//         ),
-//         prefixIcon: const Icon(Icons.search),
-//       ),
-//     );
-//   }
-//   Widget _buildCheckboxList(NutritionQuestion question) {
-//     final filteredOptions = question.options
-//         .where((option) => option.toLowerCase().contains(_searchQuery.toLowerCase()))
-//         .toList()
-//         .take(_ingredientsToShow)
-//         .toList();
-
-//     return Column(
-//       crossAxisAlignment: CrossAxisAlignment.start,
-//       children: [
-//         Text(
-//           question.question,
-//           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF121212)),
-//         ),
-//         const SizedBox(height: 5),
-//         ...filteredOptions.map((option) {
-//           final isSelected = question.selected.contains(option);
-//           return CheckboxListTile(
-//             title: Text(option),
-//             value: isSelected,
-//             onChanged: (selected) {
-//               setState(() {
-//                 if (selected == true) {
-//                   question.selected.add(option);
-//                 } else {
-//                   question.selected.remove(option);
-//                 }
-//                 _nutritionController.updateSelectedOptions(question, question.selected);
-//               });
-//             },
-//             activeColor: const Color(0xFF129575),
-//             checkColor: Colors.white,
-//           );
-//         }).toList(),
-//       ],
-//     );
-//   }
-
-//   Widget _buildLoadMoreButton(NutritionQuestion question) {
-//     final filteredOptions = question.options
-//         .where((option) => option.toLowerCase().contains(_searchQuery.toLowerCase()))
-//         .toList();
-    
-//     if (_ingredientsToShow >= filteredOptions.length) {
-//       return const SizedBox.shrink();
-//     }
-
-//     return Center(
-//       child: ElevatedButton(
-//         style: ElevatedButton.styleFrom(
-//           backgroundColor: const Color(0xFF129575),
-//         ),
-//         onPressed: () {
-//           setState(() {
-//             _ingredientsToShow += 10;
-//           });
-//         },
-//         child: const Text(
-//           'Cargar más',
-//           style: TextStyle(color: Colors.white),
-//         ),
-//       ),
-//     );
-//   }
-
-// Widget _buildNavigationButtons(BuildContext context, int totalQuestions) {
-//     final isLastQuestion = _currentQuestionIndex == totalQuestions - 1;
-//     final isFirstQuestion = _currentQuestionIndex == 0;
-
-//     return LayoutBuilder(
-//       builder: (context, constraints) {
-//         // Ancho máximo disponible para los botones
-//         double availableWidth = constraints.maxWidth;
-
-//         // Definición los anchos base de los botones
-//         double mainButtonWidth = isLastQuestion ? 180 : 150;
-//         double backButtonWidth = 150;
-//         double spacing = 40;
-
-//         // Calcular si hay suficiente espacio para ambos botones con el espaciado
-//         double totalRequiredWidth = mainButtonWidth + backButtonWidth + spacing;
-//         if (totalRequiredWidth > availableWidth) {
-//           // Ajustar el ancho del botón "Atrás" si es necesario
-//           double excess = totalRequiredWidth - availableWidth;
-//           backButtonWidth = (backButtonWidth - excess).clamp(80, 150); // No menor de 80
-//         }
-
-//         return Row(
-//           mainAxisAlignment: MainAxisAlignment.center,
-//           children: [
-//             if (!isFirstQuestion) ...[
-//               SizedBox(
-//                 width: backButtonWidth,
-//                 child: ElevatedButton(
-//                   style: ElevatedButton.styleFrom(
-//                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-//                     shape: RoundedRectangleBorder(
-//                       borderRadius: BorderRadius.circular(10),
-//                     ),
-//                     backgroundColor: Colors.grey,
-//                   ),
-//                   onPressed: () {
-//                     setState(() {
-//                       _currentQuestionIndex--;
-//                     });
-//                   },
-//                   child: const Text(
-//                     "Atrás",
-//                     style: TextStyle(
-//                       fontSize: 16,
-//                       fontWeight: FontWeight.bold,
-//                       color: Colors.white,
-//                     ),
-//                   ),
-//                 ),
-//               ),
-//               SizedBox(width: spacing),
-//             ] else ...[
-//               // Espacio vacío simula la posición del botón "Atrás"
-//               SizedBox(width: backButtonWidth + spacing),
-//             ],
-//             SizedBox(
-//               width: mainButtonWidth,
-//               child: ElevatedButton(
-//                 style: ElevatedButton.styleFrom(
-//                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-//                   shape: RoundedRectangleBorder(
-//                     borderRadius: BorderRadius.circular(10),
-//                   ),
-//                   backgroundColor: const Color(0xFF129575),
-//                 ),
-//                 onPressed: () {
-//                   if (isLastQuestion) {
-//                     _createAccount(); // Call the function to create account
-//                   } else {
-//                     setState(() {
-//                       _currentQuestionIndex++;
-//                     });
-//                   }
-//                 },
-//                 child: Row(
-//                   mainAxisSize: MainAxisSize.min,
-//                   children: [
-//                     Text(
-//                       isLastQuestion ? "Crear Cuenta" : "Siguiente",
-//                       style: const TextStyle(
-//                         fontSize: 16,
-//                         fontWeight: FontWeight.bold,
-//                         color: Colors.white,
-//                       ),
-//                     ),
-//                     const SizedBox(width: 11),
-//                     const Icon(
-//                       Icons.arrow_forward,
-//                       size: 20,
-//                       color: Colors.white,
-//                     )
-//                   ],
-//                 ),
-//               ),
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   }
-// }
+  Widget _buildTextInput(TextEditingController controller, String label,
+      {bool obscure = false, TextInputType keyboardType = TextInputType.text}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(fontSize: 14, color: Color(0xFF121212))),
+        const SizedBox(height: 5),
+        TextField(
+          controller: controller,
+          obscureText: obscure,
+          keyboardType: keyboardType,
+          decoration: InputDecoration(
+            hintText: label,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide:
+                  const BorderSide(color: Color(0xFFD9D9D9), width: 1.5),
+            ),
+            contentPadding:
+                const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
+          ),
+        ),
+        const SizedBox(height: 15),
+      ],
+    );
+  }
+}

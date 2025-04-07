@@ -72,8 +72,7 @@ class MyApp extends StatelessWidget {
 
           return MaterialPageRoute(
             builder: (context) {
-              return PublicProfileScreen(
-                  profileId: profileId);
+              return PublicProfileScreen(profileId: profileId);
             },
           );
         }
@@ -103,7 +102,7 @@ class MyApp extends StatelessWidget {
         '/': (context) => const HomeScreen(),
         // '/login': (context) => const LoginScreen(),
         // '/forgot_password': (context) => const ForgotPasswordScreen(),
-        // '/sign_up': (context) => const SignUpScreen(),
+        '/sign_up': (context) => const SignUpScreen(),
         '/dashboard': (context) => const DashboardScreen(),
         '/recipe_search': (context) => const RecipeSearchScreen(),
         //'/recipe_search': (context) => const RecipeSearchScreen(),

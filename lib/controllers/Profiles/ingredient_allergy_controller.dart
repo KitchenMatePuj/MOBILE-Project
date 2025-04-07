@@ -34,15 +34,15 @@ class IngredientAllergyController {
   }
 
   /// POST: Crear una nueva alergia
-  Future<void> createAllergy(IngredientAllergyRequest allergy) async {
+  Future<void> createAllergy(IngredientAllergyRequest request) async {
     final response = await http.post(
-      Uri.parse(baseUrl),
+      Uri.parse('$baseUrl/ingredient_allergy'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode(allergy.toJson()),
+      body: jsonEncode(request.toJson()),
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to create allergy');
+      throw Exception('Fallo al guardar alergia: ${response.body}');
     }
   }
 

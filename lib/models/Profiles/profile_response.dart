@@ -27,7 +27,7 @@ class ProfileResponse {
 
   factory ProfileResponse.fromJson(Map<String, dynamic> json) {
     return ProfileResponse(
-      profileId: json['profile_id'],
+      profileId: json['profile_id'] ?? '',
       keycloakUserId: json['keycloak_user_id'],
       firstName: json['first_name'],
       lastName: json['last_name'],
@@ -36,8 +36,12 @@ class ProfileResponse {
       profilePhoto: json['profile_photo'],
       accountStatus: json['account_status'],
       cookingTime: json['cooking_time'],
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
-      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : null,
     );
   }
 }

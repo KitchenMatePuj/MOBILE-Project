@@ -36,7 +36,7 @@ class IngredientController {
 
   /// Obtener todos los ingredientes (GET /ingredients)
   Future<List<IngredientResponse>> fetchIngredients() async {
-    final response = await http.get(Uri.parse('$baseUrl/ingredients'));
+    final response = await http.get(Uri.parse('$baseUrl/ingredients/'));
 
     if (response.statusCode == 200) {
       final List<dynamic> body = jsonDecode(response.body);
@@ -47,7 +47,8 @@ class IngredientController {
   }
 
   /// Actualizar un ingrediente existente (PUT /ingredients/{id})
-  Future<IngredientResponse> updateIngredient(int id, IngredientRequest request) async {
+  Future<IngredientResponse> updateIngredient(
+      int id, IngredientRequest request) async {
     final response = await http.put(
       Uri.parse('$baseUrl/ingredients/$id'),
       headers: {'Content-Type': 'application/json'},
