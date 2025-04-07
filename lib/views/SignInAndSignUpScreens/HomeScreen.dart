@@ -78,7 +78,7 @@ class HomeScreen extends StatelessWidget {
                     ElevatedButton(
                       onPressed: () {
                         // Redirects to the login screen
-                        Navigator.pushNamed(context, '/sign_up');
+                        Navigator.pushNamed(context, '/login');
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFF129575),

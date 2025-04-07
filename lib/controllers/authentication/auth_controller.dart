@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:mobile_kitchenmate/models/authentication/reset_password_request.dart';
 import '../../models/authentication/register_request.dart';
-import '../../models/authentication/login_request_advanced.dart';
+import '/models/authentication/login_request_advanced.dart' as advanced;
 import '../../models/authentication/login_response.dart';
 
 class AuthController {
@@ -37,7 +37,7 @@ class AuthController {
     }
   }
 
-  Future<LoginResponse> loginUser(LoginRequest request) async {
+Future<LoginResponse> loginUser(advanced.LoginRequest request) async {
     final url = Uri.parse('$baseUrl/login');
     final response = await http.post(
       url,
