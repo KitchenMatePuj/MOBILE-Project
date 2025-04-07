@@ -17,6 +17,8 @@ class PublicProfileScreen extends StatefulWidget {
 }
 
 class _PublicProfileScreenState extends State<PublicProfileScreen> {
+  String profileBaseUrl = 'http://localhost:8001';
+  String recipeBaseUrl = 'http://localhost:8004';
   late ProfileController _profileController;
   late FollowController _followController;
   late RecipeController _recipeController;
@@ -29,10 +31,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _profileController = ProfileController();
+    _profileController = ProfileController(baseUrl: profileBaseUrl);
     _followController = FollowController();
-    _recipeController = RecipeController(baseUrl: 'http://localhost:8004');
-    _profileFuture = _profileController.getProfilebyid(widget.profileId.toString());
+    _recipeController = RecipeController(baseUrl: recipeBaseUrl);
+    _profileFuture =
+        _profileController.getProfilebyid(widget.profileId.toString());
     _followersFuture = _followController.listFollowers(widget.profileId);
     _followingFuture = _followController.listFollowed(widget.profileId);
     _recipesFuture = _loadRecipes();
@@ -40,9 +43,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   }
 
   Future<void> _checkIfFollowing() async {
-    final followed = await _followController.listFollowed(2); // profile_id del usuario logueado
+    final followed = await _followController
+        .listFollowed(2); // profile_id del usuario logueado
     setState(() {
-      _isFollowing = followed.any((follow) => follow.followedId == widget.profileId);
+      _isFollowing =
+          followed.any((follow) => follow.followedId == widget.profileId);
     });
   }
 
@@ -53,9 +58,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
 
   Future<void> _toggleFollow() async {
     if (_isFollowing) {
-      await _followController.deleteFollow(2, widget.profileId); // profile_id del usuario logueado
+      await _followController.deleteFollow(
+          2, widget.profileId); // profile_id del usuario logueado
     } else {
-      await _followController.createFollow(FollowRequest(followerId: 2, followedId: widget.profileId));
+      await _followController.createFollow(
+          FollowRequest(followerId: 2, followedId: widget.profileId));
     }
     setState(() {
       _isFollowing = !_isFollowing;
@@ -100,7 +107,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                     FutureBuilder<List<FollowResponse>>(
                       future: _followersFuture,
                       builder: (context, followersSnapshot) {
-                        if (followersSnapshot.connectionState == ConnectionState.waiting) {
+                        if (followersSnapshot.connectionState ==
+                            ConnectionState.waiting) {
                           return const CircularProgressIndicator();
                         } else if (followersSnapshot.hasError) {
                           return Text('Error: ${followersSnapshot.error}');
@@ -109,7 +117,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                         return FutureBuilder<List<FollowResponse>>(
                           future: _followingFuture,
                           builder: (context, followingSnapshot) {
-                            if (followingSnapshot.connectionState == ConnectionState.waiting) {
+                            if (followingSnapshot.connectionState ==
+                                ConnectionState.waiting) {
                               return const CircularProgressIndicator();
                             } else if (followingSnapshot.hasError) {
                               return Text('Error: ${followingSnapshot.error}');
@@ -138,7 +147,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    ProfileBio(description: 'Biografía del usuario'), // Biografía quemada
+                    ProfileBio(
+                        description:
+                            'Biografía del usuario'), // Biografía quemada
                     const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -151,7 +162,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             ),
                             child: Text(
                               _isFollowing ? 'Dejar de Seguir' : 'Seguir',
-                              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold),
                             ),
                           ),
                         ),
@@ -162,11 +176,15 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                               // Lógica de reporte
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color.fromARGB(255, 181, 108, 106),
+                              backgroundColor:
+                                  const Color.fromARGB(255, 181, 108, 106),
                             ),
                             child: const Text(
                               'Reportar',
-                              style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold),
                             ),
                           ),
                         ),
@@ -179,16 +197,20 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 child: FutureBuilder<List<RecipeResponse>>(
                   future: _recipesFuture,
                   builder: (context, recipesSnapshot) {
-                    if (recipesSnapshot.connectionState == ConnectionState.waiting) {
+                    if (recipesSnapshot.connectionState ==
+                        ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
                     } else if (recipesSnapshot.hasError) {
-                      return Center(child: Text('Error: ${recipesSnapshot.error}'));
+                      return Center(
+                          child: Text('Error: ${recipesSnapshot.error}'));
                     } else if (!recipesSnapshot.hasData) {
-                      return const Center(child: Text('No se encontraron recetas'));
+                      return const Center(
+                          child: Text('No se encontraron recetas'));
                     }
 
                     final recipes = recipesSnapshot.data!;
-                    return PublishedRecipesGrid(recipes: recipes, profile: profile);
+                    return PublishedRecipesGrid(
+                        recipes: recipes, profile: profile);
                   },
                 ),
               ),
@@ -253,7 +275,8 @@ class ProfileStats extends StatelessWidget {
       future: recipesFuture,
       builder: (context, recipesSnapshot) {
         int recipesCount = 0;
-        if (recipesSnapshot.connectionState == ConnectionState.done && recipesSnapshot.hasData) {
+        if (recipesSnapshot.connectionState == ConnectionState.done &&
+            recipesSnapshot.hasData) {
           recipesCount = recipesSnapshot.data!.length;
         }
         return Row(
@@ -269,9 +292,12 @@ class ProfileStats extends StatelessWidget {
             GestureDetector(
               onTap: () {
                 Navigator.pushNamed(
-                  context, 
-                  '/followers_and_following', 
-                  arguments: {'profile_id': profile.profileId, 'type': 'recipes'},
+                  context,
+                  '/followers_and_following',
+                  arguments: {
+                    'profile_id': profile.profileId,
+                    'type': 'recipes'
+                  },
                 );
               },
               child: _buildStatItem('Recetas', recipesCount.toString()),
@@ -279,9 +305,12 @@ class ProfileStats extends StatelessWidget {
             GestureDetector(
               onTap: () {
                 Navigator.pushNamed(
-                  context, 
-                  '/followers_and_following', 
-                  arguments: {'profile_id': profile.profileId, 'type': 'followers'},
+                  context,
+                  '/followers_and_following',
+                  arguments: {
+                    'profile_id': profile.profileId,
+                    'type': 'followers'
+                  },
                 );
               },
               child: _buildStatItem('Seguidores', followersCount.toString()),
@@ -289,9 +318,12 @@ class ProfileStats extends StatelessWidget {
             GestureDetector(
               onTap: () {
                 Navigator.pushNamed(
-                  context, 
-                  '/followers_and_following', 
-                  arguments: {'profile_id': profile.profileId, 'type': 'following'},
+                  context,
+                  '/followers_and_following',
+                  arguments: {
+                    'profile_id': profile.profileId,
+                    'type': 'following'
+                  },
                 );
               },
               child: _buildStatItem('Siguiendo', followingCount.toString()),
@@ -348,7 +380,8 @@ class PublishedRecipesGrid extends StatelessWidget {
   final List<RecipeResponse> recipes;
   final ProfileResponse profile;
 
-  const PublishedRecipesGrid({required this.recipes, required this.profile, super.key});
+  const PublishedRecipesGrid(
+      {required this.recipes, required this.profile, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -367,7 +400,8 @@ class PublishedRecipesGrid extends StatelessWidget {
           },
           child: RecipeCard(
             title: recipe.title,
-            chef: 'Chef: ${profile.firstName} ${profile.lastName}', // Placeholder for chef name
+            chef:
+                'Chef: ${profile.firstName} ${profile.lastName}', // Placeholder for chef name
             duration: recipe.cookingTime.toString(),
             imageUrl: 'assets/recipes/recipe1.jpg', // Default image
             rating: recipe.ratingAvg.toInt(),
@@ -450,7 +484,9 @@ class RecipeCard extends StatelessWidget {
                     Row(
                       children: List.generate(5, (index) {
                         return Icon(
-                          index < (rating ?? 0) ? Icons.star : Icons.star_border,
+                          index < (rating ?? 0)
+                              ? Icons.star
+                              : Icons.star_border,
                           color: Colors.amber,
                           size: 12,
                         );

@@ -23,11 +23,14 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
   String selectedCuisine = "Todas";
   int _recipesToShow = 8;
 
+  String profileBaseUrl = 'http://localhost:8001';
+  String recipeBaseUrl = 'http://localhost:8004';
+
   @override
   void initState() {
     super.initState();
-    _recipeController = RecipeController(baseUrl: 'http://localhost:8004');
-    _profileController = ProfileController();
+    _recipeController = RecipeController(baseUrl: recipeBaseUrl);
+    _profileController = ProfileController(baseUrl: profileBaseUrl);
     _fetchRecipes();
     _searchController.addListener(_applyFilters);
   }
@@ -111,7 +114,8 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
                       selectedMealType: selectedMealType,
                       selectedCuisine: selectedCuisine,
                       onApplyFilters: _applyFilters,
-                      onUpdateFilters: (duration, rating, category, mealType, cuisine) {
+                      onUpdateFilters:
+                          (duration, rating, category, mealType, cuisine) {
                         setState(() {
                           selectedDuration = duration;
                           selectedRating = rating;
@@ -134,14 +138,19 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
                     Wrap(
                       spacing: 16,
                       runSpacing: 16,
-                      children: filteredRecipes.take(_recipesToShow).map((recipe) {
+                      children:
+                          filteredRecipes.take(_recipesToShow).map((recipe) {
                         return FutureBuilder<ProfileResponse>(
-                          future: _profileController.getProfile(recipe.keycloakUserId),
+                          future: _profileController
+                              .getProfile(recipe.keycloakUserId),
                           builder: (context, snapshot) {
                             String chefName = 'Chef: Cargando...';
-                            if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+                            if (snapshot.connectionState ==
+                                    ConnectionState.done &&
+                                snapshot.hasData) {
                               ProfileResponse profile = snapshot.data!;
-                              chefName = 'Chef: ${profile.firstName} ${profile.lastName}';
+                              chefName =
+                                  'Chef: ${profile.firstName} ${profile.lastName}';
                             }
                             return RecipeCard(
                               title: recipe.title,
@@ -319,14 +328,16 @@ class RecipeCard extends StatelessWidget {
                         ),
                         if (rating != null)
                           Row(
-                          children: List.generate(
-                            5,
-                            (index) => Icon(
-                            index < rating! ? Icons.star : Icons.star_border,
-                            color: Colors.amber,
-                            size: 13,
+                            children: List.generate(
+                              5,
+                              (index) => Icon(
+                                index < rating!
+                                    ? Icons.star
+                                    : Icons.star_border,
+                                color: Colors.amber,
+                                size: 13,
+                              ),
                             ),
-                          ),
                           ),
                       ],
                     ),
@@ -403,7 +414,8 @@ class SearchBar extends StatelessWidget {
 
                     return Padding(
                       padding: EdgeInsets.only(
-                        top: kToolbarHeight + MediaQuery.of(context).padding.top,
+                        top:
+                            kToolbarHeight + MediaQuery.of(context).padding.top,
                       ),
                       child: Container(
                         padding: const EdgeInsets.all(16),
@@ -423,13 +435,60 @@ class SearchBar extends StatelessWidget {
                         ),
                         child: StatefulBuilder(
                           builder: (context, setState) {
-                            List<String> durationOptions = ["Todos", "0-15", "15-30", "30-60", "60-120", "+120"];
-                            List<String> ratingOptions = ["Todas", "1", "2", "3", "4", "5"];
-                            List<String> categoryOptions = ["Todos", "Vegetales", "Frutas", "Proteina", "Cereales", "Mariscos", "Arroz", "Pasta"];
-                            List<String> mealTypeOptions = ["Todos", "Desayuno", "Almuerzo", "Cena", "Postre", "Bebida"];
-                            List<String> cuisineOptions = ["Todas", "India", "Italiana", "Asiatica", "China", "Mexicana", "Francesa", "Mediterránea", "Japonesa", "Colombiana", "Venezolana"];
+                            List<String> durationOptions = [
+                              "Todos",
+                              "0-15",
+                              "15-30",
+                              "30-60",
+                              "60-120",
+                              "+120"
+                            ];
+                            List<String> ratingOptions = [
+                              "Todas",
+                              "1",
+                              "2",
+                              "3",
+                              "4",
+                              "5"
+                            ];
+                            List<String> categoryOptions = [
+                              "Todos",
+                              "Vegetales",
+                              "Frutas",
+                              "Proteina",
+                              "Cereales",
+                              "Mariscos",
+                              "Arroz",
+                              "Pasta"
+                            ];
+                            List<String> mealTypeOptions = [
+                              "Todos",
+                              "Desayuno",
+                              "Almuerzo",
+                              "Cena",
+                              "Postre",
+                              "Bebida"
+                            ];
+                            List<String> cuisineOptions = [
+                              "Todas",
+                              "India",
+                              "Italiana",
+                              "Asiatica",
+                              "China",
+                              "Mexicana",
+                              "Francesa",
+                              "Mediterránea",
+                              "Japonesa",
+                              "Colombiana",
+                              "Venezolana"
+                            ];
 
-                            Widget buildFilterOption(String title, List<String> options, String selectedValue, Function(String) onSelected, {bool showStar = false}) {
+                            Widget buildFilterOption(
+                                String title,
+                                List<String> options,
+                                String selectedValue,
+                                Function(String) onSelected,
+                                {bool showStar = false}) {
                               return Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -450,18 +509,24 @@ class SearchBar extends StatelessWidget {
                                         onTap: () {
                                           setState(() {
                                             if (isSelected) {
-                                              onSelected(""); // Deseleccionar si ya está seleccionado
+                                              onSelected(
+                                                  ""); // Deseleccionar si ya está seleccionado
                                             } else {
                                               onSelected(option);
                                             }
                                           });
                                         },
                                         child: Container(
-                                          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 6, horizontal: 16),
                                           decoration: BoxDecoration(
-                                            color: isSelected ? const Color(0xFF129575) : Colors.white,
-                                            border: Border.all(color: const Color(0xFF129575)),
-                                            borderRadius: BorderRadius.circular(25),
+                                            color: isSelected
+                                                ? const Color(0xFF129575)
+                                                : Colors.white,
+                                            border: Border.all(
+                                                color: const Color(0xFF129575)),
+                                            borderRadius:
+                                                BorderRadius.circular(25),
                                           ),
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
@@ -469,15 +534,20 @@ class SearchBar extends StatelessWidget {
                                               Text(
                                                 option,
                                                 style: TextStyle(
-                                                  color: isSelected ? Colors.white : const Color(0xFF129575),
+                                                  color: isSelected
+                                                      ? Colors.white
+                                                      : const Color(0xFF129575),
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               ),
-                                              if (showStar && option != "Todas") ...[
+                                              if (showStar &&
+                                                  option != "Todas") ...[
                                                 const SizedBox(width: 4),
                                                 Icon(
                                                   Icons.star,
-                                                  color: isSelected ? Colors.white : const Color(0xFF129575),
+                                                  color: isSelected
+                                                      ? Colors.white
+                                                      : const Color(0xFF129575),
                                                   size: 20,
                                                 ),
                                               ]
@@ -507,18 +577,42 @@ class SearchBar extends StatelessWidget {
                                     ),
                                   ),
                                   const SizedBox(height: 8),
-                                  buildFilterOption("Duración en mins", durationOptions, tempSelectedDuration, (val) => tempSelectedDuration = val),
-                                  buildFilterOption("Calificación", ratingOptions, tempSelectedRating, (val) => tempSelectedRating = val, showStar: true),
-                                  buildFilterOption("Categoría", categoryOptions, tempSelectedCategory, (val) => tempSelectedCategory = val),
-                                  buildFilterOption("Tipo de Comida", mealTypeOptions, tempSelectedMealType, (val) => tempSelectedMealType = val),
-                                  buildFilterOption("Tipo de Cocina", cuisineOptions, tempSelectedCuisine, (val) => tempSelectedCuisine = val),
+                                  buildFilterOption(
+                                      "Duración en mins",
+                                      durationOptions,
+                                      tempSelectedDuration,
+                                      (val) => tempSelectedDuration = val),
+                                  buildFilterOption(
+                                      "Calificación",
+                                      ratingOptions,
+                                      tempSelectedRating,
+                                      (val) => tempSelectedRating = val,
+                                      showStar: true),
+                                  buildFilterOption(
+                                      "Categoría",
+                                      categoryOptions,
+                                      tempSelectedCategory,
+                                      (val) => tempSelectedCategory = val),
+                                  buildFilterOption(
+                                      "Tipo de Comida",
+                                      mealTypeOptions,
+                                      tempSelectedMealType,
+                                      (val) => tempSelectedMealType = val),
+                                  buildFilterOption(
+                                      "Tipo de Cocina",
+                                      cuisineOptions,
+                                      tempSelectedCuisine,
+                                      (val) => tempSelectedCuisine = val),
                                   Center(
                                     child: ElevatedButton(
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFF129575),
-                                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 80),
+                                        backgroundColor:
+                                            const Color(0xFF129575),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 12, horizontal: 80),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
                                         ),
                                       ),
                                       onPressed: () {

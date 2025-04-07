@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_kitchenmate/controllers/Profiles/sumary_controller.dart';
+import 'package:mobile_kitchenmate/controllers/Recipes/recipes.dart';
+import 'package:mobile_kitchenmate/models/Profiles/summary_response.dart';
 import 'package:provider/provider.dart';
 import '../../../controllers/Profiles/saved_recipe_controller.dart';
 import '../../../models/Recipes/recipes_response.dart';
@@ -20,25 +23,76 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late Future<ProfileResponse> _profileFuture;
   late Future<List<FollowResponse>> _followersFuture;
   late Future<List<FollowResponse>> _followingFuture;
-  late ProfileController _profileController;
+  late Future<ProfileSummaryResponse> _summaryFuture;
+
+  late SumaryController _summaryController;
   late FollowController _followController;
+  late ProfileController _profileController;
+
+  // Futuros para las recetas
   late Future<List<RecipeResponse>> _publishedRecipesFuture;
   late Future<List<RecipeResponse>> _savedRecipesFuture;
 
-  String keycloakUserId =
-      'user1234'; // Reemplaza '12' con el keycloak_user_id correcto
+  String profileBaseUrl = 'http://localhost:8001';
+  String recipeBaseUrl = 'http://localhost:8004';
 
+  // keycloakUserId del usuario que consultamos
+  String keycloakUserId = 'user1234';
+  String images = 'assets/images/default.jpg';
   @override
   void initState() {
     super.initState();
-    _profileController = ProfileController();
+    _initializeData();
+  }
+
+  /// Carga inicial de datos:
+  void _initializeData() async {
+    _summaryController = SumaryController();
     _followController = FollowController();
-    _profileFuture = _profileController.getProfile(
-        keycloakUserId); // Reemplaza '12' con el keycloak_user_id correcto
-    _followersFuture = _followController
-        .listFollowers(2); // Reemplaza '12' con el profileId correcto
-    _followingFuture = _followController
-        .listFollowed(2); // Reemplaza '12' con el profileId correcto
+    _profileController = ProfileController(baseUrl: profileBaseUrl);
+
+    // 1) Resumen de perfil (allergies, cooking_time, etc)
+    final summary = await _summaryController.getProfileSummary(keycloakUserId);
+    _summaryFuture = Future.value(summary);
+
+    // 2) Perfil
+    final profile = await _profileController.getProfile(keycloakUserId);
+    _profileFuture = Future.value(profile);
+
+    // 3) Seguidores y seguidos
+    _followersFuture = _followController.listFollowers(profile.profileId);
+    _followingFuture = _followController.listFollowed(profile.profileId);
+
+    // 4) Recetas publicadas y guardadas
+    final recipeController = RecipeController(baseUrl: recipeBaseUrl);
+    final savedRecipeController =
+        SavedRecipeController(baseUrl: profileBaseUrl);
+
+    // Recetas publicadas (GET /recipes/user/{userId})
+    _publishedRecipesFuture = recipeController.getRecipesByUser(
+      profile.keycloakUserId,
+    );
+
+    // Recetas guardadas (primero la lista, luego consultamos cada ID)
+    _savedRecipesFuture = savedRecipeController
+        .getSavedRecipesByKeycloak(keycloakUserId)
+        .then((savedList) async {
+      final futures = savedList.map((saved) async {
+        try {
+          print('🔍 Intentando cargar receta con ID ${saved.recipeId}');
+          return await recipeController.getRecipeById(saved.recipeId);
+        } catch (e) {
+          print('❌ No se pudo cargar receta con ID ${saved.recipeId}: $e');
+          return null;
+        }
+      }).toList();
+
+      final results = await Future.wait(futures);
+      // Filtramos los null (caso de que alguna receta no se haya encontrado)
+      return results.whereType<RecipeResponse>().toList();
+    });
+
+    setState(() {}); // Reconstruye el widget
   }
 
   @override
@@ -54,6 +108,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
         backgroundColor: const Color(0xFF129575),
+        automaticallyImplyLeading: false,
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.settings, color: Colors.white),
@@ -106,18 +161,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
             },
           ),
         ],
-        automaticallyImplyLeading: false,
       ),
       backgroundColor: Colors.white,
       body: FutureBuilder<ProfileResponse>(
         future: _profileFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return CircularProgressIndicator();
+            return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Text('Error: ${snapshot.error}');
           } else if (!snapshot.hasData) {
-            return Text('No data found');
+            return const Text('No data found');
           }
 
           final profile = snapshot.data!;
@@ -128,12 +182,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 23),
                 child: Column(
                   children: [
+                    // -- FUTURE BUILDER PARA FOLLOWERS --
                     FutureBuilder<List<FollowResponse>>(
                       future: _followersFuture,
                       builder: (context, followersSnapshot) {
                         if (followersSnapshot.connectionState ==
                             ConnectionState.waiting) {
-                          return CircularProgressIndicator();
+                          return const CircularProgressIndicator();
                         } else if (followersSnapshot.hasError) {
                           return Text('Error: ${followersSnapshot.error}');
                         }
@@ -144,7 +199,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           builder: (context, followingSnapshot) {
                             if (followingSnapshot.connectionState ==
                                 ConnectionState.waiting) {
-                              return CircularProgressIndicator();
+                              return const CircularProgressIndicator();
                             } else if (followingSnapshot.hasError) {
                               return Text('Error: ${followingSnapshot.error}');
                             }
@@ -159,7 +214,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         );
                       },
                     ),
+
                     const SizedBox(height: 16),
+
+                    // -- Nombre del usuario --
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
@@ -171,11 +229,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     ),
+
                     const SizedBox(height: 8),
-                    ProfileBio(
-                        description:
-                            'Aquí va una descripción genérica del usuario.'), // Descripción quemada
+
+                    // -- Breve descripción --
+                    const ProfileBio(
+                      description:
+                          'Aquí va una descripción genérica del usuario.',
+                    ),
+
                     const SizedBox(height: 16),
+
+                    // -- Pestañas (Recetas publicadas / Guardadas)
                     ProfileTabs(
                       selectedIndex: selectedIndex,
                       onTabSelected: (index) {
@@ -183,26 +248,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           selectedIndex = index;
                         });
                       },
-                    ), // Pestañas para publicaciones y guardados
+                    ),
                   ],
                 ),
               ),
+
+              // -- Vista de recetas publicadas o guardadas --
               Expanded(
-                child: Container(
-                  child: Center(
-                    child: Text(
-                        'Aquí irá el contenido de las recetas guardadas y publicadas.'),
-                  ),
-                ),
-                // child: SavedRecipesGrid(
-                //   selectedIndex: selectedIndex,
-                //   profile: profile,
-                // ), // Recetas guardadas
+                child: selectedIndex == 0
+                    ? _buildPublishedRecipes() // Recetas publicadas
+                    : _buildSavedRecipes(), // Recetas guardadas
               ),
             ],
           );
         },
       ),
+
+      // -- Bottom Navigation --
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
@@ -237,7 +299,93 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+
+  /// Construye la lista de recetas publicadas
+  Widget _buildPublishedRecipes() {
+    return FutureBuilder<List<RecipeResponse>>(
+      future: _publishedRecipesFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text('No hay recetas publicadas.'));
+        }
+
+        final published = snapshot.data!;
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 23, vertical: 16),
+          itemCount: published.length,
+          itemBuilder: (context, index) {
+            final recipe = published[index];
+            return GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  '/recipe',
+                  arguments: {'recipeId': recipe.recipeId},
+                );
+              },
+              child: RecipeCard(
+                title: recipe.title,
+                chef: recipe.keycloakUserId,
+                duration: '${recipe.cookingTime}',
+                imageUrl: images,
+                rating: recipe.ratingAvg.round(),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// Construye la lista de recetas guardadas
+  Widget _buildSavedRecipes() {
+    return FutureBuilder<List<RecipeResponse>>(
+      future: _savedRecipesFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text('No tienes recetas guardadas.'));
+        }
+
+        final saved = snapshot.data!;
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 23, vertical: 16),
+          itemCount: saved.length,
+          itemBuilder: (context, index) {
+            final recipe = saved[index];
+            return GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  '/recipe',
+                  arguments: {'recipeId': recipe.recipeId},
+                );
+              },
+              child: RecipeCard(
+                title: recipe.title,
+                chef: recipe.keycloakUserId,
+                duration: '${recipe.cookingTime}',
+                imageUrl: images,
+                rating: recipe.ratingAvg.round(),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 }
+
+// ------------------------
+//  WIDGETS DE PERFIL
+// ------------------------
 
 class ProfileStats extends StatelessWidget {
   final ProfileResponse profile;
@@ -258,8 +406,9 @@ class ProfileStats extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 45,
-          backgroundImage: NetworkImage(profile.profilePhoto ??
-              'default_image_url'), // Utilizamos NetworkImage para imágenes desde una URL
+          backgroundImage: NetworkImage(
+            profile.profilePhoto ?? 'default_image_url',
+          ),
         ),
         const SizedBox(width: 2),
         GestureDetector(
@@ -267,26 +416,17 @@ class ProfileStats extends StatelessWidget {
             Navigator.pushNamed(
               context,
               '/followers_and_following',
-              arguments: {
-                'profile_id': profile
-                    .profileId, // Asegúrate de que profileId es un int válido
-                'type': 'recipes'
-              },
+              arguments: {'profile_id': profile.profileId, 'type': 'recipes'},
             );
           },
-          child: _buildStatItem(
-              'Recetas', '0'), // Placeholder for the actual recipe count
+          child: _buildStatItem('Recetas', '0'),
         ),
         GestureDetector(
           onTap: () {
             Navigator.pushNamed(
               context,
               '/followers_and_following',
-              arguments: {
-                'profile_id': profile
-                    .profileId, // Asegúrate de que profileId es un int válido
-                'type': 'followers'
-              },
+              arguments: {'profile_id': profile.profileId, 'type': 'followers'},
             );
           },
           child: _buildStatItem('Seguidores', followersCount.toString()),
@@ -296,11 +436,7 @@ class ProfileStats extends StatelessWidget {
             Navigator.pushNamed(
               context,
               '/followers_and_following',
-              arguments: {
-                'profile_id': profile
-                    .profileId, // Asegúrate de que profileId es un int válido
-                'type': 'following'
-              },
+              arguments: {'profile_id': profile.profileId, 'type': 'following'},
             );
           },
           child: _buildStatItem('Siguiendo', followingCount.toString()),
@@ -399,149 +535,115 @@ class ProfileTabs extends StatelessWidget {
   }
 }
 
-// class SavedRecipesGrid extends StatelessWidget {
-//   final int selectedIndex;
-//   final Profile profile;
+// ------------------------
+//  WIDGET DE RecipeCard
+// ------------------------
 
-//   const SavedRecipesGrid({
-//     required this.selectedIndex,
-//     required this.profile,
-//   });
+class RecipeCard extends StatelessWidget {
+  final String title;
+  final String chef;
+  final String duration;
+  final String imageUrl;
+  final int? rating;
 
-//   @override
-//   Widget build(BuildContext context) {
-//     final recipeController = RecipeController();
-//     final savedRecipes = profile.saved_recipes
-//         .map((recipeId) =>
-//             recipeController.allRecipes.firstWhere((recipe) => recipe.recipeId == '$recipeId'))
-//         .toList();
-//     final publishedRecipes = profile.published_recipes
-//         .map((recipeId) =>
-//             recipeController.allRecipes.firstWhere((recipe) => recipe.recipeId == '$recipeId'))
-//         .toList();
+  const RecipeCard({
+    Key? key,
+    required this.title,
+    required this.chef,
+    required this.duration,
+    required this.imageUrl,
+    this.rating,
+  }) : super(key: key);
 
-//     final recipesToShow = selectedIndex == 0 ? publishedRecipes : savedRecipes;
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Imagen superior:
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: Image.asset(
+              imageUrl,
+              height: 120,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
 
-//     return ListView.builder(
-//       padding: const EdgeInsets.symmetric(horizontal: 23, vertical: 16),
-//       itemCount: recipesToShow.length,
-//       itemBuilder: (context, index) {
-//         final recipe = recipesToShow[index];
-//         return GestureDetector(
-//           onTap: () {
-//             Navigator.pushNamed(
-//               context,
-//               '/recipe',
-//               arguments: {'recipeId': recipe.recipeId},
-//             );
-//           },
-//           child: RecipeCard(
-//             title: recipe.title,
-//             chef: recipe.chef,
-//             duration: recipe.duration,
-//             imageUrl: recipe.imageUrl,
-//             rating: recipe.rating,
-//           ),
-//         );
-//       },
-//     );
-//   }
-// }
+          // Texto e info:
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Título
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
 
-// class RecipeCard extends StatelessWidget {
-//   final String title;
-//   final String chef;
-//   final String duration;
-//   final String imageUrl;
-//   final int? rating;
+                // Chef / usuario
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 12,
+                      backgroundImage:
+                          AssetImage('assets/chefs/default_chef.jpg'),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      chef,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
 
-//   const RecipeCard({
-//     Key? key,
-//     required this.title,
-//     required this.chef,
-//     required this.duration,
-//     required this.imageUrl,
-//     this.rating,
-//   }) : super(key: key);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       margin: const EdgeInsets.symmetric(vertical: 8),
-//       width: double.infinity,
-//       decoration: BoxDecoration(
-//         color: Colors.white,
-//         borderRadius: BorderRadius.circular(12),
-//         boxShadow: [
-//           BoxShadow(
-//             color: Colors.black.withOpacity(0.1),
-//             blurRadius: 8,
-//             offset: const Offset(0, 2),
-//           ),
-//         ],
-//       ),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           ClipRRect(
-//             borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-//             child: Image.asset(
-//               imageUrl,
-//               height: 120,
-//               width: double.infinity,
-//               fit: BoxFit.cover,
-//             ),
-//           ),
-//           Padding(
-//             padding: const EdgeInsets.all(12),
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 Text(
-//                   title,
-//                   style: const TextStyle(
-//                     fontSize: 16,
-//                     fontWeight: FontWeight.w600,
-//                   ),
-//                 ),
-//                 const SizedBox(height: 8),
-//                 Row(
-//                   children: [
-//                     CircleAvatar(
-//                       radius: 12,
-//                       backgroundImage: AssetImage('assets/chefs/$chef.jpg'),
-//                     ),
-//                     const SizedBox(width: 8),
-//                     Text(
-//                       chef,
-//                       style: const TextStyle(fontSize: 14),
-//                     ),
-//                   ],
-//                 ),
-//                 const SizedBox(height: 8),
-//                 Row(
-//                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                   children: [
-//                     Text(
-//                       '$duration mins',
-//                       style: const TextStyle(color: Colors.grey),
-//                     ),
-//                     Row(
-//                       children: List.generate(5, (index) {
-//                         return Icon(
-//                           index < (rating ?? 0) ? Icons.star : Icons.star_border,
-//                           color: Colors.amber,
-//                           size: 12,
-//                         );
-//                       }),
-//                     ),
-//                   ],
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
+                // Duration + Rating
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '$duration mins',
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                    Row(
+                      children: List.generate(5, (index) {
+                        return Icon(
+                          index < (rating ?? 0)
+                              ? Icons.star
+                              : Icons.star_border,
+                          color: Colors.amber,
+                          size: 12,
+                        );
+                      }),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

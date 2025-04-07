@@ -4,11 +4,14 @@ import '../../models/Profiles/profile_request.dart';
 import '../../models/Profiles/profile_response.dart';
 
 class ProfileController {
-  static const String _baseUrl = 'http://localhost:8001/profiles';
+  final String baseUrl;
+
+  ProfileController({required this.baseUrl});
 
   /// GET: Obtener perfil por keycloak_user_id
   Future<ProfileResponse> getProfile(String keycloakUserId) async {
-    final response = await http.get(Uri.parse('$_baseUrl/$keycloakUserId'));
+    final response =
+        await http.get(Uri.parse('$baseUrl/profiles/$keycloakUserId'));
 
     if (response.statusCode == 200) {
       return ProfileResponse.fromJson(json.decode(response.body));
@@ -19,7 +22,8 @@ class ProfileController {
 
   /// GET: Obtener perfil por profile_id
   Future<ProfileResponse> getProfilebyid(String profile_id) async {
-    final response = await http.get(Uri.parse('$_baseUrl/id/$profile_id'));
+    final response =
+        await http.get(Uri.parse('$baseUrl/profiles/id/$profile_id'));
 
     if (response.statusCode == 200) {
       return ProfileResponse.fromJson(json.decode(response.body));
@@ -30,7 +34,7 @@ class ProfileController {
 
   /// GET: Listar todos los perfiles
   Future<List<ProfileResponse>> listProfiles() async {
-    final response = await http.get(Uri.parse(_baseUrl));
+    final response = await http.get(Uri.parse('$baseUrl/profiles/'));
 
     if (response.statusCode == 200) {
       final List<dynamic> body = json.decode(response.body);
@@ -43,7 +47,7 @@ class ProfileController {
   /// POST: Crear perfil
   Future<void> createProfile(ProfileRequest profile) async {
     final response = await http.post(
-      Uri.parse(_baseUrl),
+      Uri.parse('$baseUrl/profiles/'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode(profile.toJson()),
     );
@@ -57,7 +61,7 @@ class ProfileController {
   Future<void> updateProfile(
       String keycloakUserId, ProfileRequest updatedProfile) async {
     final response = await http.put(
-      Uri.parse('$_baseUrl/$keycloakUserId'),
+      Uri.parse('$baseUrl/$keycloakUserId'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode(updatedProfile.toJson()),
     );
@@ -69,7 +73,8 @@ class ProfileController {
 
   /// DELETE: Eliminar perfil
   Future<void> deleteProfile(String keycloakUserId) async {
-    final response = await http.delete(Uri.parse('$_baseUrl/$keycloakUserId'));
+    final response =
+        await http.delete(Uri.parse('$baseUrl/profiles/$keycloakUserId'));
 
     if (response.statusCode != 200 && response.statusCode != 204) {
       throw Exception('Failed to delete profile');

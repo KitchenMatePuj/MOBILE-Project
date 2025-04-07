@@ -17,6 +17,7 @@ class EditprofileScreen extends StatefulWidget {
 }
 
 class _EditprofileState extends State<EditprofileScreen> {
+  String profileBaseUrl = 'http://localhost:8001/profiles';
   late ProfileResponse? profile =
       ProfileResponse(profileId: 1, keycloakUserId: 'user1234', email: "email");
   bool isProfileInfoSelected = true;
@@ -38,8 +39,8 @@ class _EditprofileState extends State<EditprofileScreen> {
 
   Future<void> _loadData(String keycloak_user_id) async {
     try {
-      final fetchedProfile =
-          await ProfileController().getProfile(keycloak_user_id);
+      final fetchedProfile = await ProfileController(baseUrl: profileBaseUrl)
+          .getProfile(keycloak_user_id);
       final fetchedAllergies =
           await IngredientAllergyController(baseUrl: 'http://localhost:8001')
               .listAllergiesByProfile(fetchedProfile.profileId);
@@ -278,7 +279,9 @@ class _EditprofileState extends State<EditprofileScreen> {
                                 );
 
                                 try {
-                                  await ProfileController().updateProfile(
+                                  await ProfileController(
+                                          baseUrl: profileBaseUrl)
+                                      .updateProfile(
                                     profile!.keycloakUserId,
                                     updatedProfile,
                                   );

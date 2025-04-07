@@ -728,24 +728,13 @@ class IngredientCard extends StatelessWidget {
                 Expanded(
                   flex: 3,
                   child: DropdownButtonFormField<String>(
-                    value: ingredient.name.isEmpty ? null : ingredient.name,
-                    items: [
-                      ...availableIngredients.map((ingredientData) {
-                        return DropdownMenuItem<String>(
-                          value: ingredientData.name,
-                          child: Text(ingredientData.name),
-                        );
-                      }).toList(),
-                      const DropdownMenuItem<String>(
-                        value: 'Otro',
-                        child: Text('Otro'),
-                      ),
-                    ],
+                    value: _getValidValue(ingredient.name),
+                    items: _buildIngredientItems(),
                     onChanged: (value) {
                       if (value == 'Otro') {
                         _showCustomIngredientDialog(context, ingredient);
-                      } else {
-                        ingredient.name = value!;
+                      } else if (value != null) {
+                        ingredient.name = value;
                         final selected = availableIngredients.firstWhere(
                           (i) => i.name == value,
                           orElse: () => IngredientResponse(
@@ -853,6 +842,36 @@ class IngredientCard extends StatelessWidget {
         ingredient.name = result;
       }
     });
+  }
+
+  String? _getValidValue(String ingredientName) {
+    final names = availableIngredients.map((e) => e.name).toList();
+    // Si no está en la lista, devuelvo null
+    if (!names.contains(ingredientName)) return null;
+
+    // Ver cuántas veces aparece
+    final occurrences = names.where((n) => n == ingredientName).length;
+    return occurrences == 1 ? ingredientName : null;
+  }
+
+  /// Construye la lista de items sin duplicados y con "Otro"
+  List<DropdownMenuItem<String>> _buildIngredientItems() {
+    // Evitar duplicados y mapear a DropdownMenuItem
+    final uniqueList = availableIngredients.map((e) => e.name).toSet().toList();
+    final items = uniqueList.map((name) {
+      return DropdownMenuItem<String>(
+        value: name,
+        child: Text(name),
+      );
+    }).toList();
+
+    // Agregamos la opción 'Otro'
+    items.add(const DropdownMenuItem<String>(
+      value: 'Otro',
+      child: Text('Otro'),
+    ));
+
+    return items;
   }
 
   void _showQuantityDialog(BuildContext context, Ingredient ingredient) {

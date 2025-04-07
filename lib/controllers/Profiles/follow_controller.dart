@@ -4,7 +4,7 @@ import '../../models/Profiles/follow_request.dart';
 import '../../models/Profiles/follow_response.dart';
 
 class FollowController {
-  static const String baseUrl = 'http://localhost:8001/follows'; 
+  static const String baseUrl = 'http://localhost:8001/follows';
 
   /// GET: Obtener lista de seguidores de un perfil
   Future<List<FollowResponse>> listFollowers(int profileId) async {
@@ -27,6 +27,19 @@ class FollowController {
       return body.map((e) => FollowResponse.fromJson(e)).toList();
     } else {
       throw Exception('Failed to fetch followed profiles');
+    }
+  }
+
+  /// GET: Obtener keycloak_user_ids de los perfiles que sigue un usuario
+  Future<List<String>> getFollowedKeycloakUserIds(int profileId) async {
+    final response =
+        await http.get(Uri.parse('$baseUrl/followed-keycloak-ids/$profileId'));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> body = json.decode(response.body);
+      return body.map((e) => e.toString()).toList();
+    } else {
+      throw Exception('Failed to fetch followed keycloak user ids');
     }
   }
 

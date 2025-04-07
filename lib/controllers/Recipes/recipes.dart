@@ -38,7 +38,7 @@ class RecipeController {
 
   /// Listar todas las recetas (GET /recipes)
   Future<List<RecipeResponse>> fetchRecipes() async {
-    final response = await http.get(Uri.parse('$baseUrl/recipes'));
+    final response = await http.get(Uri.parse('$baseUrl/recipes/'));
 
     if (response.statusCode == 200) {
       final List<dynamic> body = jsonDecode(response.body);

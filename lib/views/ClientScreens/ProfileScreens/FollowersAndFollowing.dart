@@ -8,13 +8,17 @@ class FollowersAndFollowingScreen extends StatefulWidget {
   final int profileId;
   final String type;
 
-  const FollowersAndFollowingScreen({super.key, required this.profileId, required this.type});
+  const FollowersAndFollowingScreen(
+      {super.key, required this.profileId, required this.type});
 
   @override
-  _FollowersAndFollowingScreenState createState() => _FollowersAndFollowingScreenState();
+  _FollowersAndFollowingScreenState createState() =>
+      _FollowersAndFollowingScreenState();
 }
 
-class _FollowersAndFollowingScreenState extends State<FollowersAndFollowingScreen> {
+class _FollowersAndFollowingScreenState
+    extends State<FollowersAndFollowingScreen> {
+  String profileBaseUrl = 'http://localhost:8001';
   late int selectedIndex;
   late FollowController _followController;
   late ProfileController _profileController;
@@ -25,7 +29,7 @@ class _FollowersAndFollowingScreenState extends State<FollowersAndFollowingScree
     super.initState();
     selectedIndex = widget.type == 'following' ? 1 : 0;
     _followController = FollowController();
-    _profileController = ProfileController();
+    _profileController = ProfileController(baseUrl: profileBaseUrl);
     _fetchUsers();
   }
 
@@ -38,7 +42,9 @@ class _FollowersAndFollowingScreenState extends State<FollowersAndFollowingScree
       List<ProfileResponse> profiles = [];
       for (FollowResponse follow in followList) {
         ProfileResponse profile = await _profileController.getProfilebyid(
-          selectedIndex == 0 ? follow.followerId.toString() : follow.followedId.toString(),
+          selectedIndex == 0
+              ? follow.followerId.toString()
+              : follow.followedId.toString(),
         );
         profiles.add(profile);
       }
@@ -159,7 +165,9 @@ class FollowersFollowingTabs extends StatelessWidget {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: selectedIndex == index ? const Color(0xFF129575) : Colors.grey,
+              color: selectedIndex == index
+                  ? const Color(0xFF129575)
+                  : Colors.grey,
             ),
           ),
           if (selectedIndex == index)
@@ -200,7 +208,8 @@ class FollowersFollowingContent extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF129575), // Background color
               foregroundColor: Colors.white, // Text color
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 1), // Smaller padding
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 20, vertical: 1), // Smaller padding
               textStyle: const TextStyle(fontSize: 13), // Smaller font size
             ),
             onPressed: () {

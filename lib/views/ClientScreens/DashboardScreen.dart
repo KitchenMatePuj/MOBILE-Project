@@ -6,15 +6,13 @@ import 'package:mobile_kitchenmate/models/Recipes/recipes_response.dart';
 
 import 'package:mobile_kitchenmate/controllers/Profiles/profile_controller.dart';
 import 'package:mobile_kitchenmate/controllers/Profiles/sumary_controller.dart';
+import 'package:mobile_kitchenmate/controllers/Profiles/follow_controller.dart';
 import 'package:mobile_kitchenmate/models/Profiles/profile_response.dart';
 import 'package:mobile_kitchenmate/models/Profiles/summary_response.dart';
 
 import 'package:mobile_kitchenmate/models/Recommendations/recommendation_request.dart';
 import 'package:mobile_kitchenmate/models/Recommendations/recommendation_response.dart';
 import 'package:mobile_kitchenmate/controllers/recommendations/recommendations_controller.dart';
-
-import 'package:provider/provider.dart';
-import '/providers/user_provider.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -23,7 +21,12 @@ class DashboardScreen extends StatefulWidget {
   _DashboardScreenState createState() => _DashboardScreenState();
 }
 
+const image = '../../assets/images/default.jpg';
+
 class _DashboardScreenState extends State<DashboardScreen> {
+  String profileBaseUrl = 'http://localhost:8001';
+  String recipeBaseUrl = 'http://localhost:8004';
+  String recomendationBaseUrl = 'http://localhost:8007';
   late ProfileController _profileController;
   late SumaryController _summaryController;
   late RecipeController _recipeController;
@@ -37,6 +40,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   late Future<ProfileSummaryResponse> _summaryFuture;
   late Future<ProfileResponse> _profileFuture;
+  bool _publishedRecipesLoaded = false;
 
   String query = '';
   int _recipesToShow = 4;
@@ -47,12 +51,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
 
-    _recipeController = RecipeController(baseUrl: 'http://localhost:8004');
-    _categoryController = CategoryController(baseUrl: 'http://localhost:8004');
+    _recipeController = RecipeController(baseUrl: recipeBaseUrl);
+    _categoryController = CategoryController(baseUrl: recipeBaseUrl);
     _summaryController = SumaryController();
-    _profileController = ProfileController();
+    _profileController = ProfileController(baseUrl: profileBaseUrl);
     _recommendationController =
-        RecommendationsController(baseUrl: 'http://localhost:8007');
+        RecommendationsController(baseUrl: recomendationBaseUrl);
 
     _profileFuture = _profileController.getProfile(keycloakUserId);
 
@@ -115,13 +119,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _loadPublishedRecipes(String userId) async {
+    if (_publishedRecipesLoaded) return; // ← evita recarga
+    _publishedRecipesLoaded = true;
+
     try {
-      final recipes = await _recipeController.getRecipesByUser(userId);
+      final profile = await _profileController.getProfile(userId);
+      final followController = FollowController();
+
+      final followedKeycloaks =
+          await followController.getFollowedKeycloakUserIds(profile.profileId);
+
+      final List<RecipeResponse> allRecipes = [];
+
+      for (String followedUserId in followedKeycloaks) {
+        try {
+          final userRecipes =
+              await _recipeController.getRecipesByUser(followedUserId);
+          allRecipes.addAll(userRecipes);
+        } catch (_) {
+          continue;
+        }
+      }
+
       setState(() {
-        _publishedRecipes = recipes;
+        _publishedRecipes = allRecipes;
       });
     } catch (e) {
-      print('❌ Error al cargar publicaciones: \$e');
+      print('❌ Error al cargar publicaciones de seguidos: $e');
     }
   }
 
@@ -208,7 +232,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 title: rec.title,
                                 chef: 'Chef',
                                 duration: '${rec.cookingTime}',
-                                imageUrl: 'assets/images/default.jpg',
+                                imageUrl: image,
                                 rating: rec.ratingAvg.round(),
                               ),
                             );
@@ -237,7 +261,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   title: recipe.title,
                                   chef: 'Tú',
                                   duration: '${recipe.cookingTime}',
-                                  imageUrl: 'assets/images/default.jpg',
+                                  imageUrl: image,
                                   rating: recipe.ratingAvg.round(),
                                 ),
                               ),

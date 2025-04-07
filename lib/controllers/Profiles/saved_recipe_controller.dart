@@ -21,7 +21,7 @@ class SavedRecipeController {
 
   /// GET: Listar todas las recetas guardadas
   Future<List<SavedRecipeResponse>> listSavedRecipes() async {
-    final response = await http.get(Uri.parse(baseUrl));
+    final response = await http.get(Uri.parse('$baseUrl/saved_recipes/'));
 
     if (response.statusCode == 200) {
       final List<dynamic> body = json.decode(response.body);
@@ -67,13 +67,32 @@ class SavedRecipeController {
   }
 
   /// GET: Obtener las recetas más guardadas
-  Future<List<Map<String, dynamic>>> getMostSavedRecipes({int limit = 10}) async {
-    final response = await http.get(Uri.parse('$baseUrl/most_saved?limit=$limit'));
+  Future<List<Map<String, dynamic>>> getMostSavedRecipes(
+      {int limit = 10}) async {
+    final response =
+        await http.get(Uri.parse('$baseUrl/most_saved?limit=$limit'));
 
     if (response.statusCode == 200) {
       return List<Map<String, dynamic>>.from(json.decode(response.body));
     } else {
       throw Exception('Failed to fetch most saved recipes');
+    }
+  }
+
+  Future<List<SavedRecipeResponse>> getSavedRecipesByKeycloak(
+      String keycloakUserId) async {
+    final response = await http.get(
+      Uri.parse(
+          '$baseUrl/saved_recipes/saved-recipes/keycloak/$keycloakUserId'),
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonList = json.decode(response.body);
+      return jsonList
+          .map((json) => SavedRecipeResponse.fromJson(json))
+          .toList();
+    } else {
+      throw Exception('Failed to load saved recipes');
     }
   }
 }
