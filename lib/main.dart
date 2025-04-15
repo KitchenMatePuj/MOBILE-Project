@@ -106,7 +106,7 @@ class MyApp extends StatelessWidget {
         '/recipe_search': (context) => const RecipeSearchScreen(),
         //'/recipe_search': (context) => const RecipeSearchScreen(),
         '/profile': (context) => const ProfileScreen(),
-        // '/email_forgot_pass': (context) => const EmailForgotPassScreen(),
+        '/email_forgot_pass': (context) => const EmailForgotPassScreen(),
         '/shopping_list': (context) => const ShoppingListScreen(),
         '/create': (context) => const CreateRecipeScreen(),
         // '/recipe': (context) => const RecipeScreen(),
