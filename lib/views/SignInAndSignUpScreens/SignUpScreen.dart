@@ -5,6 +5,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mobile_kitchenmate/controllers/Profiles/ingredient_allergy_controller.dart';
 import 'package:mobile_kitchenmate/controllers/authentication/auth_controller.dart';
 import 'package:mobile_kitchenmate/models/Profiles/ingredientAllery_request.dart';
@@ -15,6 +16,7 @@ import '../../models/Profiles/profile_response.dart';
 import '../../controllers/Recipes/ingredients.dart';
 import '../../models/Recipes/ingredients_response.dart';
 import '../../models/Profiles/ingredientAllery_response.dart';
+
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -54,15 +56,19 @@ class SignUpScreenState extends State<SignUpScreen> {
 
   bool _canContinue = false;
 
+  final authBaseUrl = dotenv.env['AUTH_URL'] ?? '';
+  final profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
+  final recipesBaseUrl = dotenv.env['RECIPES_URL'] ?? '';
+
   @override
   void initState() {
     super.initState();
-    _authController = AuthController(baseUrl: 'http://localhost:8008');
-    _profileController = ProfileController(baseUrl: 'http://localhost:8001');
+    _authController = AuthController(baseUrl: authBaseUrl);
+    _profileController = ProfileController(baseUrl: profileBaseUrl);
     _ingredientController =
-        IngredientController(baseUrl: 'http://localhost:8004');
+        IngredientController(baseUrl: recipesBaseUrl);
     _ingredientAllergyController =
-        IngredientAllergyController(baseUrl: 'http://localhost:8001');
+        IngredientAllergyController(baseUrl: profileBaseUrl);
     _fetchIngredients();
   }
 

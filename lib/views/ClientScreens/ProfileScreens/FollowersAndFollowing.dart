@@ -3,6 +3,7 @@ import '/controllers/Profiles/profile_controller.dart';
 import '/controllers/Profiles/follow_controller.dart';
 import '/models/Profiles/profile_response.dart';
 import '/models/Profiles/follow_response.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class FollowersAndFollowingScreen extends StatefulWidget {
   final int profileId;
@@ -18,7 +19,7 @@ class FollowersAndFollowingScreen extends StatefulWidget {
 
 class _FollowersAndFollowingScreenState
     extends State<FollowersAndFollowingScreen> {
-  String profileBaseUrl = 'http://localhost:8001';
+  final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
   late int selectedIndex;
   late FollowController _followController;
   late ProfileController _profileController;
@@ -28,7 +29,7 @@ class _FollowersAndFollowingScreenState
   void initState() {
     super.initState();
     selectedIndex = widget.type == 'following' ? 1 : 0;
-    _followController = FollowController();
+    _followController = FollowController(baseUrl: profileBaseUrl);
     _profileController = ProfileController(baseUrl: profileBaseUrl);
     _fetchUsers();
   }

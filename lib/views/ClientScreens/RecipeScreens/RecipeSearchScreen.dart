@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '/controllers/Recipes/recipes.dart';
 import '/controllers/Profiles/profile_controller.dart';
 import '/models/Recipes/recipes_response.dart';
@@ -23,8 +24,8 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
   String selectedCuisine = "Todas";
   int _recipesToShow = 8;
 
-  String profileBaseUrl = 'http://localhost:8001';
-  String recipeBaseUrl = 'http://localhost:8004';
+  final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
+  final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
 
   @override
   void initState() {

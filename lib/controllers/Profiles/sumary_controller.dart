@@ -3,7 +3,9 @@ import 'dart:convert';
 import '../../models/Profiles/summary_response.dart';
 
 class SumaryController {
-  final String baseUrl = 'http://localhost:8001';
+  final String baseUrl;
+
+  SumaryController({required this.baseUrl});
 
   Future<ProfileSummaryResponse> getProfileSummary(
       String keycloakUserId) async {

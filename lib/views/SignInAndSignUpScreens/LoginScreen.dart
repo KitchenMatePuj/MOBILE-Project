@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '/controllers/authentication/auth_controller.dart';
 import '/models/authentication/login_request_advanced.dart' as advanced;
 import '/models/authentication/login_response.dart';
@@ -18,9 +19,11 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   String _errorMessage = '';
 
+  final authBaseUrl = dotenv.env['AUTH_URL'] ?? '';
+
   @override
   Widget build(BuildContext context) {
-    final authController = AuthController(baseUrl: 'http://localhost:8008');
+    final authController = AuthController(baseUrl: authBaseUrl);
 
     return Scaffold(
       appBar: AppBar(

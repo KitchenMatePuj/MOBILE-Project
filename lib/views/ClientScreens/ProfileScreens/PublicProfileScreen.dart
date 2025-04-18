@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '/controllers/Profiles/profile_controller.dart';
 import '/controllers/Profiles/follow_controller.dart';
 import '/controllers/Recipes/recipes.dart';
@@ -17,8 +18,8 @@ class PublicProfileScreen extends StatefulWidget {
 }
 
 class _PublicProfileScreenState extends State<PublicProfileScreen> {
-  String profileBaseUrl = 'http://localhost:8001';
-  String recipeBaseUrl = 'http://localhost:8004';
+  final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
+  final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
   late ProfileController _profileController;
   late FollowController _followController;
   late RecipeController _recipeController;
@@ -32,7 +33,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   void initState() {
     super.initState();
     _profileController = ProfileController(baseUrl: profileBaseUrl);
-    _followController = FollowController();
+    _followController = FollowController(baseUrl: profileBaseUrl);
     _recipeController = RecipeController(baseUrl: recipeBaseUrl);
     _profileFuture =
         _profileController.getProfilebyid(widget.profileId.toString());

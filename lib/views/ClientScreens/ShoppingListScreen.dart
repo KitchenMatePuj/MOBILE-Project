@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '/controllers/Profiles/shopping_list_controller.dart';
 import '/controllers/Profiles/ingredient_controller.dart';
 import '/models/Profiles/ingredient_response.dart';
@@ -24,12 +25,15 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   ShoppingListResponse? selectedShoppingList;
   int profileId = 2; // profile_id del usuario logueado
 
+  final profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
+  final recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
+
   @override
   void initState() {
     super.initState();
-    shoppingListController = ShoppingListController(baseUrl: 'http://localhost:8001');
-    ingredientController = IngredientController(baseUrl: 'http://localhost:8001');
-    recipeController = RecipeController(baseUrl: 'http://localhost:8004');
+    shoppingListController = ShoppingListController(baseUrl: profileBaseUrl);
+    ingredientController = IngredientController(baseUrl: recipeBaseUrl);
+    recipeController = RecipeController(baseUrl: recipeBaseUrl);
   }
 
   @override

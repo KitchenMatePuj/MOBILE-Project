@@ -35,7 +35,7 @@ import 'views/ClientScreens/ProfileScreens/FollowersAndFollowing.dart';
 //   const MyApp({super.key});
 
 Future<void> main() async {
-  //await dotenv.load();
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 

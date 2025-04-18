@@ -1,4 +1,5 @@
 import 'package:mobile_kitchenmate/controllers/Recipes/recipe_steps.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mobile_kitchenmate/controllers/Recipes/recipes.dart';
 import 'package:mobile_kitchenmate/models/Recipes/recipe_steps_request.dart';
 import 'package:mobile_kitchenmate/models/Recipes/recipes_request.dart';
@@ -25,6 +26,8 @@ const List<String> defaultUnits = [
 
 const String keycloakUserId = '12';
 
+final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
+
 class CreateRecipeScreen extends StatefulWidget {
   const CreateRecipeScreen({super.key});
 
@@ -41,11 +44,11 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
   ];
 
   final IngredientController ingredientController =
-      IngredientController(baseUrl: 'http://localhost:8004');
+      IngredientController(baseUrl: recipeBaseUrl);
   final RecipeController recipeController =
-      RecipeController(baseUrl: 'http://localhost:8004');
+      RecipeController(baseUrl: recipeBaseUrl);
   final RecipeStepController stepController =
-      RecipeStepController(baseUrl: 'http://localhost:8004');
+      RecipeStepController(baseUrl: recipeBaseUrl);
 
   List<String> steps = [
     "Describa este paso por favor.",

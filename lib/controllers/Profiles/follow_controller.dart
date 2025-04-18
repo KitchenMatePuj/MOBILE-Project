@@ -4,7 +4,9 @@ import '../../models/Profiles/follow_request.dart';
 import '../../models/Profiles/follow_response.dart';
 
 class FollowController {
-  static const String baseUrl = 'http://localhost:8001/follows';
+  final String baseUrl;
+
+  FollowController({required this.baseUrl});
 
   /// GET: Obtener lista de seguidores de un perfil
   Future<List<FollowResponse>> listFollowers(int profileId) async {

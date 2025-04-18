@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mobile_kitchenmate/models/Profiles/profile_request.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -17,7 +18,7 @@ class EditprofileScreen extends StatefulWidget {
 }
 
 class _EditprofileState extends State<EditprofileScreen> {
-  String profileBaseUrl = 'http://localhost:8001/profiles';
+  final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
   late ProfileResponse? profile =
       ProfileResponse(profileId: 1, keycloakUserId: 'user1234', email: "email");
   bool isProfileInfoSelected = true;
@@ -42,7 +43,7 @@ class _EditprofileState extends State<EditprofileScreen> {
       final fetchedProfile = await ProfileController(baseUrl: profileBaseUrl)
           .getProfile(keycloak_user_id);
       final fetchedAllergies =
-          await IngredientAllergyController(baseUrl: 'http://localhost:8001')
+          await IngredientAllergyController(baseUrl: profileBaseUrl)
               .listAllergiesByProfile(fetchedProfile.profileId);
 
       setState(() {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mobile_kitchenmate/controllers/Profiles/sumary_controller.dart';
 import 'package:mobile_kitchenmate/controllers/Recipes/recipes.dart';
 import 'package:mobile_kitchenmate/models/Profiles/summary_response.dart';
@@ -33,8 +34,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late Future<List<RecipeResponse>> _publishedRecipesFuture;
   late Future<List<RecipeResponse>> _savedRecipesFuture;
 
-  String profileBaseUrl = 'http://localhost:8001';
-  String recipeBaseUrl = 'http://localhost:8004';
+  final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
+  final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
 
   // keycloakUserId del usuario que consultamos
   String keycloakUserId = '12';
@@ -47,8 +48,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   /// Carga inicial de datos:
   void _initializeData() async {
-    _summaryController = SumaryController();
-    _followController = FollowController();
+    _summaryController = SumaryController(baseUrl: profileBaseUrl);
+    _followController = FollowController(baseUrl: profileBaseUrl);
     _profileController = ProfileController(baseUrl: profileBaseUrl);
 
     // 1) Resumen de perfil (allergies, cooking_time, etc)

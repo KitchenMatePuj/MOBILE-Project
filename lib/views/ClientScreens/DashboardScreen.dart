@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mobile_kitchenmate/controllers/Recipes/categories.dart';
 import 'package:mobile_kitchenmate/controllers/Recipes/recipes.dart';
 import 'package:mobile_kitchenmate/models/Recipes/categories_response.dart';
@@ -24,9 +25,9 @@ class DashboardScreen extends StatefulWidget {
 const image = '../../assets/images/default.jpg';
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  String profileBaseUrl = 'http://localhost:8001';
-  String recipeBaseUrl = 'http://localhost:8004';
-  String recomendationBaseUrl = 'http://localhost:8007';
+  final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
+  final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
+  final String recomendationBaseUrl = dotenv.env['RECOMMENDATION_URL'] ?? '';
   late ProfileController _profileController;
   late SumaryController _summaryController;
   late RecipeController _recipeController;
@@ -45,7 +46,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String query = '';
   int _recipesToShow = 4;
   int selectedIndex = 0;
-  String keycloakUserId = '12';
+  String keycloakUserId = 'user1234';
 
   @override
   void initState() {
@@ -53,7 +54,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     _recipeController = RecipeController(baseUrl: recipeBaseUrl);
     _categoryController = CategoryController(baseUrl: recipeBaseUrl);
-    _summaryController = SumaryController();
+    _summaryController = SumaryController(baseUrl: profileBaseUrl);
     _profileController = ProfileController(baseUrl: profileBaseUrl);
     _recommendationController =
         RecommendationsController(baseUrl: recomendationBaseUrl);
@@ -124,7 +125,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     try {
       final profile = await _profileController.getProfile(userId);
-      final followController = FollowController();
+      final followController = FollowController(baseUrl: profileBaseUrl);
 
       final followedKeycloaks =
           await followController.getFollowedKeycloakUserIds(profile.profileId);
