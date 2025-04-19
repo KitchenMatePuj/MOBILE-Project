@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '/controllers/authentication/auth_controller.dart';
@@ -42,9 +44,11 @@ class _LoginScreenState extends State<LoginScreen> {
               borderRadius: BorderRadius.circular(30),
               color: Colors.white,
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 30), // Márgenes simétricos
+            padding: const EdgeInsets.symmetric(
+                horizontal: 30), // Márgenes simétricos
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start, // Mantiene textos alineados a la izquierda
+              crossAxisAlignment: CrossAxisAlignment
+                  .start, // Mantiene textos alineados a la izquierda
               children: [
                 const SizedBox(height: 40),
                 const Text(
@@ -173,7 +177,8 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildLoginButton(BuildContext context, AuthController authController) {
+  Widget _buildLoginButton(
+      BuildContext context, AuthController authController) {
     return Center(
       child: Column(
         children: [
@@ -197,13 +202,16 @@ class _LoginScreenState extends State<LoginScreen> {
               );
 
               try {
-                final LoginResponse loginResponse = await authController.loginUser(loginRequest);
+                final LoginResponse loginResponse =
+                    await authController.loginUser(loginRequest);
                 // Añadir un print statement para verificar la respuesta del backend
                 print('LoginResponse: ${loginResponse.accessToken}');
-                
+
                 // Si el login es exitoso, navega al dashboard
-                if (loginResponse.accessToken.isNotEmpty) {
+                if (loginResponse.accessToken.isNotEmpty) { 
                   Navigator.pushNamed(context, '/dashboard');
+                  authController.saveToken(loginResponse.accessToken);
+                  
                 } else {
                   setState(() {
                     _isLoading = false;

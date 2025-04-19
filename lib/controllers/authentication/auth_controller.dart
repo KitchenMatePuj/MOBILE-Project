@@ -4,9 +4,12 @@ import 'package:mobile_kitchenmate/models/authentication/reset_password_request.
 import '../../models/authentication/register_request.dart';
 import '/models/authentication/login_request_advanced.dart' as advanced;
 import '../../models/authentication/login_response.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class AuthController {
   final String baseUrl;
+  final _storage = const FlutterSecureStorage();
   AuthController({required this.baseUrl});
 
   Future<String> registerUser({
@@ -37,7 +40,7 @@ class AuthController {
     }
   }
 
-Future<LoginResponse> loginUser(advanced.LoginRequest request) async {
+  Future<LoginResponse> loginUser(advanced.LoginRequest request) async {
     final url = Uri.parse('$baseUrl/login');
     final response = await http.post(
       url,
@@ -67,5 +70,37 @@ Future<LoginResponse> loginUser(advanced.LoginRequest request) async {
     } else {
       throw Exception('Reset password failed: ${response.body}');
     }
+  }
+
+  // Guardar el token
+  Future<void> saveToken(String token) async {
+    await _storage.write(key: 'jwt_token', value: token);
+  }
+
+  // Leer el token
+  Future<String?> getToken() async {
+    return await _storage.read(key: 'jwt_token');
+  }
+
+  // Eliminar el token
+  Future<void> deleteToken() async {
+    await _storage.delete(key: 'jwt_token');
+  }
+
+  Future<void> checkToken() async {
+    String? token = await getToken();
+    if (token != null) {
+      Map<String, dynamic> decoded = JwtDecoder.decode(token);
+      print("Usuario: ${decoded['sub']}");
+      print("Expira en: ${JwtDecoder.getExpirationDate(token)}");
+    } else {
+      print("No hay token guardado");
+    }
+  }
+
+  Future<String> getKeycloakUserId() async {
+    String? token = await getToken();
+    Map<String, dynamic> decoded = JwtDecoder.decode(token!);
+    return decoded['sub'];
   }
 }

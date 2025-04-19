@@ -15,6 +15,10 @@ import 'package:mobile_kitchenmate/models/Recommendations/recommendation_request
 import 'package:mobile_kitchenmate/models/Recommendations/recommendation_response.dart';
 import 'package:mobile_kitchenmate/controllers/recommendations/recommendations_controller.dart';
 
+import '/controllers/authentication/auth_controller.dart';
+import '/models/authentication/login_request_advanced.dart' as advanced;
+import '/models/authentication/login_response.dart';
+
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -27,12 +31,14 @@ const image = '../../assets/images/default.jpg';
 class _DashboardScreenState extends State<DashboardScreen> {
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
   final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
+  final String authBaseUrl = dotenv.env['AUTH_URL'] ?? '';
   final String recomendationBaseUrl = dotenv.env['RECOMMENDATION_URL'] ?? '';
   late ProfileController _profileController;
   late SumaryController _summaryController;
   late RecipeController _recipeController;
   late CategoryController _categoryController;
   late RecommendationsController _recommendationController;
+  late AuthController _authController;
 
   List<RecipeResponse> _savedRecipeDetails = [];
   List<RecipeResponse> _publishedRecipes = [];
@@ -43,10 +49,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late Future<ProfileResponse> _profileFuture;
   bool _publishedRecipesLoaded = false;
 
+  String keycloakUserId = '';
+
   String query = '';
   int _recipesToShow = 4;
   int selectedIndex = 0;
-  String keycloakUserId = 'user1234';
 
   @override
   void initState() {
@@ -58,6 +65,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _profileController = ProfileController(baseUrl: profileBaseUrl);
     _recommendationController =
         RecommendationsController(baseUrl: recomendationBaseUrl);
+
+    _authController = AuthController(baseUrl: authBaseUrl);
 
     _profileFuture = _profileController.getProfile(keycloakUserId);
 
@@ -87,6 +96,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         await _loadPublishedRecipes(keycloakUserId);
       });
+    
+    _authController.getKeycloakUserId().then((id) {
+      keycloakUserId = id;
+    });
   }
 
   Future<void> _loadSavedRecipes(List<int> recipeIds) async {

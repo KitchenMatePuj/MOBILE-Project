@@ -13,6 +13,7 @@ class LoginRequest {
     this.clientSecret = 'YOUR_SECRET_HERE',
   });
 
+
   Map<String, String> toJson() {
     return {
       'grant_type': grantType,
