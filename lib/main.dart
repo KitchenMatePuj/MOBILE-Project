@@ -35,6 +35,7 @@ import 'views/ClientScreens/ProfileScreens/FollowersAndFollowing.dart';
 //   const MyApp({super.key});
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
