@@ -10,6 +10,10 @@ import '/models/Recipes/comments_request.dart';
 import '/models/Recipes/comments_response.dart';
 import '/models/Profiles/profile_response.dart';
 
+import '/controllers/authentication/auth_controller.dart';
+import '/models/authentication/login_request_advanced.dart' as advanced;
+import '/models/authentication/login_response.dart';
+
 class CommentsScreen extends StatefulWidget {
   const CommentsScreen({super.key});
 
@@ -24,11 +28,14 @@ class _CommentsScreenState extends State<CommentsScreen> {
 
   late final CommentController _commentCtl;
   late final ProfileController _profileCtl;
+  late AuthController _authController;
 
   /* ---------- ids & estado ---------- */
   late int recipeId; // llega por ruta
   bool _loaded = false; // evita set‑state dobles
   double _rating = 0; // ⭐ de 1‑5
+
+  String keycloakUserId = '';
 
   late Future<List<CommentResponse>> _commentsF;
   final _newComment = TextEditingController();
@@ -41,6 +48,10 @@ class _CommentsScreenState extends State<CommentsScreen> {
     super.initState();
     _commentCtl = CommentController(baseUrl: recipeBaseUrl);
     _profileCtl = ProfileController(baseUrl: profileBaseUrl);
+
+    _authController.getKeycloakUserId().then((id) {
+      keycloakUserId = id;
+    });
   }
 
   @override

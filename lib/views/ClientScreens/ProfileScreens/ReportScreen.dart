@@ -7,6 +7,10 @@ import '/models/Profiles/profile_response.dart';
 import '/models/Reports/report_response.dart';
 import '/providers/user_provider.dart';
 
+import '/controllers/authentication/auth_controller.dart';
+import '/models/authentication/login_request_advanced.dart' as advanced;
+import '/models/authentication/login_response.dart';
+
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
 
@@ -18,11 +22,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
   final List<int> _expandedReports = [];
   late Future<List<ReportResponse>> _reportsFuture;
   late ReportsController _reportsController;
+  late AuthController _authController;
   String reporterUserIdd = "2"; // Cambiar segun necesitemos Probar
+  String keycloakUserId = '';
 
   @override
   void initState() {
     super.initState();
+
+    _authController.getKeycloakUserId().then((id) {
+      keycloakUserId = id;
+    });
+
     _reportsController = ReportsController();
     _reportsFuture = _reportsController.fetchAllReports();
   }

@@ -27,6 +27,10 @@ import 'package:mobile_kitchenmate/models/Profiles/profile_response.dart';
 import 'package:mobile_kitchenmate/models/Profiles/follow_response.dart';
 import 'package:mobile_kitchenmate/models/Recipes/recipes_response.dart';
 
+import '/controllers/authentication/auth_controller.dart';
+import '/models/authentication/login_request_advanced.dart' as advanced;
+import '/models/authentication/login_response.dart';
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -55,6 +59,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<List<FollowResponse>>? _followingF;
   late Future<List<RecipeResponse>> _publishedF;
   late Future<List<RecipeResponse>> _savedF;
+  late AuthController _authController;
+
+  String keycloakUserId = '';
 
   // ---------------------------------------------------------------------------
   // Constantes de configuración y usuario en sesión (mock)
@@ -78,6 +85,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _profileCtl = ProfileController(baseUrl: _profileBase);
     _recipeCtl = RecipeController(baseUrl: _recipeBase);
     _savedCtl = SavedRecipeController(baseUrl: _profileBase);
+
+    _authController.getKeycloakUserId().then((id) {
+      keycloakUserId = id;
+    });
 
     _loadAll();
   }

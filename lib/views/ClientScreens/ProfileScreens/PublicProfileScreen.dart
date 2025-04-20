@@ -8,6 +8,10 @@ import '/models/Profiles/follow_response.dart';
 import '/models/Profiles/follow_request.dart';
 import '/models/Recipes/recipes_response.dart';
 
+import '/controllers/authentication/auth_controller.dart';
+import '/models/authentication/login_request_advanced.dart' as advanced;
+import '/models/authentication/login_response.dart';
+
 class PublicProfileScreen extends StatefulWidget {
   final int profileId;
 
@@ -27,7 +31,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   late Future<List<FollowResponse>> _followersFuture;
   late Future<List<FollowResponse>> _followingFuture;
   late Future<List<RecipeResponse>> _recipesFuture;
+  late AuthController _authController;
   bool _isFollowing = false;
+  String keycloakUserId = '';
 
   @override
   void initState() {
@@ -35,6 +41,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     _profileController = ProfileController(baseUrl: profileBaseUrl);
     _followController = FollowController(baseUrl: profileBaseUrl);
     _recipeController = RecipeController(baseUrl: recipeBaseUrl);
+
+    _authController.getKeycloakUserId().then((id) {
+      keycloakUserId = id;
+    });
+
     _profileFuture =
         _profileController.getProfilebyid(widget.profileId.toString());
     _followersFuture = _followController.listFollowers(widget.profileId);

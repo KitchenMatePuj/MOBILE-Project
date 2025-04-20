@@ -71,13 +71,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _loadUserData() async {
-    /*
-      _authController.getKeycloakUserId().then((id) {
-        keycloakUserId = id;
-      });
-    */
-
-    keycloakUserId = 'user1234';
+    
+    _authController.getKeycloakUserId().then((id) {
+      keycloakUserId = id;
+    });
+    
 
     _profileFuture = _profileController.getProfile(keycloakUserId);
 
