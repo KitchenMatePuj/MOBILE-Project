@@ -10,6 +10,10 @@ import '../../../models/Profiles/profile_response.dart';
 import '../../../controllers/Profiles/profile_controller.dart';
 import '/providers/user_provider.dart';
 
+import '/controllers/authentication/auth_controller.dart';
+import '/models/authentication/login_request_advanced.dart' as advanced;
+import '/models/authentication/login_response.dart';
+
 class EditprofileScreen extends StatefulWidget {
   const EditprofileScreen({super.key});
 
@@ -19,11 +23,18 @@ class EditprofileScreen extends StatefulWidget {
 
 class _EditprofileState extends State<EditprofileScreen> {
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
+
+  // A FUTURO TOCA QUE RECONOZCA POR DEFECTO EL PROFILE ID Y EL EMAIL.
   late ProfileResponse? profile =
-      ProfileResponse(profileId: 1, keycloakUserId: 'user1234', email: "email");
+      ProfileResponse(profileId: 1, keycloakUserId: '', email: "email");
+  
+  late AuthController _authController;
+  
   bool isProfileInfoSelected = true;
   File? _profileImage;
   List<IngredientAllergyResponse> allergies = [];
+
+  String keycloakUserId = '';
 
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
@@ -34,8 +45,12 @@ class _EditprofileState extends State<EditprofileScreen> {
   @override
   void initState() {
     super.initState();
-    final keycloak_user_id = 'user1234';
-    _loadData(keycloak_user_id);
+    
+    _authController.getKeycloakUserId().then((id) {
+      keycloakUserId = id;
+    });
+
+    _loadData(keycloakUserId);
   }
 
   Future<void> _loadData(String keycloak_user_id) async {

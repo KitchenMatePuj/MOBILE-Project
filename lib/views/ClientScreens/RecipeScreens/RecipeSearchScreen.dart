@@ -5,6 +5,10 @@ import '/controllers/Profiles/profile_controller.dart';
 import '/models/Recipes/recipes_response.dart';
 import '/models/Profiles/profile_response.dart';
 
+import '/controllers/authentication/auth_controller.dart';
+import '/models/authentication/login_request_advanced.dart' as advanced;
+import '/models/authentication/login_response.dart';
+
 class RecipeSearchScreen extends StatefulWidget {
   const RecipeSearchScreen({super.key});
 
@@ -15,6 +19,7 @@ class RecipeSearchScreen extends StatefulWidget {
 class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
   late RecipeController _recipeController;
   late ProfileController _profileController;
+  late AuthController _authController;
   TextEditingController _searchController = TextEditingController();
   List<RecipeResponse> filteredRecipes = [];
   String selectedDuration = "Todos";
@@ -22,6 +27,7 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
   String selectedCategory = "Todos";
   String selectedMealType = "Todos";
   String selectedCuisine = "Todas";
+    String keycloakUserId = '';
   int _recipesToShow = 8;
 
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
@@ -32,6 +38,11 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
     super.initState();
     _recipeController = RecipeController(baseUrl: recipeBaseUrl);
     _profileController = ProfileController(baseUrl: profileBaseUrl);
+
+    _authController.getKeycloakUserId().then((id) {
+      keycloakUserId = id;
+    });
+
     _fetchRecipes();
     _searchController.addListener(_applyFilters);
   }

@@ -18,6 +18,10 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart'; // Import the services package for input formatters
 
+import '/controllers/authentication/auth_controller.dart';
+import '/models/authentication/login_request_advanced.dart' as advanced;
+import '/models/authentication/login_response.dart';
+
 // Default lists for ingredients and units
 const List<String> defaultUnits = [
   'Otro',
@@ -59,6 +63,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
       StrapiController(baseUrl: strapiBaseUrl);
 
   late StrapiController _strapiCtl;
+  late AuthController _authController;
   Uint8List? _imageBytes;
 
   List<String> steps = [
@@ -71,6 +76,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
   String estimatedPortions = "Porciones estimadas ";
   File? _image;
   String recipeTitle = "Nombre de la Receta";
+  String keycloakUserId = '';
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -93,6 +99,11 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
   void initState() {
     super.initState();
     _strapiCtl = StrapiController(baseUrl: strapiBaseUrl);
+
+    _authController.getKeycloakUserId().then((id) {
+      keycloakUserId = id;
+    });
+
     fetchIngredientsFromBackend();
   }
 

@@ -5,9 +5,14 @@ import '/models/Profiles/profile_response.dart';
 import '/models/Profiles/follow_response.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+import '/controllers/authentication/auth_controller.dart';
+import '/models/authentication/login_request_advanced.dart' as advanced;
+import '/models/authentication/login_response.dart';
+
 class FollowersAndFollowingScreen extends StatefulWidget {
   final int profileId;
   final String type;
+  
 
   const FollowersAndFollowingScreen(
       {super.key, required this.profileId, required this.type});
@@ -23,14 +28,22 @@ class _FollowersAndFollowingScreenState
   late int selectedIndex;
   late FollowController _followController;
   late ProfileController _profileController;
+  late AuthController _authController;
   List<ProfileResponse> users = [];
 
+    String keycloakUserId = '';
   @override
+
   void initState() {
     super.initState();
     selectedIndex = widget.type == 'following' ? 1 : 0;
     _followController = FollowController(baseUrl: profileBaseUrl);
     _profileController = ProfileController(baseUrl: profileBaseUrl);
+
+    _authController.getKeycloakUserId().then((id) {
+      keycloakUserId = id;
+    });
+
     _fetchUsers();
   }
 

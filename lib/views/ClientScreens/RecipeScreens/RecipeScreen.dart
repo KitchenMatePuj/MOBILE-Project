@@ -8,6 +8,10 @@ import 'package:mobile_kitchenmate/controllers/Recipes/recipe_steps.dart';
 import 'package:mobile_kitchenmate/controllers/Profiles/profile_controller.dart';
 import 'package:mobile_kitchenmate/controllers/Profiles/saved_recipe_controller.dart';
 
+import '/controllers/authentication/auth_controller.dart';
+import '/models/authentication/login_request_advanced.dart' as advanced;
+import '/models/authentication/login_response.dart';
+
 class RecipeScreen extends StatefulWidget {
   final int recipeId;
   const RecipeScreen({super.key, required this.recipeId});
@@ -24,6 +28,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
   String imageUrl = '';
   String recipeTitle = '';
   String chefName = '';
+  String keycloakUserId = '';
   String chefImage = 'assets/chefs/default_user.png';
   int duration = 0;
   int totalServings = 0;
@@ -41,6 +46,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
   late ProfileController _profileController;
   late SavedRecipeController _savedController;
   late CommentController _commentController;
+  late AuthController _authController;
 
   Future<void> _loadRecipeData(int recipeId) async {
     try {
@@ -100,6 +106,10 @@ class _RecipeScreenState extends State<RecipeScreen> {
     _commentController = CommentController(baseUrl: recipeBaseUrl);
     _profileController = ProfileController(baseUrl: profileBaseUrl);
     _savedController = SavedRecipeController(baseUrl: profileBaseUrl);
+
+    _authController.getKeycloakUserId().then((id) {
+      keycloakUserId = id;
+    });
   }
 
   // ──────────────── 3) didChangeDependencies → leer arguments ──────────
