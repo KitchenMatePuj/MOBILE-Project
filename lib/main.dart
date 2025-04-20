@@ -91,26 +91,24 @@ class MyApp extends StatelessWidget {
             settings: settings,
             builder: (_) => RecipeScreen(recipeId: args['recipeId'] as int),
           );
+        } else if (settings.name == '/comments') {
+          final args = settings.arguments as Map<String, dynamic>?;
+
+          if (args == null || args['recipeId'] == null) {
+            return MaterialPageRoute(
+              builder: (_) => const Scaffold(
+                body: Center(child: Text('⚠️ No se recibió recipeId')),
+              ),
+            );
+          }
+
+          // 👉 Opción A – usaremos ModalRoute en la pantalla
+          return MaterialPageRoute(
+            settings: settings, // ¡no olvides conservar los args!
+            builder: (_) => const CommentsScreen(),
+          );
         }
 
-        // else if (settings.name == '/comments') {
-        //  else if (settings.name == '/public_profile') {
-        //   final args = settings.arguments as Map<String, dynamic>;
-        //   return MaterialPageRoute(
-        //     builder: (context) {
-        //       return PublicProfileScreen(keycloakUserId: args['keycloak_user_id']);
-        //     },
-        //   );
-        // } else if (settings.name == '/comments') {
-
-        //   final args = settings.arguments as Map<String, dynamic>;
-        //   return MaterialPageRoute(
-        //     builder: (context) {
-        //       return CommentsScreen(recipeId: args['recipeId']);
-        //     },
-        //   );
-        // }
-        // Define other routes here if needed
         return MaterialPageRoute(
           builder: (_) => const Scaffold(
             body: Center(child: Text('Ruta no encontrada')),

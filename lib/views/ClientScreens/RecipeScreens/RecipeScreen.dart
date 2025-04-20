@@ -221,8 +221,11 @@ class _RecipeScreenState extends State<RecipeScreen> {
         ),
         GestureDetector(
           onTap: () {
-            Navigator.pushNamed(context, '/comments',
-                arguments: {'recipeId': recipeId});
+            Navigator.pushNamed(
+              context,
+              '/comments',
+              arguments: {'recipeId': recipeId},
+            );
           },
           child: Text(
             '$totalComments Comentarios',

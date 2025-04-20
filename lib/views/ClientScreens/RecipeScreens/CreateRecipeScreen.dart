@@ -24,7 +24,7 @@ const List<String> defaultUnits = [
   'Pizca'
 ];
 
-const String keycloakUserId = '12';
+const String keycloakUserId = 'user1234';
 
 final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
 
@@ -543,7 +543,8 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
                       totalPortions: int.tryParse(
                               estimatedPortions.replaceAll(' porciones', '')) ??
                           1,
-                      keycloakUserId: "user123", // Ajusta con el user ID real
+                      keycloakUserId:
+                          keycloakUserId, // Ajusta con el user ID real
                     );
 
                     final createdRecipe =
