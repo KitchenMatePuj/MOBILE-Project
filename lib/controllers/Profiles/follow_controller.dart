@@ -38,8 +38,8 @@ class FollowController {
 
   /// GET: Obtener keycloak_user_ids de los perfiles que sigue un usuario
   Future<List<String>> getFollowedKeycloakUserIds(int profileId) async {
-    final response =
-        await http.get(Uri.parse('$baseUrl/followed-keycloak-ids/$profileId'));
+    final response = await http
+        .get(Uri.parse('$baseUrl/follows/followed-keycloak-ids/$profileId'));
 
     if (response.statusCode == 200) {
       final List<dynamic> body = json.decode(response.body);

@@ -146,4 +146,32 @@ class RecipeController {
       throw Exception('Failed to get total recipe count');
     }
   }
+
+  Future<void> updateRecipeImage(int recipeId, String imageUrl) async {
+    final actual = await getRecipeById(recipeId);
+
+    // 2. Construye el payload completo
+    final body = {
+      'category_id': actual.categoryId,
+      'title': actual.title,
+      'created_at': actual.createdAt.toIso8601String(),
+      'updated_at': DateTime.now().toIso8601String(),
+      'cooking_time': actual.cookingTime,
+      'food_type': actual.foodType,
+      'total_portions': actual.totalPortions,
+      'keycloak_user_id': actual.keycloakUserId,
+      'rating_avg': actual.ratingAvg,
+      'image_url': imageUrl, //  << añadido
+    };
+
+    final resp = await http.put(
+      Uri.parse('$baseUrl/recipes/$recipeId'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    );
+
+    if (resp.statusCode != 200) {
+      throw Exception('PUT falló: ${resp.statusCode}  ${resp.body}');
+    }
+  }
 }

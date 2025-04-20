@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:mobile_kitchenmate/controllers/Reports/reports_controller.dart';
+import 'package:mobile_kitchenmate/models/Reports/report_request.dart';
 import 'package:mobile_kitchenmate/views/ClientScreens/RecipeScreens/CreateRecipeScreen.dart';
 
 import '/controllers/Recipes/comments.dart';
@@ -175,8 +177,36 @@ class _CommentsScreenState extends State<CommentsScreen> {
                             ),
                           ],
                         ),
-                        trailing: const Icon(Icons.report,
-                            color: Color.fromARGB(255, 181, 108, 106)),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.report,
+                              color: Color.fromARGB(255, 181, 108, 106)),
+                          onPressed: () async {
+                            final reportRequest = ReportRequest(
+                              reporterUserId:
+                                  'user1234', // ← este es fijo por ahora
+                              resourceType: 'comment',
+                              description:
+                                  'Comentario reportado automáticamente.',
+                            );
+
+                            try {
+                              final reportController = ReportsController();
+                              await reportController
+                                  .createReport(reportRequest);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Comentario reportado correctamente.')),
+                              );
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text(
+                                        'Error al reportar el comentario: $e')),
+                              );
+                            }
+                          },
+                        ),
                       ),
                     );
                   },

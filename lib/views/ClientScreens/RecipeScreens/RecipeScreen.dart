@@ -21,10 +21,10 @@ class _RecipeScreenState extends State<RecipeScreen> {
   bool isSaved = false;
 
   int? recipeId;
-  String imageUrl = 'assets/recipes/recipe_placeholder.jpg';
+  String imageUrl = '';
   String recipeTitle = '';
   String chefName = '';
-  String chefImage = 'assets/chefs/default_chef.jpg';
+  String chefImage = 'assets/chefs/default_user.png';
   int duration = 0;
   int totalServings = 0;
   int totalComments = 0;
@@ -33,6 +33,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
 
   final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
+  final strapiBase = dotenv.env['STRAPI_URL'] ?? '';
 
   late RecipeController _recipeController;
   late IngredientController _ingredientController;
@@ -54,13 +55,23 @@ class _RecipeScreenState extends State<RecipeScreen> {
 
       final comments = await _commentController.fetchComments(recipeId);
 
+      imageUrl = (recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty)
+          ? (recipe.imageUrl!.startsWith('http')
+              ? recipe.imageUrl! // ya viene absoluta
+              : '$strapiBase${recipe.imageUrl!}') // relativa → la completamos
+          : 'assets/recipes/recipe_placeholder.jpg';
+
       if (!mounted) return; // pantalla cerrada → salir
       setState(() {
         recipeTitle = recipe.title;
         duration = recipe.cookingTime;
         totalServings = recipe.totalPortions;
         chefName = chef.firstName ?? '';
-        chefImage = chef.profilePhoto ?? chefImage;
+        chefImage = (chef.profilePhoto != null && chef.profilePhoto!.isNotEmpty)
+            ? (chef.profilePhoto!.startsWith('http')
+                ? chef.profilePhoto!
+                : '$strapiBase${chef.profilePhoto!}')
+            : 'assets/chefs/default_user.png';
         steps = stepRes.map((e) => e.description).toList();
         ingredients = ingOfRecipe
             .map((i) => {'name': i.name, 'unit': i.measurementUnit})
@@ -169,12 +180,19 @@ class _RecipeScreenState extends State<RecipeScreen> {
           child: ColorFiltered(
             colorFilter: ColorFilter.mode(
                 Colors.black.withOpacity(0.3), BlendMode.darken),
-            child: Image.asset(
-              imageUrl,
-              width: double.infinity,
-              height: 150,
-              fit: BoxFit.cover,
-            ),
+            child: imageUrl.startsWith('http')
+                ? Image.network(
+                    imageUrl,
+                    width: double.infinity,
+                    height: 150,
+                    fit: BoxFit.cover,
+                  )
+                : Image.asset(
+                    imageUrl,
+                    width: double.infinity,
+                    height: 150,
+                    fit: BoxFit.cover,
+                  ),
           ),
         ),
         Positioned(
@@ -242,7 +260,12 @@ class _RecipeScreenState extends State<RecipeScreen> {
       children: [
         Row(
           children: [
-            CircleAvatar(backgroundImage: AssetImage(chefImage), radius: 20),
+            CircleAvatar(
+              radius: 20,
+              backgroundImage: chefImage.startsWith('http')
+                  ? NetworkImage(chefImage)
+                  : AssetImage(chefImage) as ImageProvider,
+            ),
             const SizedBox(width: 10),
             Text(chefName,
                 style:

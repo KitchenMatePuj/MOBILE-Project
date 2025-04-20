@@ -8,6 +8,11 @@ import '../../../models/Recipes/ingredients_response.dart';
 import '../../../controllers/Recipes/ingredients.dart';
 import '../../../models/Recipes/ingredients_response.dart';
 import '../../../models/Recipes/ingredients_request.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:mobile_kitchenmate/controllers/strapi/strapi_controller.dart';
+import 'package:mobile_kitchenmate/models/strapi/strapi_request.dart';
+import 'package:mobile_kitchenmate/models/strapi/strapi_response.dart';
+import 'package:path/path.dart' as p;
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -27,6 +32,7 @@ const List<String> defaultUnits = [
 const String keycloakUserId = 'user1234';
 
 final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
+final String strapiBaseUrl = dotenv.env['STRAPI_URL'] ?? '';
 
 class CreateRecipeScreen extends StatefulWidget {
   const CreateRecipeScreen({super.key});
@@ -49,6 +55,11 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
       RecipeController(baseUrl: recipeBaseUrl);
   final RecipeStepController stepController =
       RecipeStepController(baseUrl: recipeBaseUrl);
+  final StrapiController strapiController =
+      StrapiController(baseUrl: strapiBaseUrl);
+
+  late StrapiController _strapiCtl;
+  Uint8List? _imageBytes;
 
   List<String> steps = [
     "Describa este paso por favor.",
@@ -66,8 +77,14 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
+      // 1. operaciones asíncronas
+      final bytes = await pickedFile.readAsBytes();
+      final imageFile = File(pickedFile.path);
+
+      // 2. actualización síncrona del estado
       setState(() {
-        _image = File(pickedFile.path);
+        _image = imageFile;
+        _imageBytes = bytes;
       });
     }
   }
@@ -75,6 +92,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
   @override
   void initState() {
     super.initState();
+    _strapiCtl = StrapiController(baseUrl: strapiBaseUrl);
     fetchIngredientsFromBackend();
   }
 
@@ -87,6 +105,38 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
     } catch (e) {
       print("❌ Error al cargar ingredientes: $e");
     }
+  }
+
+  String _mimeFromExt(String ext) {
+    switch (ext.toLowerCase()) {
+      case '.png':
+        return 'image/png';
+      case '.svg':
+        return 'image/svg+xml';
+      case '.jpg':
+      case '.jpeg':
+        return 'image/jpeg';
+      case '.gif':
+        return 'image/gif';
+      default:
+        return 'application/octet-stream';
+    }
+  }
+
+  Future<String?> _uploadRecipeImage(int recipeId) async {
+    if (!kIsWeb && _image == null) return null;
+    if (kIsWeb && _imageBytes == null) return null;
+
+    final req = kIsWeb
+        ? StrapiUploadRequest.fromBytes(
+            bytes: _imageBytes!,
+            filename: 'r$recipeId.jpg', // o usa extensión real
+            mimeType: 'image/jpeg',
+          )
+        : StrapiUploadRequest.fromFile(_image!);
+
+    final resp = await _strapiCtl.uploadImage(req);
+    return '${dotenv.env['STRAPI_URL']}${resp.url}';
   }
 
   @override
@@ -111,24 +161,24 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
                   width: double.infinity,
                   height: 150,
                   decoration: BoxDecoration(
-                    color: Colors.grey[800],
                     borderRadius: BorderRadius.circular(10.0),
-                    image: _image != null
-                        ? DecorationImage(
-                            image: FileImage(_image!),
-                            fit: BoxFit.cover,
-                            colorFilter: ColorFilter.mode(
-                              Colors.black.withOpacity(0.3),
-                              BlendMode.darken,
-                            ),
-                          )
-                        : null,
+                    color: Colors.grey[800],
                   ),
-                  child: Center(
-                    child: IconButton(
-                      icon: Icon(Icons.add, color: Colors.white, size: 50),
-                      onPressed: _pickImage,
-                    ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10.0),
+                    child: _imageBytes != null
+                        ? Image.memory(
+                            _imageBytes!,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                          )
+                        : Center(
+                            child: IconButton(
+                              icon: Icon(Icons.add,
+                                  color: Colors.white, size: 50),
+                              onPressed: _pickImage,
+                            ),
+                          ),
                   ),
                 ),
                 Positioned(
@@ -515,7 +565,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
               child: ElevatedButton(
                 onPressed: () async {
                   try {
-                    // Validar campos mínimos
+                    // 0️⃣ Validación rápida
                     if (recipeTitle.isEmpty ||
                         estimatedTime == "Tiempo estimado " ||
                         estimatedPortions == "Porciones estimadas ") {
@@ -529,56 +579,66 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
                       return;
                     }
 
-                    // Crear receta
-                    final recipeRequest = RecipeRequest(
-                      title: recipeTitle,
-                      categoryId: 1, // Ajusta esto según tu lógica
-                      createdAt: DateTime.now(),
-                      updatedAt: DateTime.now(),
-                      cookingTime:
-                          int.tryParse(estimatedTime.replaceAll(' min', '')) ??
-                              0,
-                      foodType:
-                          "General", // O la categoría de comida que manejes
-                      totalPortions: int.tryParse(
-                              estimatedPortions.replaceAll(' porciones', '')) ??
-                          1,
-                      keycloakUserId:
-                          keycloakUserId, // Ajusta con el user ID real
+                    // 1️⃣ POST /recipes  (sin imagen todavía)
+                    final newRecipe = await recipeController.createRecipe(
+                      RecipeRequest(
+                        title: recipeTitle,
+                        categoryId: 1,
+                        createdAt: DateTime.now(),
+                        updatedAt: DateTime.now(),
+                        cookingTime:
+                            int.parse(estimatedTime.replaceAll(' min', '')),
+                        foodType: 'General',
+                        totalPortions: int.parse(
+                            estimatedPortions.replaceAll(' porciones', '')),
+                        keycloakUserId: keycloakUserId,
+                        imageUrl: null,
+                      ),
                     );
 
-                    final createdRecipe =
-                        await recipeController.createRecipe(recipeRequest);
-                    final recipeId = createdRecipe.recipeId;
+                    final int recipeId = newRecipe.recipeId;
 
-                    // Crear pasos
-                    for (int i = 0; i < steps.length; i++) {
-                      final stepRequest = RecipeStepRequest(
-                        stepNumber: i + 1,
-                        title: "Paso ${i + 1}",
-                        description: steps[i],
-                      );
-                      await stepController.createStep(recipeId, stepRequest);
+                    // 2️⃣ Si hay foto -> súbela a Strapi y actualiza la receta
+                    if (_image != null) {
+                      final imageUrl = await _uploadRecipeImage(recipeId);
+                      if (imageUrl != null) {
+                        await recipeController.updateRecipeImage(
+                            recipeId, imageUrl);
+                      }
                     }
 
-                    // Crear ingredientes
+                    // 3️⃣ Pasos
+                    for (var i = 0; i < steps.length; i++) {
+                      await stepController.createStep(
+                        recipeId,
+                        RecipeStepRequest(
+                          stepNumber: i + 1,
+                          title: 'Paso ${i + 1}',
+                          description: steps[i],
+                        ),
+                      );
+                    }
+
+                    // 4️⃣ Ingredientes
                     for (var ing in ingredients) {
-                      final ingredientRequest = IngredientRequest(
-                        name: ing.name,
-                        measurementUnit: ing.unit,
-                        recipeId: recipeId,
+                      await ingredientController.createIngredient(
+                        IngredientRequest(
+                          name: ing.name,
+                          measurementUnit: ing.unit,
+                          recipeId: recipeId,
+                        ),
                       );
-                      await ingredientController
-                          .createIngredient(ingredientRequest);
                     }
 
-                    // Mensaje de éxito
+                    // 5️⃣ Éxito
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('✅ Receta creada exitosamente.'),
                         backgroundColor: Color(0xFF129575),
                       ),
                     );
+                    await Future.delayed(const Duration(seconds: 1));
+                    Navigator.pushReplacementNamed(context, '/dashboard');
                   } catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -588,13 +648,8 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
                     );
                   }
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF129575),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
                 child: const Text(
-                  "Confirmar Receta",
+                  "Confirmar Receta", // Este es el texto del botón
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),

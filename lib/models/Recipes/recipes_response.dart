@@ -9,6 +9,7 @@ class RecipeResponse {
   final int totalPortions;
   final String keycloakUserId;
   final double ratingAvg;
+  final String? imageUrl;
 
   RecipeResponse({
     required this.recipeId,
@@ -21,6 +22,7 @@ class RecipeResponse {
     required this.totalPortions,
     required this.keycloakUserId,
     required this.ratingAvg,
+    this.imageUrl,
   });
 
   factory RecipeResponse.fromJson(Map<String, dynamic> json) {
@@ -35,6 +37,7 @@ class RecipeResponse {
       totalPortions: json['total_portions'],
       keycloakUserId: json['keycloak_user_id'],
       ratingAvg: json['rating_avg'].toDouble(),
+      imageUrl: json['image_url'],
     );
   }
 }

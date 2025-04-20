@@ -1,121 +1,214 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
+// ---------------------------------------------------------------
+// ProfileScreen
+// ---------------------------------------------------------------
+// Pantalla que muestra el perfil del usuario junto con sus recetas
+// publicadas y guardadas.  Incluye:
+//   • carga perezosa de datos con FutureBuilder
+//   • tabs para alternar entre recetas publicadas / guardadas
+//   • cálculo del nombre del chef y las fotos – incluyendo la URL
+//     absoluta a Strapi cuando el backend devuelve una ruta relativa.
+//   • comentarios en línea para que el código sea más fácil de seguir.
+// ---------------------------------------------------------------
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+// Controladores de negocio ----------------------------------------------------
 import 'package:mobile_kitchenmate/controllers/Profiles/sumary_controller.dart';
+import 'package:mobile_kitchenmate/controllers/Profiles/profile_controller.dart';
+import 'package:mobile_kitchenmate/controllers/Profiles/follow_controller.dart';
+import 'package:mobile_kitchenmate/controllers/Profiles/saved_recipe_controller.dart';
 import 'package:mobile_kitchenmate/controllers/Recipes/recipes.dart';
+
+// Modelos ---------------------------------------------------------------------
 import 'package:mobile_kitchenmate/models/Profiles/summary_response.dart';
-import 'package:provider/provider.dart';
-import '../../../controllers/Profiles/saved_recipe_controller.dart';
-import '../../../models/Recipes/recipes_response.dart';
-import '/controllers/Profiles/profile_controller.dart';
-import '/controllers/Profiles/follow_controller.dart';
-import '/models/Profiles/profile_response.dart';
-import '/models/Profiles/follow_response.dart'; // Ensure FollowResponse is imported
-import '/providers/user_provider.dart';
+import 'package:mobile_kitchenmate/models/Profiles/profile_response.dart';
+import 'package:mobile_kitchenmate/models/Profiles/follow_response.dart';
+import 'package:mobile_kitchenmate/models/Recipes/recipes_response.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  _ProfileScreenState createState() => _ProfileScreenState();
+  State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  int selectedIndex = 0;
-  Future<ProfileResponse>? _profileFuture;
-  Future<List<FollowResponse>>? _followersFuture;
-  Future<List<FollowResponse>>? _followingFuture;
-  Future<ProfileSummaryResponse>? _summaryFuture;
+  // ---------------------------------------------------------------------------
+  // Controladores (inyección manual – podrías migrar a Provider / Riverpod)
+  // ---------------------------------------------------------------------------
+  late final SumaryController _summaryCtl;
+  late final FollowController _followCtl;
+  late final ProfileController _profileCtl;
+  late final RecipeController _recipeCtl;
+  late final SavedRecipeController _savedCtl;
 
-  late SumaryController _summaryController;
-  late FollowController _followController;
-  late ProfileController _profileController;
+  // ---------------------------------------------------------------------------
+  // Estado UI – tab seleccionado & futuros para la data pesada
+  // ---------------------------------------------------------------------------
+  int _tabIndex = 0; // 0 = publicadas, 1 = guardadas
 
-  // Futuros para las recetas
-  late Future<List<RecipeResponse>> _publishedRecipesFuture;
-  late Future<List<RecipeResponse>> _savedRecipesFuture;
+  Future<ProfileResponse>? _profileF;
+  Future<ProfileSummaryResponse>? _summaryF;
+  Future<List<FollowResponse>>? _followersF;
+  Future<List<FollowResponse>>? _followingF;
+  late Future<List<RecipeResponse>> _publishedF;
+  late Future<List<RecipeResponse>> _savedF;
 
-  final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
-  final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
+  // ---------------------------------------------------------------------------
+  // Constantes de configuración y usuario en sesión (mock)
+  // ---------------------------------------------------------------------------
+  final _profileBase = dotenv.env['PROFILE_URL'] ?? '';
+  final _recipeBase = dotenv.env['RECIPE_URL'] ?? '';
+  final _strapiBase = dotenv.env['STRAPI_URL'] ?? '';
 
-  // keycloakUserId del usuario que consultamos
-  String keycloakUserId = 'user1234';
-  String images = 'assets/images/default.jpg';
+  // ⚠️ En una app real obtendrías esto del provider de autenticación.
+  final _keycloakId = 'user1234';
+
+  // ---------------------------------------------------------------------------
+  // Ciclo de vida – instanciamos controladores y disparamos la carga inicial
+  // ---------------------------------------------------------------------------
   @override
   void initState() {
     super.initState();
-    _initializeData();
+
+    _summaryCtl = SumaryController(baseUrl: _profileBase);
+    _followCtl = FollowController(baseUrl: _profileBase);
+    _profileCtl = ProfileController(baseUrl: _profileBase);
+    _recipeCtl = RecipeController(baseUrl: _recipeBase);
+    _savedCtl = SavedRecipeController(baseUrl: _profileBase);
+
+    _loadAll();
   }
 
-  /// Carga inicial de datos:
-  void _initializeData() async {
-    _summaryController = SumaryController(baseUrl: profileBaseUrl);
-    _followController = FollowController(baseUrl: profileBaseUrl);
-    _profileController = ProfileController(baseUrl: profileBaseUrl);
+  /// Carga los distintos bloques de información en paralelo y refresca la UI
+  Future<void> _loadAll() async {
+    // 1️⃣ Perfil principal ------------------------------------------------------
+    final profile = await _profileCtl.getProfile(_keycloakId);
+    _profileF = Future.value(profile);
 
-    // 1) Resumen de perfil (allergies, cooking_time, etc)
-    final summary = await _summaryController.getProfileSummary(keycloakUserId);
-    _summaryFuture = Future.value(summary);
+    // 2️⃣ Resumen (ej. alergias, tiempo de cocción preferido…) ---------------
+    _summaryF = _summaryCtl.getProfileSummary(_keycloakId);
 
-    // 2) Perfil
-    final profile = await _profileController.getProfile(keycloakUserId);
-    _profileFuture = Future.value(profile);
+    // 3️⃣ Seguidores / seguidos ------------------------------------------------
+    _followersF = _followCtl.listFollowers(profile.profileId);
+    _followingF = _followCtl.listFollowed(profile.profileId);
 
-    // 3) Seguidores y seguidos
-    _followersFuture = _followController.listFollowers(profile.profileId);
-    _followingFuture = _followController.listFollowed(profile.profileId);
+    // 4️⃣ Recetas publicadas ---------------------------------------------------
+    _publishedF = _recipeCtl.getRecipesByUser(_keycloakId);
 
-    // 4) Recetas publicadas y guardadas
-    final recipeController = RecipeController(baseUrl: recipeBaseUrl);
-    final savedRecipeController =
-        SavedRecipeController(baseUrl: profileBaseUrl);
-
-    // Recetas publicadas (GET /recipes/user/{userId})
-    _publishedRecipesFuture = recipeController.getRecipesByUser(
-      profile.keycloakUserId,
-    );
-
-    // Recetas guardadas (primero la lista, luego consultamos cada ID)
-    _savedRecipesFuture = savedRecipeController
-        .getSavedRecipesByKeycloak(keycloakUserId)
+    // 5️⃣ Recetas guardadas ----------------------------------------------------
+    //    • primero obtenemos la lista de IDs guardados
+    //    • luego hacemos N peticiones paralelas para traer cada receta
+    _savedF = _savedCtl
+        .getSavedRecipesByKeycloak(_keycloakId)
         .then((savedList) async {
-      final futures = savedList.map((saved) async {
+      final results = await Future.wait(savedList.map((s) async {
         try {
-          print('🔍 Intentando cargar receta con ID ${saved.recipeId}');
-          return await recipeController.getRecipeById(saved.recipeId);
-        } catch (e) {
-          print('❌ No se pudo cargar receta con ID ${saved.recipeId}: $e');
-          return null;
+          return await _recipeCtl.getRecipeById(s.recipeId);
+        } catch (_) {
+          return null; // receta fue eliminada
         }
-      }).toList();
-
-      final results = await Future.wait(futures);
-      // Filtramos los null (caso de que alguna receta no se haya encontrado)
+      }));
       return results.whereType<RecipeResponse>().toList();
     });
 
-    setState(() {}); // Reconstruye el widget
+    setState(() {}); // fuerza un rebuild cuando todos los futuros están listos
   }
 
+  // ---------------------------------------------------------------------------
+  // Helper: construye una URL absoluta para imágenes que vienen relativas
+  // ---------------------------------------------------------------------------
+  String _fullImageUrl(String? path, {required String placeholder}) {
+    try {
+      if (path == null || path.isEmpty || path == 'example') return placeholder;
+      if (path.startsWith('http')) return path;
+      final base = _strapiBase.endsWith('/')
+          ? _strapiBase.substring(0, _strapiBase.length - 1)
+          : _strapiBase;
+      final fixedPath = path.startsWith('/') ? path : '/$path';
+      return '$base$fixedPath';
+    } catch (_) {
+      return placeholder;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // UI principal --------------------------------------------------------------
+  // ---------------------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Mi Perfil',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+      appBar: _buildAppBar(),
+      backgroundColor: Colors.white,
+      body: _profileF == null
+          ? const Center(child: CircularProgressIndicator())
+          : FutureBuilder<ProfileResponse>(
+              future: _profileF,
+              builder: (context, snap) {
+                if (!snap.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final profile = snap.data!;
+                return Column(
+                  children: [
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 23),
+                      child: Column(
+                        children: [
+                          _buildStats(profile),
+                          const SizedBox(height: 16),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              profile.firstName ?? 'Nombre no disponible',
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const ProfileBio(
+                            description:
+                                'Aquí va una descripción genérica del usuario.',
+                          ),
+                          const SizedBox(height: 16),
+                          ProfileTabs(
+                            selectedIndex: _tabIndex,
+                            onTabSelected: (i) => setState(() => _tabIndex = i),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      // Cambiamos el future según la pestaña seleccionada
+                      child: _tabIndex == 0
+                          ? _recipeList(_publishedF)
+                          : _recipeList(_savedF),
+                    ),
+                  ],
+                );
+              },
+            ),
+      bottomNavigationBar: _buildBottomBar(),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // AppBar con menú de opciones ----------------------------------------------
+  // ---------------------------------------------------------------------------
+  AppBar _buildAppBar() => AppBar(
+        title: const Text('Mi Perfil'),
         backgroundColor: const Color(0xFF129575),
         automaticallyImplyLeading: false,
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.settings, color: Colors.white),
-            color: Colors.white,
-            onSelected: (String value) {
-              switch (value) {
+            onSelected: (v) {
+              switch (v) {
                 case 'Editar Perfil':
                   Navigator.pushNamed(context, '/edit_profile');
                   break;
@@ -127,173 +220,143 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   break;
               }
             },
-            itemBuilder: (BuildContext context) {
-              return [
-                PopupMenuItem(
-                  value: 'Editar Perfil',
-                  child: Row(
-                    children: const [
-                      Icon(Icons.edit, color: Colors.black),
-                      SizedBox(width: 8),
-                      Text('Editar Perfil'),
-                    ],
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'Reportes',
-                  child: Row(
-                    children: const [
-                      Icon(Icons.report, color: Colors.black),
-                      SizedBox(width: 8),
-                      Text('Reportes'),
-                    ],
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'Cerrar sesión',
-                  child: Center(
-                    child: Text(
-                      'Cerrar sesión',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ),
-                ),
-              ];
-            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                  value: 'Editar Perfil', child: Text('Editar Perfil')),
+              PopupMenuItem(value: 'Reportes', child: Text('Reportes')),
+              PopupMenuItem(
+                value: 'Cerrar sesión',
+                child:
+                    Text('Cerrar sesión', style: TextStyle(color: Colors.red)),
+              ),
+            ],
           ),
         ],
-      ),
-      backgroundColor: Colors.white,
-      body: _profileFuture == null
-          ? const Center(child: CircularProgressIndicator())
-          : FutureBuilder<ProfileResponse>(
-              future: _profileFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Text('Error: ${snapshot.error}');
-                } else if (!snapshot.hasData) {
-                  return const Text('No data found');
-                }
+      );
 
-                final profile = snapshot.data!;
-                return Column(
-                  children: [
-                    const SizedBox(height: 16),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 23),
-                      child: Column(
-                        children: [
-                          // -- FUTURE BUILDER PARA FOLLOWERS --
-                          FutureBuilder<List<FollowResponse>>(
-                            future: _followersFuture,
-                            builder: (context, followersSnapshot) {
-                              if (followersSnapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const CircularProgressIndicator();
-                              } else if (followersSnapshot.hasError) {
-                                return Text(
-                                    'Error: ${followersSnapshot.error}');
-                              }
+  // ---------------------------------------------------------------------------
+  // Widget cabecera con avatar + recuento followers / following ---------------
+  // ---------------------------------------------------------------------------
+  Widget _buildStats(ProfileResponse profile) => FutureBuilder(
+        future: Future.wait([_followersF!, _followingF!]),
+        builder: (context, snap) {
+          if (!snap.hasData) return const CircularProgressIndicator();
 
-                              final followers = followersSnapshot.data ?? [];
-                              return FutureBuilder<List<FollowResponse>>(
-                                future: _followingFuture,
-                                builder: (context, followingSnapshot) {
-                                  if (followingSnapshot.connectionState ==
-                                      ConnectionState.waiting) {
-                                    return const CircularProgressIndicator();
-                                  } else if (followingSnapshot.hasError) {
-                                    return Text(
-                                        'Error: ${followingSnapshot.error}');
-                                  }
+          final followers = (snap.data![0] as List<FollowResponse>).length;
+          final following = (snap.data![1] as List<FollowResponse>).length;
 
-                                  final following =
-                                      followingSnapshot.data ?? [];
-                                  return ProfileStats(
-                                    profile: profile,
-                                    followersCount: followers.length,
-                                    followingCount: following.length,
-                                  );
-                                },
-                              );
-                            },
-                          ),
+          // Obtenemos URL absoluta para la foto de perfil
+          final avatar = _fullImageUrl(
+            profile.profilePhoto,
+            placeholder: 'assets/chefs/default_user.png',
+          );
 
-                          const SizedBox(height: 16),
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              CircleAvatar(
+                radius: 45,
+                backgroundImage: avatar.startsWith('http')
+                    ? NetworkImage(avatar)
+                    : AssetImage(avatar) as ImageProvider,
+              ),
+              _stat('Recetas', '0'), // TODO: contar recetas publicadas
+              _stat('Seguidores', followers.toString()),
+              _stat('Siguiendo', following.toString()),
+            ],
+          );
+        },
+      );
 
-                          // -- Nombre del usuario --
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              profile.firstName ?? 'Nombre no disponible',
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
+  Widget _stat(String label, String value) => Column(
+        children: [
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(label, style: const TextStyle(color: Colors.grey)),
+        ],
+      );
 
-                          const SizedBox(height: 8),
-
-                          // -- Breve descripción --
-                          const ProfileBio(
-                            description:
-                                'Aquí va una descripción genérica del usuario.',
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          // -- Pestañas (Recetas publicadas / Guardadas)
-                          ProfileTabs(
-                            selectedIndex: selectedIndex,
-                            onTabSelected: (index) {
-                              setState(() {
-                                selectedIndex = index;
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // -- Vista de recetas publicadas o guardadas --
-                    Expanded(
-                      child: selectedIndex == 0
-                          ? _buildPublishedRecipes() // Recetas publicadas
-                          : _buildSavedRecipes(), // Recetas guardadas
-                    ),
-                  ],
-                );
-              },
-            ),
-
-      // -- Bottom Navigation --
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xFF129575),
-        unselectedItemColor: const Color.fromARGB(255, 83, 83, 83),
-        currentIndex: 4,
-        onTap: (int index) {
-          switch (index) {
-            case 0:
-              Navigator.pushNamed(context, '/dashboard');
-              break;
-            case 1:
-              Navigator.pushNamed(context, '/recipe_search');
-              break;
-            case 2:
-              Navigator.pushNamed(context, '/create');
-              break;
-            case 3:
-              Navigator.pushNamed(context, '/shopping_list');
-              break;
-            case 4:
-              break;
+  // ---------------------------------------------------------------------------
+  // Lista (perezosa) de recetas ------------------------------------------------
+  // ---------------------------------------------------------------------------
+  Widget _recipeList(Future<List<RecipeResponse>> future) =>
+      FutureBuilder<List<RecipeResponse>>(
+        future: future,
+        builder: (context, snap) {
+          if (!snap.hasData) {
+            return const Center(child: CircularProgressIndicator());
           }
+          final list = snap.data!;
+          if (list.isEmpty) {
+            return const Center(child: Text('Sin recetas'));
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 23, vertical: 16),
+            itemCount: list.length,
+            itemBuilder: (_, i) {
+              final r = list[i];
+
+              // Imagen de la receta ------------------------------------------
+              final img = _fullImageUrl(
+                r.imageUrl,
+                placeholder: 'assets/styles/recipe_placeholder.jpg',
+              );
+
+              // Traemos perfil del autor para mostrar su nombre y avatar
+              return FutureBuilder<ProfileResponse>(
+                future: _profileCtl.getProfile(r.keycloakUserId),
+                builder: (context, chefSnap) {
+                  if (!chefSnap.hasData) {
+                    return const SizedBox.shrink();
+                  }
+
+                  final chefProfile = chefSnap.data!;
+                  final chefName =
+                      chefProfile.firstName ?? chefProfile.keycloakUserId;
+                  final avatar = _fullImageUrl(
+                    chefProfile.profilePhoto,
+                    placeholder: 'assets/chefs/default_user.png',
+                  );
+
+                  return GestureDetector(
+                    onTap: () => Navigator.pushNamed(
+                      context,
+                      '/recipe',
+                      arguments: {'recipeId': r.recipeId},
+                    ),
+                    child: RecipeCard(
+                      title: r.title,
+                      chef: chefName, // ← mostramos nombre, no ID ✅
+                      duration: '${r.cookingTime}',
+                      imageUrl: img,
+                      avatarUrl: avatar,
+                      rating: r.ratingAvg.round(),
+                    ),
+                  );
+                },
+              );
+            },
+          );
+        },
+      );
+
+  // ---------------------------------------------------------------------------
+  // Bottom navigation ---------------------------------------------------------
+  // ---------------------------------------------------------------------------
+  BottomNavigationBar _buildBottomBar() => BottomNavigationBar(
+        currentIndex: 4,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: const Color(0xFF129575),
+        unselectedItemColor: Colors.grey,
+        onTap: (i) {
+          const routes = [
+            '/dashboard',
+            '/recipe_search',
+            '/create',
+            '/shopping_list',
+            '/profile',
+          ];
+          if (i != 4) Navigator.pushNamed(context, routes[i]);
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
@@ -302,249 +365,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Compras'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
         ],
-      ),
-    );
-  }
-
-  /// Construye la lista de recetas publicadas
-  Widget _buildPublishedRecipes() {
-    return FutureBuilder<List<RecipeResponse>>(
-      future: _publishedRecipesFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('No hay recetas publicadas.'));
-        }
-
-        final published = snapshot.data!;
-        return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 23, vertical: 16),
-          itemCount: published.length,
-          itemBuilder: (context, index) {
-            final recipe = published[index];
-            print('Receta ID: ${recipe.recipeId}');
-            return GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(
-                  context,
-                  '/recipe',
-                  arguments: {'recipeId': recipe.recipeId},
-                );
-              },
-              child: RecipeCard(
-                title: recipe.title,
-                chef: recipe.keycloakUserId,
-                duration: '${recipe.cookingTime}',
-                imageUrl: images,
-                rating: recipe.ratingAvg.round(),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  /// Construye la lista de recetas guardadas
-  Widget _buildSavedRecipes() {
-    return FutureBuilder<List<RecipeResponse>>(
-      future: _savedRecipesFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('No tienes recetas guardadas.'));
-        }
-
-        final saved = snapshot.data!;
-        return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 23, vertical: 16),
-          itemCount: saved.length,
-          itemBuilder: (context, index) {
-            final recipe = saved[index];
-            return GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(
-                  context,
-                  '/recipe',
-                  arguments: {'recipeId': recipe.recipeId},
-                );
-              },
-              child: RecipeCard(
-                title: recipe.title,
-                chef: recipe.keycloakUserId,
-                duration: '${recipe.cookingTime}',
-                imageUrl: images,
-                rating: recipe.ratingAvg.round(),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
+      );
 }
 
-// ------------------------
-//  WIDGETS DE PERFIL
-// ------------------------
-
-class ProfileStats extends StatelessWidget {
-  final ProfileResponse profile;
-  final int followersCount;
-  final int followingCount;
-
-  const ProfileStats({
-    required this.profile,
-    required this.followersCount,
-    required this.followingCount,
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        CircleAvatar(
-          radius: 45,
-          backgroundImage: NetworkImage(
-            profile.profilePhoto ?? 'default_image_url',
-          ),
-        ),
-        const SizedBox(width: 2),
-        GestureDetector(
-          onTap: () {
-            Navigator.pushNamed(
-              context,
-              '/followers_and_following',
-              arguments: {'profile_id': profile.profileId, 'type': 'recipes'},
-            );
-          },
-          child: _buildStatItem('Recetas', '0'),
-        ),
-        GestureDetector(
-          onTap: () {
-            Navigator.pushNamed(
-              context,
-              '/followers_and_following',
-              arguments: {'profile_id': profile.profileId, 'type': 'followers'},
-            );
-          },
-          child: _buildStatItem('Seguidores', followersCount.toString()),
-        ),
-        GestureDetector(
-          onTap: () {
-            Navigator.pushNamed(
-              context,
-              '/followers_and_following',
-              arguments: {'profile_id': profile.profileId, 'type': 'following'},
-            );
-          },
-          child: _buildStatItem('Siguiendo', followingCount.toString()),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatItem(String label, String count) {
-    return Column(
-      children: [
-        Text(
-          count,
-          style: const TextStyle(
-            fontSize: 19,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.grey,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
+// ---------------------------------------------------------------------------
+// Widgets auxiliares ---------------------------------------------------------
+// ---------------------------------------------------------------------------
 class ProfileBio extends StatelessWidget {
   final String description;
-
-  const ProfileBio({required this.description, super.key});
+  const ProfileBio({super.key, required this.description});
 
   @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        description,
-        style: const TextStyle(
-          fontSize: 14,
-          color: Colors.grey,
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Align(
+        alignment: Alignment.centerLeft,
+        child: Text(description, style: const TextStyle(color: Colors.grey)),
+      );
 }
 
 class ProfileTabs extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onTabSelected;
-
-  const ProfileTabs({
-    required this.selectedIndex,
-    required this.onTabSelected,
-  });
+  const ProfileTabs(
+      {super.key, required this.selectedIndex, required this.onTabSelected});
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _buildTab('Recetas', 0),
-        _buildTab('Guardados', 1),
-      ],
-    );
-  }
-
-  Widget _buildTab(String label, int index) {
-    return GestureDetector(
-      onTap: () => onTabSelected(index),
-      child: Column(
+  Widget build(BuildContext context) => Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: selectedIndex == index
-                  ? const Color(0xFF129575)
-                  : Colors.grey,
-            ),
-          ),
-          if (selectedIndex == index)
-            Container(
-              margin: const EdgeInsets.only(top: 4),
-              height: 2,
-              width: 60,
-              color: const Color(0xFF129575),
-            ),
+          _tab('Recetas', 0),
+          _tab('Guardados', 1),
         ],
-      ),
-    );
-  }
-}
+      );
 
-// ------------------------
-//  WIDGET DE RecipeCard
-// ------------------------
+  Widget _tab(String label, int index) => GestureDetector(
+        onTap: () => onTabSelected(index),
+        child: Column(
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: selectedIndex == index
+                    ? const Color(0xFF129575)
+                    : Colors.grey,
+              ),
+            ),
+            if (selectedIndex == index)
+              Container(
+                margin: const EdgeInsets.only(top: 4),
+                height: 2,
+                width: 60,
+                color: const Color(0xFF129575),
+              ),
+          ],
+        ),
+      );
+}
 
 class RecipeCard extends StatelessWidget {
   final String title;
@@ -552,105 +428,100 @@ class RecipeCard extends StatelessWidget {
   final String duration;
   final String imageUrl;
   final int? rating;
-
+  final String avatarUrl;
   const RecipeCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.chef,
     required this.duration,
     required this.imageUrl,
+    required this.avatarUrl,
     this.rating,
-  }) : super(key: key);
+  });
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Imagen superior:
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Image.asset(
-              imageUrl,
-              height: 120,
-              width: double.infinity,
-              fit: BoxFit.cover,
+  Widget build(BuildContext context) => Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-          ),
-
-          // Texto e info:
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Título
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Imagen de cabecera ------------------------------------------------
+            ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(12)),
+              child: imageUrl.startsWith('http')
+                  ? Image.network(
+                      imageUrl,
+                      height: 120,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    )
+                  : Image.asset(
+                      imageUrl,
+                      height: 120,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+            ),
+            // Detalles ---------------------------------------------------------
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Título de la receta
+                  Text(title,
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  // Nombre + avatar del chef
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 12,
+                        backgroundImage: avatarUrl.startsWith('http')
+                            ? NetworkImage(avatarUrl)
+                            : AssetImage(avatarUrl) as ImageProvider,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(chef, style: const TextStyle(fontSize: 14)),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 8),
-
-                // Chef / usuario
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 12,
-                      backgroundImage:
-                          AssetImage('assets/chefs/default_chef.jpg'),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      chef,
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-
-                // Duration + Rating
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '$duration mins',
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                    Row(
-                      children: List.generate(5, (index) {
-                        return Icon(
-                          index < (rating ?? 0)
-                              ? Icons.star
-                              : Icons.star_border,
-                          color: Colors.amber,
-                          size: 12,
-                        );
-                      }),
-                    ),
-                  ],
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  // Duración + rating
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('$duration mins',
+                          style: const TextStyle(color: Colors.grey)),
+                      Row(
+                        children: List.generate(
+                            5,
+                            (i) => Icon(
+                                  i < (rating ?? 0)
+                                      ? Icons.star
+                                      : Icons.star_border,
+                                  color: Colors.amber,
+                                  size: 12,
+                                )),
+                      ),
+                    ],
+                  )
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
+          ],
+        ),
+      );
 }

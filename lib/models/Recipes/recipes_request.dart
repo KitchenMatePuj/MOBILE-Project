@@ -8,6 +8,7 @@ class RecipeRequest {
   final int totalPortions;
   final String keycloakUserId;
   final double ratingAvg;
+  final String? imageUrl;
 
   RecipeRequest({
     required this.categoryId,
@@ -19,6 +20,7 @@ class RecipeRequest {
     required this.totalPortions,
     required this.keycloakUserId,
     this.ratingAvg = 0.0,
+    this.imageUrl = '',
   });
 
   Map<String, dynamic> toJson() {
@@ -32,6 +34,7 @@ class RecipeRequest {
       'total_portions': totalPortions,
       'keycloak_user_id': keycloakUserId,
       'rating_avg': ratingAvg,
+      'image_url': imageUrl,
     };
   }
 }
