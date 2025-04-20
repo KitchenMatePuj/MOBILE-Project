@@ -1,549 +1,410 @@
-// import 'package:flutter/material.dart';
-// import 'package:provider/provider.dart';
-// import 'package:mobile_kitchenmate/models/comment_model.dart';
-// import '/controllers/profile_controller.dart';
-// import '/controllers/ingredient_controller.dart';
-// import '/controllers/recipe_controller.dart'; // Importa el RecipeController
-// import '/models/profile_model.dart';
-// import '/models/ingredient_model.dart';
-// import '/models/recipe_model.dart';
-// import '/models/recipe_ingredient_model.dart';
-// import '/controllers/comment_controller.dart'; // Importa el CommentController
-// import '/providers/user_provider.dart';
-// import '/models/user_model.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:mobile_kitchenmate/controllers/Recipes/comments.dart';
 
-// class RecipeScreen extends StatefulWidget {
-//   const RecipeScreen({super.key});
+import 'package:mobile_kitchenmate/controllers/Recipes/recipes.dart';
+import 'package:mobile_kitchenmate/controllers/Recipes/ingredients.dart';
+import 'package:mobile_kitchenmate/controllers/Recipes/recipe_steps.dart';
+import 'package:mobile_kitchenmate/controllers/Profiles/profile_controller.dart';
+import 'package:mobile_kitchenmate/controllers/Profiles/saved_recipe_controller.dart';
 
-//   @override
-//   _RecipeScreenState createState() => _RecipeScreenState();
-// }
+class RecipeScreen extends StatefulWidget {
+  final int recipeId;
+  const RecipeScreen({super.key, required this.recipeId});
 
-// class _RecipeScreenState extends State<RecipeScreen> {
-//   int selectedIndex = 0;
-//   bool isSaved = false;
+  @override
+  _RecipeScreenState createState() => _RecipeScreenState();
+}
 
-//   ProfileController profileController = ProfileController();
-//   IngredientController ingredientController = IngredientController();
-//   RecipeController recipeController = RecipeController(); // Instancia del RecipeController
-//   CommentController commentController = CommentController();
+class _RecipeScreenState extends State<RecipeScreen> {
+  int selectedIndex = 0;
+  bool isSaved = false;
 
-//   Map<String, dynamic>? arguments;
-//   int? recipeId;
-//   Profile? chefProfile;
-//   List<RecipeIngredient> recipeIngredients = [];
-//   List<String> steps = [];
-//   String? imageUrl;
-//   String? recipeTitle;
-//   int? totalServings;
-//   int? duration;
-//   int totalComments = 0; // Variable para almacenar el número total de comentarios
-//   Profile? userProfile;
+  int? recipeId;
+  String imageUrl = 'assets/recipes/recipe_placeholder.jpg';
+  String recipeTitle = '';
+  String chefName = '';
+  String chefImage = 'assets/chefs/default_chef.jpg';
+  int duration = 0;
+  int totalServings = 0;
+  int totalComments = 0;
+  List<String> steps = [];
+  List<Map<String, String>> ingredients = [];
 
-//   @override
-//   void didChangeDependencies() {
-//     super.didChangeDependencies();
-//     final user = Provider.of<UserProvider>(context, listen: false).user;
-//     if (user != null) {
-//       userProfile = profileController.recommendedProfiles.firstWhere((p) => p.email == user.email);
-//     } else {
-//       userProfile = profileController.recommendedProfiles.firstWhere((profile) => profile.keycloak_user_id == 11);
-//     }
-    
-//     arguments = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-//     if (arguments != null && arguments!['recipeId'] != null) {
-//       recipeId = int.tryParse(arguments!['recipeId'].toString());
-//       if (recipeId != null) {
-//         chefProfile = profileController.getProfileByRecipeId(recipeId!);
-//         recipeIngredients = ingredientController.getIngredientsByRecipeId(recipeId.toString());
-//         steps = recipeController.getSteps(recipeId.toString());
-//         imageUrl = recipeController.getImageUrl(recipeId.toString());
-//         recipeTitle = recipeController.getTitle(recipeId.toString());
-//         duration = int.tryParse(recipeController.getDuration(recipeId.toString()) ?? '');
-//         totalServings = int.tryParse(recipeController.getTotalServings(recipeId.toString()) ?? '');
-//         totalComments = commentController.getTotalComments(recipeId!);
-//         isSaved = userProfile!.saved_recipes.contains(recipeId);
-//       }
-//     }
-//   }
+  final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
+  final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
 
-//   @override
-//   Widget build(BuildContext context) {
-//     if (recipeId == null || chefProfile == null) {
-//       return Scaffold(
-//         appBar: AppBar(
-//           title: const Text('Receta'),
-//         ),
-//         body: const Center(
-//           child: Text('No se encontró la receta.'),
-//         ),
-//       );
-//     }
+  late RecipeController _recipeController;
+  late IngredientController _ingredientController;
+  late RecipeStepController _stepController;
+  late ProfileController _profileController;
+  late SavedRecipeController _savedController;
+  late CommentController _commentController;
 
-//     return Scaffold(
-//       backgroundColor: Colors.white,
-//       appBar: AppBar(
-//         backgroundColor: const Color(0xFF129575),
-//         foregroundColor: Colors.white,
-//         automaticallyImplyLeading: false,
-//         leading: IconButton(
-//           icon: const Icon(Icons.arrow_back, color: Colors.white),
-//           onPressed: () => Navigator.pop(context),
-//         ),
-//         actions: [
-//           IconButton(
-//             icon: const Icon(Icons.report, color: Colors.white),
-//             onPressed: () {
-//               // Acción para el icono de reportes
-//             },
-//           ),
-//         ],
-//       ),
-//       body: Padding(
-//         padding: const EdgeInsets.all(16.0),
-//         child: Padding(
-//           padding: const EdgeInsets.symmetric(horizontal: 8.0),
-//           child: Column(
-//             crossAxisAlignment: CrossAxisAlignment.start,
-//             children: [
-//               // Imagen de la receta
-//               Stack(
-//                 children: [
-//                   ClipRRect(
-//                     borderRadius: BorderRadius.circular(10.0),
-//                     child: ColorFiltered(
-//                       colorFilter: ColorFilter.mode(
-//                         Colors.black.withOpacity(0.3),
-//                         BlendMode.darken,
-//                       ),
-//                       child: Image.asset(
-//                         imageUrl ?? 'assets/recipes/recipe_placeholder.jpg', // Use the imageUrl
-//                         fit: BoxFit.cover,
-//                         width: double.infinity,
-//                         height: 150,
-//                       ),
-//                     ),
-//                   ),
-//                   Positioned(
-//                     bottom: 8,
-//                     left: 8,
-//                     child: Row(
-//                       children: [
-//                         const Icon(Icons.access_time, color: Colors.white),
-//                         const SizedBox(width: 4),
-//                         Text(
-//                           '$duration mins', // Placeholder duration
-//                           style: const TextStyle(color: Colors.white),
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                   Positioned(
-//                     bottom: 8,
-//                     right: 8,
-//                     child: IconButton(
-//                       icon: Container(
-//                         decoration: BoxDecoration(
-//                           shape: BoxShape.circle,
-//                           color: Colors.white.withOpacity(0.5), // White color with opacity
-//                         ),
-//                         padding: const EdgeInsets.all(3.0), // Increase padding to make the circle larger
-//                         child: Icon(Icons.bookmark, color: isSaved ? Colors.yellow : Colors.white),
-//                       ),
-//                       onPressed: () {
-//                         setState(() {
-//                           isSaved = !isSaved;
-//                           if (isSaved) {
-//                             userProfile!.saved_recipes.add(recipeId!);
-//                           } else {
-//                             userProfile!.saved_recipes.remove(recipeId);
-//                           }
-//                         });
-//                       },
-//                     ),
-//                   ),
-//                   Positioned(
-//                     top: 8,
-//                     right: 8,
-//                     child: GestureDetector(
-//                       onTap: () {
-//                         _showRatingDialog();
-//                       },
-//                       child: Container(
-//                         padding: const EdgeInsets.all(4),
-//                         decoration: BoxDecoration(
-//                           color: const Color.fromARGB(255, 255, 255, 255).withOpacity(0.5), // White color with opacity
-//                           borderRadius: BorderRadius.circular(5),
-//                         ),
-//                         child: Row(
-//                           children: [
-//                             const Icon(Icons.star, color: Colors.yellow),
-//                             const SizedBox(width: 4),
-//                             Text(
-//                               "5", // Placeholder rating
-//                               style: const TextStyle(color: Colors.black), // Changed text color to black for better contrast
-//                             ),
-//                           ],
-//                         ),
-//                       ),
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//               const SizedBox(height: 10),
+  Future<void> _loadRecipeData(int recipeId) async {
+    try {
+      // receta principal y perfil del autor
+      final recipe = await _recipeController.getRecipeById(recipeId);
+      final chef = await _profileController.getProfile(recipe.keycloakUserId);
 
-//               // Fila 1: Nombre de la receta y número de reseñas
-//               Row(
-//                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                 children: [
-//                   Flexible(
-//                     child: Text(
-//                       recipeTitle ?? "Receta Placeholder", // Use the recipeTitle
-//                       style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-//                       overflow: TextOverflow.ellipsis,
-//                     ),
-//                   ),
-//                   GestureDetector(
-//                     onTap: () {
-//                       Navigator.pushNamed(
-//                         context,
-//                         '/comments',
-//                         arguments: {'recipeId': recipeId},
-//                       );
-//                     },
-//                     child: Text(
-//                       "$totalComments Comentarios", // Usar el número real de comentarios
-//                       style: const TextStyle(fontSize: 14, color: Colors.grey),
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//               const SizedBox(height: 14),
+      // pasos e ingredientes
+      final stepRes = await _stepController.fetchSteps(recipeId);
+      final ingRes = await _ingredientController.fetchIngredients();
+      final ingOfRecipe = ingRes.where((i) => i.recipeId == recipeId);
 
-//               // Fila 2: Foto de perfil, nombre del chef y botones
-//               Row(
-//                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                 children: [
-//                   Row(
-//                     children: [
-//                       GestureDetector(
-//                         onTap: () {
-//                           Navigator.pushNamed(
-//                             context,
-//                             '/public_profile',
-//                             arguments: {'keycloak_user_id': chefProfile!.keycloak_user_id},
-//                           );
-//                         },
-//                         child: CircleAvatar(
-//                           backgroundImage: AssetImage(chefProfile!.imageUrl),
-//                           radius: 20,
-//                         ),
-//                       ),
-//                       const SizedBox(width: 10),
-//                       Container(
-//                         constraints: BoxConstraints(
-//                           maxWidth: MediaQuery.of(context).size.width * 0.2, // Adjust the width as needed
-//                         ),
-//                         child: Text(
-//                           chefProfile!.first_name,
-//                           overflow: TextOverflow.ellipsis,
-//                           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                   Row(
-//                     children: [
-//                       ElevatedButton(
-//                         onPressed: () {},
-//                         style: ElevatedButton.styleFrom(
-//                           backgroundColor: const Color(0xFF129575),
-//                           foregroundColor: Colors.white,
-//                         ),
-//                         child: const Text("Seguir"),
-//                       ),
-//                       const SizedBox(width: 5),
-//                       ElevatedButton(
-//                         onPressed: () {},
-//                         style: ElevatedButton.styleFrom(
-//                           backgroundColor: const Color(0xFF129575),
-//                           foregroundColor: Colors.white,
-//                         ),
-//                         child: const Text("+ Lista de\nCompras"),
-//                       ),
-//                     ],
-//                   ),
-//                 ],
-//               ),
-//               const SizedBox(height: 14),
+      final comments = await _commentController.fetchComments(recipeId);
 
-//               // Fila 3: Ingredientes y Procedimiento
-//               Column(
-//                 children: [
-//                   Row(
-//                     mainAxisAlignment: MainAxisAlignment.spaceAround,
-//                     children: [
-//                       _buildTab('Ingredientes', 0),
-//                       _buildTab('Procedimiento', 1),
-//                     ],
-//                   ),
-//                   const SizedBox(height: 30),
+      if (!mounted) return; // pantalla cerrada → salir
+      setState(() {
+        recipeTitle = recipe.title;
+        duration = recipe.cookingTime;
+        totalServings = recipe.totalPortions;
+        chefName = chef.firstName ?? '';
+        chefImage = chef.profilePhoto ?? chefImage;
+        steps = stepRes.map((e) => e.description).toList();
+        ingredients = ingOfRecipe
+            .map((i) => {'name': i.name, 'unit': i.measurementUnit})
+            .toList();
+        totalComments = comments.length;
+      });
+    } catch (e) {
+      // SnackBar tras el primer frame
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error al cargar receta: $e')),
+          );
+        }
+      });
+    }
+  }
 
-//                   // New Row with portion and steps information
-//                   Row(
-//                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                     children: [
-//                       Row(
-//                         children: [
-//                           Icon(Icons.restaurant, color: Colors.grey),
-//                           SizedBox(width: 4),
-//                           Text(
-//                             '${totalServings ?? 1} ${totalServings == 1 ? "Porción" : "Porciones"}',
-//                             style: TextStyle(color: Colors.grey),
-//                           ),
-//                         ],
-//                       ),
-//                       Text(
-//                         '${steps.length} Pasos',
-//                         style: TextStyle(color: Colors.grey),
-//                       ),
-//                     ],
-//                   ),
-//                 ],
-//               ),
-//               const SizedBox(height: 6),
+  // ────────────────── 2) InitState → solo instanciar controladores ─────
+  @override
+  void initState() {
+    super.initState();
+    _recipeController = RecipeController(baseUrl: recipeBaseUrl);
+    _ingredientController = IngredientController(baseUrl: recipeBaseUrl);
+    _stepController = RecipeStepController(baseUrl: recipeBaseUrl);
+    _commentController = CommentController(baseUrl: recipeBaseUrl);
+    _profileController = ProfileController(baseUrl: profileBaseUrl);
+    _savedController = SavedRecipeController(baseUrl: profileBaseUrl);
+  }
 
-//               // Mostrar contenido según la pestaña seleccionada
-//               Expanded(
-//                 child: selectedIndex == 0
-//                     ? ListView.builder(
-//                         itemCount: recipeIngredients.length,
-//                         itemBuilder: (context, index) {
-//                           final recipeIngredient = recipeIngredients[index];
-//                           final ingredient = ingredientController.allIngredients.firstWhere((ing) => ing.ingredientId == recipeIngredient.ingredientId);
-//                           return IngredientCard(
-//                             ingredient: ingredient,
-//                             quantity: recipeIngredient.quantity,
-//                             unit: recipeIngredient.unit,
-//                           );
-//                         },
-//                       )
-//                     : ListView.builder(
-//                         itemCount: steps.length,
-//                         itemBuilder: (context, index) {
-//                           final step = steps[index];
-//                           return StepCard(step: step, stepNumber: index + 1);
-//                         },
-//                       ),
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//       bottomNavigationBar: BottomNavigationBar(
-//         type: BottomNavigationBarType.fixed,
-//         backgroundColor: Colors.white,
-//         selectedItemColor: const Color.fromARGB(255, 83, 83, 83),
-//         unselectedItemColor: const Color.fromARGB(255, 83, 83, 83),
-//         onTap: (int index) {
-//           switch (index) {
-//             case 0:
-//               Navigator.pushNamed(context, '/dashboard');
-//               break;
-//             case 1:
-//               Navigator.pushNamed(context, '/recipe_search');
-//               break;
-//             case 2:
-//               Navigator.pushNamed(context, '/create');
-//               break;
-//             case 3:
-//               Navigator.pushNamed(context, '/shopping_list');
-//               break;
-//             case 4:
-//               Navigator.pushNamed(context, '/profile');
-//               break;
-//           }
-//         },
-//         items: const [
-//           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-//           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Buscar'),
-//           BottomNavigationBarItem(icon: Icon(Icons.add), label: 'Publicar'),
-//           BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Compras'),
-//           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
-//         ],
-//       ),
-//     );
-//   }
+  // ──────────────── 3) didChangeDependencies → leer arguments ──────────
+  bool _loaded = false; // evita recargas múltiples
 
-//   Widget _buildTab(String label, int index) {
-//     return GestureDetector(
-//       onTap: () {
-//         setState(() {
-//           selectedIndex = index;
-//         });
-//       },
-//       child: Column(
-//         children: [
-//           Text(
-//             label,
-//             style: TextStyle(
-//               fontSize: 16,
-//               fontWeight: FontWeight.bold,
-//               color: selectedIndex == index ? const Color(0xFF129575) : Colors.grey,
-//             ),
-//           ),
-//           if (selectedIndex == index)
-//             Container(
-//               margin: const EdgeInsets.only(top: 4),
-//               height: 2,
-//               width: 60,
-//               color: const Color(0xFF129575),
-//             ),
-//         ],
-//       ),
-//     );
-//   }
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_loaded) return;
 
-//   void _showRatingDialog() {
-//     showDialog(
-//       context: context,
-//       builder: (BuildContext context) {
-//         return RatingDialog();
-//       },
-//     );
-//   }
-// }
+    final args = ModalRoute.of(context)!.settings.arguments as Map;
+    if (args is Map<String, dynamic> && args['recipeId'] != null) {
+      recipeId = args['recipeId'] as int;
+      _loadRecipeData(recipeId!); // ← pasamos el id
+      _loaded = true;
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Error: no se recibió recipeId')),
+          );
+        }
+      });
+    }
+  }
 
-// class RatingDialog extends StatefulWidget {
-//   @override
-//   _RatingDialogState createState() => _RatingDialogState();
-// }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF129575),
+        foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.report),
+            onPressed: () {
+              // Acción de reporte
+            },
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildImageHeader(),
+            const SizedBox(height: 10),
+            _buildTitleAndComments(),
+            const SizedBox(height: 14),
+            _buildChefInfo(),
+            const SizedBox(height: 14),
+            _buildTabs(),
+            const SizedBox(height: 30),
+            _buildInfoRow(),
+            const SizedBox(height: 10),
+            Expanded(
+                child: selectedIndex == 0
+                    ? _buildIngredientsList()
+                    : _buildStepsList()),
+          ],
+        ),
+      ),
+      bottomNavigationBar: _buildBottomNavBar(),
+    );
+  }
 
-// class _RatingDialogState extends State<RatingDialog> {
-//   int _selectedRating = 0;
+  Widget _buildImageHeader() {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: ColorFiltered(
+            colorFilter: ColorFilter.mode(
+                Colors.black.withOpacity(0.3), BlendMode.darken),
+            child: Image.asset(
+              imageUrl,
+              width: double.infinity,
+              height: 150,
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: 8,
+          left: 8,
+          child: Row(
+            children: [
+              const Icon(Icons.access_time, color: Colors.white),
+              const SizedBox(width: 4),
+              Text('$duration mins',
+                  style: const TextStyle(color: Colors.white)),
+            ],
+          ),
+        ),
+        Positioned(
+          bottom: 8,
+          right: 8,
+          child: IconButton(
+            icon: Icon(
+              isSaved ? Icons.bookmark : Icons.bookmark_border,
+              color: isSaved ? Colors.yellow : Colors.white,
+            ),
+            onPressed: () {
+              setState(() {
+                isSaved = !isSaved;
+              });
+            },
+          ),
+        ),
+      ],
+    );
+  }
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Dialog(
-//       backgroundColor: Colors.transparent, // Transparent background
-//       child: Center(
-//         child: Container(
-//           width: MediaQuery.of(context).size.width * 0.7, // Set width to 80% of screen width
-//           padding: const EdgeInsets.all(15),
-//           decoration: BoxDecoration(
-//             color: Colors.white,
-//             borderRadius: BorderRadius.circular(10),
-//           ),
-//           child: Column(
-//             mainAxisSize: MainAxisSize.min,
-//             children: [
-//               Text(
-//                 'Calificación',
-//                 style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
-//               ),
-//               const SizedBox(height: 5),
-//               Row(
-//                 mainAxisAlignment: MainAxisAlignment.center,
-//                 children: List.generate(5, (index) {
-//                   return IconButton(
-//                     icon: Icon(
-//                       _selectedRating > index ? Icons.star : Icons.star_border,
-//                       color: Colors.orange, 
-//                       // color: const Color(0xFF129575)
-//                     ),
-//                     onPressed: () {
-//                       setState(() {
-//                         _selectedRating = index + 1;
-//                       });
-//                     },
-//                   );
-//                 }),
-//               ),
-//               const SizedBox(height: 5),
-//               ElevatedButton(
-//                 onPressed: _selectedRating == 0 ? null : () {
-//                   // Handle rating submission
-//                   Navigator.of(context).pop();
-//                 },
-//                 style: ElevatedButton.styleFrom(
-//                   backgroundColor: Colors.orange, 
-//                   // backgroundColor: Color(0xFF129575)
-//                   foregroundColor: Colors.white,
-//                 ),
-//                 child: const Text('Enviar'),
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
+  Widget _buildTitleAndComments() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Flexible(
+          child: Text(
+            recipeTitle,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        GestureDetector(
+          onTap: () {
+            Navigator.pushNamed(context, '/comments',
+                arguments: {'recipeId': recipeId});
+          },
+          child: Text(
+            '$totalComments Comentarios',
+            style: const TextStyle(fontSize: 14, color: Colors.grey),
+          ),
+        ),
+      ],
+    );
+  }
 
-// class IngredientCard extends StatelessWidget {
-//   final Ingredient ingredient;
-//   final String quantity;
-//   final String unit;
+  Widget _buildChefInfo() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            CircleAvatar(backgroundImage: AssetImage(chefImage), radius: 20),
+            const SizedBox(width: 10),
+            Text(chefName,
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        Row(
+          children: [
+            ElevatedButton(
+              onPressed: () {},
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF129575)),
+              child: const Text("Seguir"),
+            ),
+            const SizedBox(width: 5),
+            ElevatedButton(
+              onPressed: () {},
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF129575)),
+              child:
+                  const Text("+ Lista\nCompras", textAlign: TextAlign.center),
+            ),
+          ],
+        )
+      ],
+    );
+  }
 
-//   const IngredientCard({
-//     required this.ingredient, 
-//     required this.quantity, 
-//     required this.unit
-//   });
+  Widget _buildTabs() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        _buildTab('Ingredientes', 0),
+        _buildTab('Procedimiento', 1),
+      ],
+    );
+  }
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Card(
-//       color: Colors.grey[200],
-//       margin: const EdgeInsets.symmetric(vertical: 8.0),
-//       child: Padding(
-//         padding: const EdgeInsets.all(16.0),
-//         child: Row(
-//           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//           children: [
-//             Text(
-//               ingredient.ingredientName,
-//               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
-//             ),
-//             Text(
-//               "$quantity $unit",
-//               style: const TextStyle(fontSize: 16, color: Color.fromARGB(255, 51, 50, 50)),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
+  Widget _buildTab(String label, int index) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedIndex = index;
+        });
+      },
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: selectedIndex == index
+                  ? const Color(0xFF129575)
+                  : Colors.grey,
+            ),
+          ),
+          if (selectedIndex == index)
+            Container(
+              margin: const EdgeInsets.only(top: 4),
+              height: 2,
+              width: 60,
+              color: const Color(0xFF129575),
+            ),
+        ],
+      ),
+    );
+  }
 
-// class StepCard extends StatelessWidget {
-//   final String step;
-//   final int stepNumber;
+  Widget _buildInfoRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(children: [
+          const Icon(Icons.restaurant, color: Colors.grey),
+          const SizedBox(width: 4),
+          Text('$totalServings Porciones',
+              style: const TextStyle(color: Colors.grey)),
+        ]),
+        Text('${steps.length} Pasos',
+            style: const TextStyle(color: Colors.grey)),
+      ],
+    );
+  }
 
-//   const StepCard({required this.step, required this.stepNumber});
+  Widget _buildIngredientsList() {
+    return ListView.builder(
+      itemCount: ingredients.length,
+      itemBuilder: (context, index) {
+        final ingredient = ingredients[index];
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          color: Colors.grey[200],
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(ingredient['name']!,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                //${ingredient['quantity']}
+                Text('${ingredient['unit']}'),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Card(
-//       color: Colors.grey[200],
-//       margin: const EdgeInsets.symmetric(vertical: 8.0),
-//       child: Padding(
-//         padding: const EdgeInsets.all(16.0),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             Text(
-//               "Paso $stepNumber",
-//               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
-//             ),
-//             const SizedBox(height: 8),
-//             Text(
-//               step,
-//               style: const TextStyle(fontSize: 16, color: Color.fromARGB(255, 51, 50, 50)),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
+  Widget _buildStepsList() {
+    return ListView.builder(
+      itemCount: steps.length,
+      itemBuilder: (context, index) {
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          color: Colors.grey[200],
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Paso ${index + 1}',
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text(steps[index]),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  BottomNavigationBar _buildBottomNavBar() {
+    return BottomNavigationBar(
+      type: BottomNavigationBarType.fixed,
+      currentIndex: 1,
+      selectedItemColor: const Color(0xFF129575),
+      unselectedItemColor: Colors.grey,
+      onTap: (index) {
+        switch (index) {
+          case 0:
+            Navigator.pushNamed(context, '/dashboard');
+            break;
+          case 1:
+            break;
+          case 2:
+            Navigator.pushNamed(context, '/create');
+            break;
+          case 3:
+            Navigator.pushNamed(context, '/shopping_list');
+            break;
+          case 4:
+            Navigator.pushNamed(context, '/profile');
+            break;
+        }
+      },
+      items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
+        BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Buscar'),
+        BottomNavigationBarItem(icon: Icon(Icons.add), label: 'Publicar'),
+        BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Compras'),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
+      ],
+    );
+  }
+}

@@ -160,7 +160,7 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
                               imageUrl: 'assets/recipes/recipe1.jpg',
                               width: cardWidth,
                               rating: recipe.ratingAvg.toInt(),
-                              recipeId: recipe.recipeId.toString(),
+                              recipeId: recipe.recipeId,
                             );
                           },
                         );
@@ -249,7 +249,7 @@ class RecipeCard extends StatelessWidget {
   final String imageUrl;
   final double width;
   final int? rating;
-  final String recipeId;
+  final int recipeId;
 
   const RecipeCard({
     super.key,

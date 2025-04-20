@@ -76,6 +76,21 @@ class MyApp extends StatelessWidget {
               return PublicProfileScreen(profileId: profileId);
             },
           );
+        } else if (settings.name == '/recipe') {
+          final args = settings.arguments as Map<String, dynamic>?;
+
+          if (args == null || args['recipeId'] == null) {
+            return MaterialPageRoute(
+              builder: (_) => const Scaffold(
+                body: Center(child: Text('⚠️ No se recibió recipeId')),
+              ),
+            );
+          }
+
+          return MaterialPageRoute(
+            settings: settings,
+            builder: (_) => RecipeScreen(recipeId: args['recipeId'] as int),
+          );
         }
 
         // else if (settings.name == '/comments') {
@@ -96,7 +111,11 @@ class MyApp extends StatelessWidget {
         //   );
         // }
         // Define other routes here if needed
-        return null;
+        return MaterialPageRoute(
+          builder: (_) => const Scaffold(
+            body: Center(child: Text('Ruta no encontrada')),
+          ),
+        );
       },
       routes: {
         '/': (context) => const HomeScreen(),
@@ -110,7 +129,6 @@ class MyApp extends StatelessWidget {
         '/email_forgot_pass': (context) => const EmailForgotPassScreen(),
         '/shopping_list': (context) => const ShoppingListScreen(),
         '/create': (context) => const CreateRecipeScreen(),
-        // '/recipe': (context) => const RecipeScreen(),
         '/edit_profile': (context) => const EditprofileScreen(),
         '/reports': (context) => const ReportsScreen(),
       },

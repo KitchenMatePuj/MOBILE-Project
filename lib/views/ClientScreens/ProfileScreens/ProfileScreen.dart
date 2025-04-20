@@ -21,10 +21,10 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   int selectedIndex = 0;
-  late Future<ProfileResponse> _profileFuture;
-  late Future<List<FollowResponse>> _followersFuture;
-  late Future<List<FollowResponse>> _followingFuture;
-  late Future<ProfileSummaryResponse> _summaryFuture;
+  Future<ProfileResponse>? _profileFuture;
+  Future<List<FollowResponse>>? _followersFuture;
+  Future<List<FollowResponse>>? _followingFuture;
+  Future<ProfileSummaryResponse>? _summaryFuture;
 
   late SumaryController _summaryController;
   late FollowController _followController;
@@ -38,7 +38,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
 
   // keycloakUserId del usuario que consultamos
-  String keycloakUserId = '12';
+  String keycloakUserId = 'user1234';
   String images = 'assets/images/default.jpg';
   @override
   void initState() {
@@ -164,106 +164,111 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
       backgroundColor: Colors.white,
-      body: FutureBuilder<ProfileResponse>(
-        future: _profileFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Text('Error: ${snapshot.error}');
-          } else if (!snapshot.hasData) {
-            return const Text('No data found');
-          }
+      body: _profileFuture == null
+          ? const Center(child: CircularProgressIndicator())
+          : FutureBuilder<ProfileResponse>(
+              future: _profileFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                } else if (!snapshot.hasData) {
+                  return const Text('No data found');
+                }
 
-          final profile = snapshot.data!;
-          return Column(
-            children: [
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 23),
-                child: Column(
+                final profile = snapshot.data!;
+                return Column(
                   children: [
-                    // -- FUTURE BUILDER PARA FOLLOWERS --
-                    FutureBuilder<List<FollowResponse>>(
-                      future: _followersFuture,
-                      builder: (context, followersSnapshot) {
-                        if (followersSnapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const CircularProgressIndicator();
-                        } else if (followersSnapshot.hasError) {
-                          return Text('Error: ${followersSnapshot.error}');
-                        }
-
-                        final followers = followersSnapshot.data ?? [];
-                        return FutureBuilder<List<FollowResponse>>(
-                          future: _followingFuture,
-                          builder: (context, followingSnapshot) {
-                            if (followingSnapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const CircularProgressIndicator();
-                            } else if (followingSnapshot.hasError) {
-                              return Text('Error: ${followingSnapshot.error}');
-                            }
-
-                            final following = followingSnapshot.data ?? [];
-                            return ProfileStats(
-                              profile: profile,
-                              followersCount: followers.length,
-                              followingCount: following.length,
-                            );
-                          },
-                        );
-                      },
-                    ),
-
                     const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 23),
+                      child: Column(
+                        children: [
+                          // -- FUTURE BUILDER PARA FOLLOWERS --
+                          FutureBuilder<List<FollowResponse>>(
+                            future: _followersFuture,
+                            builder: (context, followersSnapshot) {
+                              if (followersSnapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const CircularProgressIndicator();
+                              } else if (followersSnapshot.hasError) {
+                                return Text(
+                                    'Error: ${followersSnapshot.error}');
+                              }
 
-                    // -- Nombre del usuario --
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        profile.firstName ?? 'Nombre no disponible',
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
+                              final followers = followersSnapshot.data ?? [];
+                              return FutureBuilder<List<FollowResponse>>(
+                                future: _followingFuture,
+                                builder: (context, followingSnapshot) {
+                                  if (followingSnapshot.connectionState ==
+                                      ConnectionState.waiting) {
+                                    return const CircularProgressIndicator();
+                                  } else if (followingSnapshot.hasError) {
+                                    return Text(
+                                        'Error: ${followingSnapshot.error}');
+                                  }
+
+                                  final following =
+                                      followingSnapshot.data ?? [];
+                                  return ProfileStats(
+                                    profile: profile,
+                                    followersCount: followers.length,
+                                    followingCount: following.length,
+                                  );
+                                },
+                              );
+                            },
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // -- Nombre del usuario --
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              profile.firstName ?? 'Nombre no disponible',
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          // -- Breve descripción --
+                          const ProfileBio(
+                            description:
+                                'Aquí va una descripción genérica del usuario.',
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // -- Pestañas (Recetas publicadas / Guardadas)
+                          ProfileTabs(
+                            selectedIndex: selectedIndex,
+                            onTabSelected: (index) {
+                              setState(() {
+                                selectedIndex = index;
+                              });
+                            },
+                          ),
+                        ],
                       ),
                     ),
 
-                    const SizedBox(height: 8),
-
-                    // -- Breve descripción --
-                    const ProfileBio(
-                      description:
-                          'Aquí va una descripción genérica del usuario.',
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // -- Pestañas (Recetas publicadas / Guardadas)
-                    ProfileTabs(
-                      selectedIndex: selectedIndex,
-                      onTabSelected: (index) {
-                        setState(() {
-                          selectedIndex = index;
-                        });
-                      },
+                    // -- Vista de recetas publicadas o guardadas --
+                    Expanded(
+                      child: selectedIndex == 0
+                          ? _buildPublishedRecipes() // Recetas publicadas
+                          : _buildSavedRecipes(), // Recetas guardadas
                     ),
                   ],
-                ),
-              ),
-
-              // -- Vista de recetas publicadas o guardadas --
-              Expanded(
-                child: selectedIndex == 0
-                    ? _buildPublishedRecipes() // Recetas publicadas
-                    : _buildSavedRecipes(), // Recetas guardadas
-              ),
-            ],
-          );
-        },
-      ),
+                );
+              },
+            ),
 
       // -- Bottom Navigation --
       bottomNavigationBar: BottomNavigationBar(
@@ -320,6 +325,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           itemCount: published.length,
           itemBuilder: (context, index) {
             final recipe = published[index];
+            print('Receta ID: ${recipe.recipeId}');
             return GestureDetector(
               onTap: () {
                 Navigator.pushNamed(

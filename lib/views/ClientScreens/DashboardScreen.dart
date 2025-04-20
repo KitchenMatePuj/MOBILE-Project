@@ -45,8 +45,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<RecommendationResponse> _recommendations = [];
   Map<int, CategoryResponse> _categoriesById = {};
 
-  late Future<ProfileSummaryResponse> _summaryFuture;
-  late Future<ProfileResponse> _profileFuture;
+  Future<ProfileResponse>? _profileFuture;
+  Future<ProfileSummaryResponse>? _summaryFuture;
   bool _publishedRecipesLoaded = false;
 
   String keycloakUserId = '';
@@ -65,8 +65,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _profileController = ProfileController(baseUrl: profileBaseUrl);
     _recommendationController =
         RecommendationsController(baseUrl: recomendationBaseUrl);
-
     _authController = AuthController(baseUrl: authBaseUrl);
+
+    _loadUserData(); // llamamos la lógica aparte
+  }
+
+  Future<void> _loadUserData() async {
+    /*
+      _authController.getKeycloakUserId().then((id) {
+        keycloakUserId = id;
+      });
+    */
+
+    keycloakUserId = 'user1234';
 
     _profileFuture = _profileController.getProfile(keycloakUserId);
 
@@ -90,16 +101,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         final recs = await _recommendationController
             .fetchRecommendations(recommendationRequest);
+
         setState(() {
           _recommendations = recs;
         });
 
         await _loadPublishedRecipes(keycloakUserId);
       });
-    
-    _authController.getKeycloakUserId().then((id) {
-      keycloakUserId = id;
-    });
+
+    setState(() {}); // fuerza rebuild con los futuros actualizados
   }
 
   Future<void> _loadSavedRecipes(List<int> recipeIds) async {

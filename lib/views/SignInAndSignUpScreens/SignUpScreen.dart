@@ -17,7 +17,6 @@ import '../../controllers/Recipes/ingredients.dart';
 import '../../models/Recipes/ingredients_response.dart';
 import '../../models/Profiles/ingredientAllery_response.dart';
 
-
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
 
@@ -58,15 +57,14 @@ class SignUpScreenState extends State<SignUpScreen> {
 
   final authBaseUrl = dotenv.env['AUTH_URL'] ?? '';
   final profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
-  final recipesBaseUrl = dotenv.env['RECIPES_URL'] ?? '';
+  final recipesBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
 
   @override
   void initState() {
     super.initState();
     _authController = AuthController(baseUrl: authBaseUrl);
     _profileController = ProfileController(baseUrl: profileBaseUrl);
-    _ingredientController =
-        IngredientController(baseUrl: recipesBaseUrl);
+    _ingredientController = IngredientController(baseUrl: recipesBaseUrl);
     _ingredientAllergyController =
         IngredientAllergyController(baseUrl: profileBaseUrl);
     _fetchIngredients();
@@ -82,7 +80,8 @@ class SignUpScreenState extends State<SignUpScreen> {
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cargar ingredientes: \$e')),
+        SnackBar(
+            content: Text('Error al cargar ingredientes: ${e.toString()}')),
       );
     }
   }

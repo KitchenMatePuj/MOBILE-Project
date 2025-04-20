@@ -741,7 +741,8 @@ class IngredientCard extends StatelessWidget {
                         final selected = availableIngredients.firstWhere(
                           (i) => i.name == value,
                           orElse: () => IngredientResponse(
-                            ingredientId: -1, // ID ficticio para "Otro"
+                            ingredientId: -1,
+                            recipeId: -1, // ID ficticio para "Otro"
                             name: value,
                             measurementUnit: '',
                           ),

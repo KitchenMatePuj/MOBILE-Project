@@ -36,11 +36,18 @@ class IngredientController {
 
   /// Obtener todos los ingredientes (GET /ingredients)
   Future<List<IngredientResponse>> fetchIngredients() async {
-    final response = await http.get(Uri.parse('$baseUrl/ingredients/'));
+    final url = Uri.parse('$baseUrl/ingredients');
+    final response = await http.get(url);
+
+    print('URL: $url');
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
 
     if (response.statusCode == 200) {
-      final List<dynamic> body = jsonDecode(response.body);
-      return body.map((e) => IngredientResponse.fromJson(e)).toList();
+      final List<dynamic> jsonData = jsonDecode(response.body);
+      return jsonData
+          .map((ingredientJson) => IngredientResponse.fromJson(ingredientJson))
+          .toList();
     } else {
       throw Exception('Failed to load ingredients');
     }

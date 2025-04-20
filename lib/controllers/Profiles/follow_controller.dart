@@ -10,7 +10,9 @@ class FollowController {
 
   /// GET: Obtener lista de seguidores de un perfil
   Future<List<FollowResponse>> listFollowers(int profileId) async {
-    final response = await http.get(Uri.parse('$baseUrl/followers/$profileId'));
+    final response = await http.get(
+      Uri.parse('$baseUrl/follows/followers/$profileId'), // ✅ usa "/follows/"
+    );
 
     if (response.statusCode == 200) {
       final List<dynamic> body = json.decode(response.body);
@@ -22,7 +24,9 @@ class FollowController {
 
   /// GET: Obtener lista de seguidos por un perfil
   Future<List<FollowResponse>> listFollowed(int profileId) async {
-    final response = await http.get(Uri.parse('$baseUrl/followed/$profileId'));
+    final response = await http.get(
+      Uri.parse('$baseUrl/follows/followed/$profileId'), // ✅ usa "/follows/"
+    );
 
     if (response.statusCode == 200) {
       final List<dynamic> body = json.decode(response.body);
