@@ -14,6 +14,11 @@ import '/controllers/authentication/auth_controller.dart';
 import '/models/authentication/login_request_advanced.dart' as advanced;
 import '/models/authentication/login_response.dart';
 
+import 'package:mime/mime.dart';
+import '../../../models/strapi/strapi_request.dart';
+import '../../../controllers/strapi/strapi_controller.dart';
+import '../../../models/strapi/strapi_response.dart';
+
 class EditprofileScreen extends StatefulWidget {
   const EditprofileScreen({super.key});
 
@@ -23,34 +28,40 @@ class EditprofileScreen extends StatefulWidget {
 
 class _EditprofileState extends State<EditprofileScreen> {
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
+  final _authBase = dotenv.env['AUTH_URL'] ?? '';
+  final String strapiBaseUrl = dotenv.env['STRAPI_URL'] ?? '';
 
   // A FUTURO TOCA QUE RECONOZCA POR DEFECTO EL PROFILE ID Y EL EMAIL.
   late ProfileResponse? profile =
-      ProfileResponse(profileId: 1, keycloakUserId: '', email: "email");
-  
+      ProfileResponse(profileId: 0, keycloakUserId: '', email: '');
+
   late AuthController _authController;
-  
+
   bool isProfileInfoSelected = true;
   File? _profileImage;
   List<IngredientAllergyResponse> allergies = [];
 
   String keycloakUserId = '';
+  String? uploadedImagePathFromStrapi;
 
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController cookingTimeController = TextEditingController();
+  late StrapiController strapiController =
+      StrapiController(baseUrl: strapiBaseUrl);
 
   @override
   void initState() {
     super.initState();
-    
-    _authController.getKeycloakUserId().then((id) {
-      keycloakUserId = id;
-    });
+    _authController = AuthController(baseUrl: _authBase);
+    _initializeProfile();
+  }
 
-    _loadData(keycloakUserId);
+  Future<void> _initializeProfile() async {
+    keycloakUserId = await _authController.getKeycloakUserId();
+    await _loadData(keycloakUserId);
   }
 
   Future<void> _loadData(String keycloak_user_id) async {
@@ -65,6 +76,8 @@ class _EditprofileState extends State<EditprofileScreen> {
         profile = fetchedProfile;
         allergies = fetchedAllergies;
 
+        print('profile name $profile.firstName');
+
         firstNameController.text = profile?.firstName ?? '';
         lastNameController.text = profile?.lastName ?? '';
         emailController.text = profile?.email ?? '';
@@ -73,6 +86,35 @@ class _EditprofileState extends State<EditprofileScreen> {
       });
     } catch (e) {
       print('Error al cargar perfil o alergias: $e');
+    }
+  }
+
+  Future<void> _updateProfile() async {
+    try {
+      final updatedProfile = ProfileRequest(
+        firstName: firstNameController.text,
+        lastName: lastNameController.text,
+        email: emailController.text,
+        phone: phoneController.text,
+        cookingTime: int.tryParse(cookingTimeController.text) ?? 0,
+        profilePhoto:
+            uploadedImagePathFromStrapi, // asegúrate de asignarlo si subes imagen
+      );
+
+      print(
+          'PROFIIIIIIIIIIIIIIIIIIIIIIIIIIIIILE ID: ${profile!.keycloakUserId}'); // Imprimir el profile_id profile!.keycloakUserId);
+
+      await ProfileController(baseUrl: profileBaseUrl)
+          .updateProfile(profile!.keycloakUserId, updatedProfile);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Perfil actualizado correctamente')),
+      );
+    } catch (e) {
+      print('Error al actualizar perfil: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error al actualizar el perfil')),
+      );
     }
   }
 
@@ -85,6 +127,15 @@ class _EditprofileState extends State<EditprofileScreen> {
         _profileImage = File(pickedFile.path);
       });
     }
+  }
+
+  Future<String> uploadImageToStrapi(File image) async {
+    final mimeType = lookupMimeType(image.path) ?? 'application/octet-stream';
+
+    final request = StrapiUploadRequest.fromFile(image);
+    final response = await strapiController.uploadImage(request);
+
+    return response.url; // URL completa que puedes guardar como profilePhoto
   }
 
   @override
@@ -115,17 +166,24 @@ class _EditprofileState extends State<EditprofileScreen> {
                         isProfileInfoSelected = true;
                       });
                     },
-                    child: Container(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(
-                        vertical: 10,
-                        horizontal: 20,
-                      ),
+                          vertical: 10, horizontal: 20),
                       decoration: BoxDecoration(
                         color: isProfileInfoSelected
                             ? const Color(0xFF129575)
                             : Colors.white,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: const Color(0xFF129575)),
+                        boxShadow: [
+                          if (isProfileInfoSelected)
+                            BoxShadow(
+                              color: const Color(0xFF129575).withOpacity(0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                        ],
                       ),
                       child: Text(
                         'Información de Perfil',
@@ -149,17 +207,24 @@ class _EditprofileState extends State<EditprofileScreen> {
                         isProfileInfoSelected = false;
                       });
                     },
-                    child: Container(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(
-                        vertical: 10,
-                        horizontal: 20,
-                      ),
+                          vertical: 10, horizontal: 20),
                       decoration: BoxDecoration(
                         color: isProfileInfoSelected
                             ? Colors.white
                             : const Color(0xFF129575),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: const Color(0xFF129575)),
+                        boxShadow: [
+                          if (!isProfileInfoSelected)
+                            BoxShadow(
+                              color: const Color(0xFF129575).withOpacity(0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                        ],
                       ),
                       child: Text(
                         'Alergias',
@@ -193,11 +258,13 @@ class _EditprofileState extends State<EditprofileScreen> {
                             radius: 55,
                             backgroundImage: _profileImage != null
                                 ? FileImage(_profileImage!)
-                                : AssetImage(
-                                    // Ajusta el acceso a la foto de perfil real
-                                    profile?.profilePhoto ??
-                                        'assets/default_profile.png',
-                                  ) as ImageProvider,
+                                : (profile?.profilePhoto != null &&
+                                        profile!.profilePhoto!
+                                            .startsWith('http'))
+                                    ? NetworkImage(profile!.profilePhoto!)
+                                    : const AssetImage(
+                                            'assets/default_profile.png')
+                                        as ImageProvider,
                           ),
                           const SizedBox(width: 35),
                           GestureDetector(
@@ -282,13 +349,23 @@ class _EditprofileState extends State<EditprofileScreen> {
                           Expanded(
                             child: ElevatedButton(
                               onPressed: () async {
+                                String? uploadedImagePathFromStrapi;
+
+                                if (_profileImage != null) {
+                                  uploadedImagePathFromStrapi =
+                                      await uploadImageToStrapi(_profileImage!);
+                                } else {
+                                  uploadedImagePathFromStrapi =
+                                      profile?.profilePhoto;
+                                }
+
                                 final updatedProfile = ProfileRequest(
                                   keycloakUserId: profile?.keycloakUserId,
                                   firstName: firstNameController.text,
                                   lastName: lastNameController.text,
                                   email: emailController.text,
                                   phone: phoneController.text,
-                                  profilePhoto: profile?.profilePhoto,
+                                  profilePhoto: uploadedImagePathFromStrapi,
                                   accountStatus: profile?.accountStatus,
                                   cookingTime:
                                       int.tryParse(cookingTimeController.text),
@@ -297,10 +374,8 @@ class _EditprofileState extends State<EditprofileScreen> {
                                 try {
                                   await ProfileController(
                                           baseUrl: profileBaseUrl)
-                                      .updateProfile(
-                                    profile!.keycloakUserId,
-                                    updatedProfile,
-                                  );
+                                      .updateProfile(profile!.keycloakUserId,
+                                          updatedProfile);
 
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(

@@ -27,17 +27,19 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
   String selectedCategory = "Todos";
   String selectedMealType = "Todos";
   String selectedCuisine = "Todas";
-    String keycloakUserId = '';
+  String keycloakUserId = '';
   int _recipesToShow = 8;
 
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
   final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
+  final String _authBase = dotenv.env['AUTH_URL'] ?? '';
 
   @override
   void initState() {
     super.initState();
     _recipeController = RecipeController(baseUrl: recipeBaseUrl);
     _profileController = ProfileController(baseUrl: profileBaseUrl);
+    _authController = AuthController(baseUrl: _authBase);
 
     _authController.getKeycloakUserId().then((id) {
       keycloakUserId = id;

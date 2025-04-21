@@ -6,6 +6,7 @@ class RecommendationResponse {
   final double ratingAvg;
   final List<String> categories;
   final List<String> ingredients;
+  final String? imageUrl;
 
   RecommendationResponse({
     required this.recipeId,
@@ -15,6 +16,7 @@ class RecommendationResponse {
     required this.ratingAvg,
     required this.categories,
     required this.ingredients,
+    required this.imageUrl,
   });
 
   factory RecommendationResponse.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,7 @@ class RecommendationResponse {
       ratingAvg: (json['rating_avg'] as num).toDouble(),
       categories: List<String>.from(json['categories'] ?? []),
       ingredients: List<String>.from(json['ingredients'] ?? []),
+      imageUrl: json['image_url'] != null ? json['image_url'] : null,
     );
   }
 }

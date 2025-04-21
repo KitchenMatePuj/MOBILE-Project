@@ -24,6 +24,7 @@ class PublicProfileScreen extends StatefulWidget {
 class _PublicProfileScreenState extends State<PublicProfileScreen> {
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
   final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
+  final _authBase = dotenv.env['AUTH_URL'] ?? '';
   late ProfileController _profileController;
   late FollowController _followController;
   late RecipeController _recipeController;
@@ -41,6 +42,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     _profileController = ProfileController(baseUrl: profileBaseUrl);
     _followController = FollowController(baseUrl: profileBaseUrl);
     _recipeController = RecipeController(baseUrl: recipeBaseUrl);
+    _authController = AuthController(baseUrl: _authBase);
 
     _authController.getKeycloakUserId().then((id) {
       keycloakUserId = id;

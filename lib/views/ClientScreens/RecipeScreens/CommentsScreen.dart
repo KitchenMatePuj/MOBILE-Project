@@ -25,6 +25,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
   /* ---------- configuración ---------- */
   final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
+  final String _authBase = dotenv.env['AUTH_URL'] ?? '';
 
   late final CommentController _commentCtl;
   late final ProfileController _profileCtl;
@@ -48,6 +49,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
     super.initState();
     _commentCtl = CommentController(baseUrl: recipeBaseUrl);
     _profileCtl = ProfileController(baseUrl: profileBaseUrl);
+    _authController = AuthController(baseUrl: _authBase);
 
     _authController.getKeycloakUserId().then((id) {
       keycloakUserId = id;
@@ -194,7 +196,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                           onPressed: () async {
                             final reportRequest = ReportRequest(
                               reporterUserId:
-                                  'user1234', // ← este es fijo por ahora
+                                  keycloakUserId, // ← este es fijo por ahora
                               resourceType: 'comment',
                               description:
                                   'Comentario reportado automáticamente.',

@@ -4,11 +4,11 @@
 // ---------------------------------------------------------------
 // Pantalla que muestra el perfil del usuario junto con sus recetas
 // publicadas y guardadas.  Incluye:
-//   • carga perezosa de datos con FutureBuilder
-//   • tabs para alternar entre recetas publicadas / guardadas
-//   • cálculo del nombre del chef y las fotos – incluyendo la URL
+//   • carga perezosa de datos con FutureBuilder
+//   • tabs para alternar entre recetas publicadas / guardadas
+//   • cálculo del nombre del chef y las fotos – incluyendo la URL
 //     absoluta a Strapi cuando el backend devuelve una ruta relativa.
-//   • comentarios en línea para que el código sea más fácil de seguir.
+//   • comentarios en línea para que el código sea más fácil de seguir.
 // ---------------------------------------------------------------
 
 import 'package:flutter/material.dart';
@@ -49,7 +49,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late final SavedRecipeController _savedCtl;
 
   // ---------------------------------------------------------------------------
-  // Estado UI – tab seleccionado & futuros para la data pesada
+  // Estado UI – tab seleccionado & futuros para la data pesada
   // ---------------------------------------------------------------------------
   int _tabIndex = 0; // 0 = publicadas, 1 = guardadas
 
@@ -59,9 +59,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<List<FollowResponse>>? _followingF;
   late Future<List<RecipeResponse>> _publishedF;
   late Future<List<RecipeResponse>> _savedF;
-  late AuthController _authController;
-
-  String keycloakUserId = '';
 
   // ---------------------------------------------------------------------------
   // Constantes de configuración y usuario en sesión (mock)
@@ -69,12 +66,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _profileBase = dotenv.env['PROFILE_URL'] ?? '';
   final _recipeBase = dotenv.env['RECIPE_URL'] ?? '';
   final _strapiBase = dotenv.env['STRAPI_URL'] ?? '';
+  final _authBase = dotenv.env['AUTH_URL'] ?? '';
+  late final AuthController _authController;
 
-  // ⚠️ En una app real obtendrías esto del provider de autenticación.
-  final _keycloakId = 'user1234';
+  // ⚠️ En una app real obtendrías esto del provider de autenticación.
+  String _keycloakId = '';
 
   // ---------------------------------------------------------------------------
-  // Ciclo de vida – instanciamos controladores y disparamos la carga inicial
+  // Ciclo de vida – instanciamos controladores y disparamos la carga inicial
   // ---------------------------------------------------------------------------
   @override
   void initState() {
@@ -85,33 +84,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _profileCtl = ProfileController(baseUrl: _profileBase);
     _recipeCtl = RecipeController(baseUrl: _recipeBase);
     _savedCtl = SavedRecipeController(baseUrl: _profileBase);
+    _authController = AuthController(baseUrl: _authBase);
 
     _authController.getKeycloakUserId().then((id) {
-      keycloakUserId = id;
-    });
+      _keycloakId = id;
 
-    _loadAll();
+      _loadAll();
+    });
   }
 
   /// Carga los distintos bloques de información en paralelo y refresca la UI
   Future<void> _loadAll() async {
-    // 1️⃣ Perfil principal ------------------------------------------------------
+    // 1️⃣ Perfil principal ------------------------------------------------------
     final profile = await _profileCtl.getProfile(_keycloakId);
     _profileF = Future.value(profile);
 
-    // 2️⃣ Resumen (ej. alergias, tiempo de cocción preferido…) ---------------
+    // 2️⃣ Resumen (ej. alergias, tiempo de cocción preferido…) ---------------
     _summaryF = _summaryCtl.getProfileSummary(_keycloakId);
 
-    // 3️⃣ Seguidores / seguidos ------------------------------------------------
+    // 3️⃣ Seguidores / seguidos ------------------------------------------------
     _followersF = _followCtl.listFollowers(profile.profileId);
     _followingF = _followCtl.listFollowed(profile.profileId);
 
-    // 4️⃣ Recetas publicadas ---------------------------------------------------
+    // 4️⃣ Recetas publicadas ---------------------------------------------------
     _publishedF = _recipeCtl.getRecipesByUser(_keycloakId);
 
-    // 5️⃣ Recetas guardadas ----------------------------------------------------
-    //    • primero obtenemos la lista de IDs guardados
-    //    • luego hacemos N peticiones paralelas para traer cada receta
+    // 5️⃣ Recetas guardadas ----------------------------------------------------
+    //    • primero obtenemos la lista de IDs guardados
+    //    • luego hacemos N peticiones paralelas para traer cada receta
     _savedF = _savedCtl
         .getSavedRecipesByKeycloak(_keycloakId)
         .then((savedList) async {
@@ -146,7 +146,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // UI principal --------------------------------------------------------------
+  // UI principal --------------------------------------------------------------
   // ---------------------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
@@ -218,6 +218,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.settings, color: Colors.white),
+            color: Colors.white, // Fondo blanco para el menú
             onSelected: (v) {
               switch (v) {
                 case 'Editar Perfil':
@@ -246,37 +247,95 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
 
   // ---------------------------------------------------------------------------
-  // Widget cabecera con avatar + recuento followers / following ---------------
+  // Widget cabecera con avatar + recuento followers / following ---------------
   // ---------------------------------------------------------------------------
-  Widget _buildStats(ProfileResponse profile) => FutureBuilder(
-        future: Future.wait([_followersF!, _followingF!]),
-        builder: (context, snap) {
-          if (!snap.hasData) return const CircularProgressIndicator();
+  Widget _buildStats(ProfileResponse profile) {
+    final followersFuture = _followCtl.listFollowers(profile.profileId);
+    final followingFuture = _followCtl.listFollowed(profile.profileId);
+    final publishedFuture = _recipeCtl.getRecipesByUser(_keycloakId);
 
-          final followers = (snap.data![0] as List<FollowResponse>).length;
-          final following = (snap.data![1] as List<FollowResponse>).length;
+    return FutureBuilder(
+      future: Future.wait([
+        followersFuture,
+        followingFuture,
+        publishedFuture,
+      ]),
+      builder: (context, snap) {
+        if (!snap.hasData) return const CircularProgressIndicator();
 
-          // Obtenemos URL absoluta para la foto de perfil
-          final avatar = _fullImageUrl(
-            profile.profilePhoto,
-            placeholder: 'assets/chefs/default_user.png',
-          );
+        final followersList = snap.data![0] as List<FollowResponse>;
+        final followingList = snap.data![1] as List<FollowResponse>;
+        final publishedList = snap.data![2] as List<RecipeResponse>;
 
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              CircleAvatar(
-                radius: 45,
-                backgroundImage: avatar.startsWith('http')
-                    ? NetworkImage(avatar)
-                    : AssetImage(avatar) as ImageProvider,
-              ),
-              _stat('Recetas', '0'), // TODO: contar recetas publicadas
-              _stat('Seguidores', followers.toString()),
-              _stat('Siguiendo', following.toString()),
-            ],
-          );
-        },
+        final followers = followersList.length;
+        final following = followingList.length;
+        final published = publishedList.length;
+
+        final avatar = _fullImageUrl(
+          profile.profilePhoto,
+          placeholder: 'assets/chefs/default_user.png',
+        );
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            CircleAvatar(
+              radius: 45,
+              backgroundImage: avatar.startsWith('http')
+                  ? NetworkImage(avatar)
+                  : AssetImage(avatar) as ImageProvider,
+            ),
+            const SizedBox(width: 2),
+            GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  '/followers_and_following',
+                  arguments: {
+                    'profile_id': profile.profileId,
+                    'type': 'recipes',
+                  },
+                );
+              },
+              child: _buildStatItem('Recetas', published.toString()),
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  '/followers_and_following',
+                  arguments: {
+                    'profile_id': profile.profileId,
+                    'type': 'followers',
+                  },
+                );
+              },
+              child: _buildStatItem('Seguidores', followers.toString()),
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  '/followers_and_following',
+                  arguments: {
+                    'profile_id': profile.profileId,
+                    'type': 'following',
+                  },
+                );
+              },
+              child: _buildStatItem('Siguiendo', following.toString()),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildStatItem(String label, String value) => Column(
+        children: [
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(label, style: const TextStyle(color: Colors.grey)),
+        ],
       );
 
   Widget _stat(String label, String value) => Column(
@@ -355,19 +414,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Bottom navigation ---------------------------------------------------------
   // ---------------------------------------------------------------------------
   BottomNavigationBar _buildBottomBar() => BottomNavigationBar(
-        currentIndex: 4,
         type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
         selectedItemColor: const Color(0xFF129575),
-        unselectedItemColor: Colors.grey,
-        onTap: (i) {
-          const routes = [
-            '/dashboard',
-            '/recipe_search',
-            '/create',
-            '/shopping_list',
-            '/profile',
-          ];
-          if (i != 4) Navigator.pushNamed(context, routes[i]);
+        unselectedItemColor: const Color.fromARGB(255, 83, 83, 83),
+        currentIndex: 4,
+        onTap: (int index) {
+          switch (index) {
+            case 0:
+              Navigator.pushNamed(context, '/dashboard');
+              break;
+            case 1:
+              Navigator.pushNamed(context, '/recipe_search');
+              break;
+            case 2:
+              Navigator.pushNamed(context, '/create');
+              break;
+            case 3:
+              Navigator.pushNamed(context, '/shopping_list');
+              break;
+            case 4:
+              break;
+          }
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
@@ -496,7 +564,7 @@ class RecipeCard extends StatelessWidget {
                       style: const TextStyle(
                           fontSize: 16, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
-                  // Nombre + avatar del chef
+                  // Nombre + avatar del chef
                   Row(
                     children: [
                       CircleAvatar(

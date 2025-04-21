@@ -39,6 +39,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
   final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
   final strapiBase = dotenv.env['STRAPI_URL'] ?? '';
+  final String _authBase = dotenv.env['AUTH_URL'] ?? '';
 
   late RecipeController _recipeController;
   late IngredientController _ingredientController;
@@ -47,6 +48,8 @@ class _RecipeScreenState extends State<RecipeScreen> {
   late SavedRecipeController _savedController;
   late CommentController _commentController;
   late AuthController _authController;
+  late String _authUserId = '';
+  late String recipeUserId = '';
 
   Future<void> _loadRecipeData(int recipeId) async {
     try {
@@ -106,10 +109,13 @@ class _RecipeScreenState extends State<RecipeScreen> {
     _commentController = CommentController(baseUrl: recipeBaseUrl);
     _profileController = ProfileController(baseUrl: profileBaseUrl);
     _savedController = SavedRecipeController(baseUrl: profileBaseUrl);
+    _authController = AuthController(baseUrl: _authBase);
 
     _authController.getKeycloakUserId().then((id) {
       keycloakUserId = id;
     });
+
+    _authUserId = keycloakUserId;
   }
 
   // ──────────────── 3) didChangeDependencies → leer arguments ──────────
@@ -284,12 +290,13 @@ class _RecipeScreenState extends State<RecipeScreen> {
         ),
         Row(
           children: [
-            ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF129575)),
-              child: const Text("Seguir"),
-            ),
+            if (_authUserId != recipeUserId)
+              ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF129575)),
+                child: const Text("Seguir"),
+              ),
             const SizedBox(width: 5),
             ElevatedButton(
               onPressed: () {},

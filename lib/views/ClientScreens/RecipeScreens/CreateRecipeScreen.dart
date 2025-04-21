@@ -33,10 +33,11 @@ const List<String> defaultUnits = [
   'Pizca'
 ];
 
-const String keycloakUserId = 'user1234';
+// const String keycloakUserId = 'user1234';
 
 final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
 final String strapiBaseUrl = dotenv.env['STRAPI_URL'] ?? '';
+final String authbaseUrl = dotenv.env['AUTH_URL'] ?? '';
 
 class CreateRecipeScreen extends StatefulWidget {
   const CreateRecipeScreen({super.key});
@@ -63,7 +64,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
       StrapiController(baseUrl: strapiBaseUrl);
 
   late StrapiController _strapiCtl;
-  late AuthController _authController;
+  final AuthController _authController=AuthController(baseUrl: authbaseUrl);
   Uint8List? _imageBytes;
 
   List<String> steps = [

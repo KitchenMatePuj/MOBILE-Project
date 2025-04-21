@@ -36,7 +36,7 @@ class IngredientAllergyController {
   /// POST: Crear una nueva alergia
   Future<void> createAllergy(IngredientAllergyRequest request) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/ingredient_allergy'),
+      Uri.parse('$baseUrl/ingredient_allergies/'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(request.toJson()),
     );
