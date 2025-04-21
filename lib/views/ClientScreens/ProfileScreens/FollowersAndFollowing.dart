@@ -25,6 +25,8 @@ class FollowersAndFollowingScreen extends StatefulWidget {
 class _FollowersAndFollowingScreenState
     extends State<FollowersAndFollowingScreen> {
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
+  final String authbaseUrl = dotenv.env['AUTH_URL'] ?? '';
+  final _authBase = dotenv.env['AUTH_URL'] ?? '';
   late int selectedIndex;
   late FollowController _followController;
   late ProfileController _profileController;
@@ -39,6 +41,7 @@ class _FollowersAndFollowingScreenState
     selectedIndex = widget.type == 'following' ? 1 : 0;
     _followController = FollowController(baseUrl: profileBaseUrl);
     _profileController = ProfileController(baseUrl: profileBaseUrl);
+    _authController = AuthController(baseUrl: _authBase);
 
     _authController.getKeycloakUserId().then((id) {
       keycloakUserId = id;

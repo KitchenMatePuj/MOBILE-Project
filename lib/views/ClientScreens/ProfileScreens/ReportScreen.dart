@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '/controllers/Profiles/profile_controller.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '/controllers/Reports/reports_controller.dart';
 import '/models/Profiles/profile_response.dart';
 import '/models/Reports/report_response.dart';
@@ -19,19 +20,22 @@ class ReportsScreen extends StatefulWidget {
 }
 
 class _ReportsScreenState extends State<ReportsScreen> {
+  final String _authBase = dotenv.env['AUTH_URL'] ?? '';
   final List<int> _expandedReports = [];
   late Future<List<ReportResponse>> _reportsFuture;
   late ReportsController _reportsController;
   late AuthController _authController;
-  String reporterUserIdd = "2"; // Cambiar segun necesitemos Probar
+  String reporterUserIdd = ''; // Cambiar segun necesitemos Probar
   String keycloakUserId = '';
 
   @override
   void initState() {
     super.initState();
+    _authController = AuthController(baseUrl: _authBase);
 
     _authController.getKeycloakUserId().then((id) {
-      keycloakUserId = id;
+      reporterUserIdd = id;
+      print('Keycloak User ID: $reporterUserIdd');
     });
 
     _reportsController = ReportsController();
@@ -86,15 +90,19 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   );
                 }
 
-                final userReports = snapshot.data!.where((report) => report.reporterUserId == reporterUserIdd).toList();
+                final userReports = snapshot.data!
+                    .where((report) => report.reporterUserId == reporterUserIdd)
+                    .toList();
 
                 return Expanded(
                   child: ListView.builder(
                     itemCount: userReports.length,
                     itemBuilder: (context, index) {
                       final report = userReports[index];
-                      final formattedDate = DateFormat('dd-MM-yyyy').format(report.createdAt);
-                      final isExpanded = _expandedReports.contains(report.reportId);
+                      final formattedDate =
+                          DateFormat('dd-MM-yyyy').format(report.createdAt);
+                      final isExpanded =
+                          _expandedReports.contains(report.reportId);
                       final statusColor = report.status == 'Resuelto'
                           ? const Color(0xFF129575)
                           : report.status == 'Eliminado'
@@ -129,7 +137,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Reporte ($formattedDate):',
@@ -154,11 +163,15 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                 RichText(
                                   text: TextSpan(
                                     text: 'Descripción de Reporte: ',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black),
                                     children: [
                                       TextSpan(
-                                        text: report.description ?? 'No disponible',
-                                        style: const TextStyle(fontWeight: FontWeight.normal),
+                                        text: report.description ??
+                                            'No disponible',
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.normal),
                                       ),
                                     ],
                                   ),
@@ -166,11 +179,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                 RichText(
                                   text: TextSpan(
                                     text: 'Tipo de Reporte: ',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black),
                                     children: [
                                       TextSpan(
                                         text: report.resourceType,
-                                        style: const TextStyle(fontWeight: FontWeight.normal),
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.normal),
                                       ),
                                     ],
                                   ),
@@ -178,11 +194,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                 RichText(
                                   text: TextSpan(
                                     text: 'ID de Reporte: ',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black),
                                     children: [
                                       TextSpan(
                                         text: report.reportId.toString(),
-                                        style: const TextStyle(fontWeight: FontWeight.normal),
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.normal),
                                       ),
                                     ],
                                   ),

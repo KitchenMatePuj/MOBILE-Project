@@ -63,7 +63,7 @@ class ProfileController {
   Future<void> updateProfile(
       String keycloakUserId, ProfileRequest updatedProfile) async {
     final response = await http.put(
-      Uri.parse('$baseUrl/$keycloakUserId'),
+      Uri.parse('$baseUrl/profiles/$keycloakUserId'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode(updatedProfile.toJson()),
     );

@@ -24,19 +24,19 @@ class AuthController {
       url,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'username': username,
-        'password': password,
-        'email': email,
-        'first_name': firstName,
-        'last_name': lastName,
+        "username": username,
+        "password": password,
+        "email": email,
+        "first_name": firstName,
+        "last_name": lastName,
       }),
     );
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
       final data = jsonDecode(response.body);
-      return data['keycloak_user_id'];
+      return data['access_token']; // <- retorna el JWT
     } else {
-      throw Exception('Fallo el registro en Keycloak: ${response.body}');
+      throw Exception('Error al registrar el usuario: ${response.body}');
     }
   }
 

@@ -11,7 +11,7 @@ class IngredientController {
   /// Crear un nuevo ingrediente (POST /ingredients)
   Future<IngredientResponse> createIngredient(IngredientRequest request) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/ingredients'),
+      Uri.parse('$baseUrl/ingredients/'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(request.toJson()),
     );
@@ -36,7 +36,7 @@ class IngredientController {
 
   /// Obtener todos los ingredientes (GET /ingredients)
   Future<List<IngredientResponse>> fetchIngredients() async {
-    final url = Uri.parse('$baseUrl/ingredients');
+    final url = Uri.parse('$baseUrl/ingredients/');
     final response = await http.get(url);
 
     print('URL: $url');

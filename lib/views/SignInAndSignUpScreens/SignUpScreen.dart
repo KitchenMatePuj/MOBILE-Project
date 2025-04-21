@@ -16,6 +16,7 @@ import '../../models/Profiles/profile_response.dart';
 import '../../controllers/Recipes/ingredients.dart';
 import '../../models/Recipes/ingredients_response.dart';
 import '../../models/Profiles/ingredientAllery_response.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -38,6 +39,7 @@ class SignUpScreenState extends State<SignUpScreen> {
   bool _isPasswordValid = true;
   bool _isConfirmPasswordValid = true;
   bool _isEmailValid = true;
+  bool _isRegistering = false;
 
   String? _firstNameError;
   String? _lastNameError;
@@ -87,6 +89,9 @@ class SignUpScreenState extends State<SignUpScreen> {
   }
 
   Future<void> _createAccount() async {
+    if (_isRegistering) return;
+    _isRegistering = true;
+
     try {
       final email = _emailController.text;
       final password = _passwordController.text;
@@ -95,13 +100,16 @@ class SignUpScreenState extends State<SignUpScreen> {
       final phone = _phoneController.text;
       final cookingTime = int.tryParse(_cookingTimeController.text) ?? 30;
 
-      final keycloakUserId = await _authController.registerUser(
-        username: email,
+      final jwt = await _authController.registerUser(
+        username: firstName,
         password: password,
         email: email,
         firstName: firstName,
         lastName: lastName,
       );
+
+      final decodedToken = JwtDecoder.decode(jwt);
+      final keycloakUserId = decodedToken['sub'];
 
       final profileRequest = ProfileRequest(
         keycloakUserId: keycloakUserId,
@@ -109,7 +117,6 @@ class SignUpScreenState extends State<SignUpScreen> {
         lastName: lastName,
         email: email,
         phone: phone,
-        profilePhoto: 'https://example.com/photo.jpg',
         accountStatus: 'active',
         cookingTime: cookingTime,
       );
@@ -128,8 +135,10 @@ class SignUpScreenState extends State<SignUpScreen> {
       Navigator.pushNamed(context, '/login');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al crear cuenta: \$e')),
+        SnackBar(content: Text('Error al crear cuenta: $e')),
       );
+    } finally {
+      _isRegistering = false;
     }
   }
 
@@ -201,6 +210,7 @@ class SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Creación de Cuenta'),

@@ -26,7 +26,7 @@ class DashboardScreen extends StatefulWidget {
   _DashboardScreenState createState() => _DashboardScreenState();
 }
 
-const image = '../../assets/images/default.jpg';
+const image = '';
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
@@ -44,6 +44,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<RecipeResponse> _publishedRecipes = [];
   List<RecommendationResponse> _recommendations = [];
   Map<int, CategoryResponse> _categoriesById = {};
+  Map<String, ProfileResponse> _authorProfiles = {};
 
   Future<ProfileResponse>? _profileFuture;
   Future<ProfileSummaryResponse>? _summaryFuture;
@@ -54,6 +55,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String query = '';
   int _recipesToShow = 4;
   int selectedIndex = 0;
+
+  String _fullImageUrl(String? path, {required String placeholder}) {
+    try {
+      if (path == null || path.isEmpty || path == 'example') return placeholder;
+      if (path.startsWith('http')) return path;
+      final base = dotenv.env['STRAPIURL']?.replaceAll(RegExp(r'/$'), '') ?? '';
+      final fixedPath = path.startsWith('/') ? path : '/$path';
+      return '$base$fixedPath';
+    } catch (_) {
+      return placeholder;
+    }
+  }
 
   @override
   void initState() {
@@ -71,43 +84,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _loadUserData() async {
-    
-    _authController.getKeycloakUserId().then((id) {
-      keycloakUserId = id;
-    });
-    
+    try {
+      keycloakUserId = await _authController.getKeycloakUserId();
 
-    _profileFuture = _profileController.getProfile(keycloakUserId);
+      _profileFuture = _profileController.getProfile(keycloakUserId);
 
-    _summaryFuture = _summaryController.getProfileSummary(keycloakUserId)
-      ..then((summary) async {
-        await _loadSavedRecipes(summary.savedRecipes);
-        await _loadCategoriesForRecipes(_savedRecipeDetails);
+      _summaryFuture = _summaryController.getProfileSummary(keycloakUserId)
+        ..then((summary) async {
+          await _loadSavedRecipes(summary.savedRecipes);
+          await _loadCategoriesForRecipes(_savedRecipeDetails);
 
-        final categoryNames = _savedRecipeDetails
-            .map((r) => r.categoryId)
-            .where((id) => _categoriesById.containsKey(id))
-            .map((id) => _categoriesById[id]!.name)
-            .toList();
+          final categoryNames = _savedRecipeDetails
+              .map((r) => r.categoryId)
+              .where((id) => _categoriesById.containsKey(id))
+              .map((id) => _categoriesById[id]!.name)
+              .toList();
 
-        final recommendationRequest = RecommendationRequest(
-          keycloakUserId: keycloakUserId,
-          favoriteCategories: categoryNames,
-          allergies: summary.ingredientAllergies,
-          cookingTime: summary.cookingTime,
-        );
+          final recommendationRequest = RecommendationRequest(
+            keycloakUserId: keycloakUserId,
+            favoriteCategories: categoryNames,
+            allergies: summary.ingredientAllergies,
+            cookingTime: summary.cookingTime,
+          );
 
-        final recs = await _recommendationController
-            .fetchRecommendations(recommendationRequest);
+          final recs = await _recommendationController
+              .fetchRecommendations(recommendationRequest);
 
-        setState(() {
-          _recommendations = recs;
+          setState(() {
+            _recommendations = recs;
+          });
+
+          await _loadPublishedRecipes(keycloakUserId);
         });
 
-        await _loadPublishedRecipes(keycloakUserId);
-      });
-
-    setState(() {}); // fuerza rebuild con los futuros actualizados
+      setState(() {}); // fuerza rebuild
+    } catch (e) {
+      print('❌ Error al cargar usuario: $e');
+    }
   }
 
   Future<void> _loadSavedRecipes(List<int> recipeIds) async {
@@ -160,6 +173,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           allRecipes.addAll(userRecipes);
         } catch (_) {
           continue;
+        }
+      }
+
+      for (final recipe in allRecipes) {
+        final authorId = recipe.keycloakUserId;
+        if (!_authorProfiles.containsKey(authorId)) {
+          final profile = await _profileController.getProfile(authorId);
+          _authorProfiles[authorId] = profile;
         }
       }
 
@@ -248,30 +269,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           itemCount: _recommendations.length,
                           itemBuilder: (context, index) {
                             final rec = _recommendations[index];
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              child: RecipeCard(
-                                title: rec.title,
-                                chef: 'Chef',
-                                duration: '${rec.cookingTime}',
-                                imageUrl: image,
-                                rating: rec.ratingAvg.round(),
-                              ),
-                            );
-                          },
-                        )
-                  : _publishedRecipes.isEmpty
-                      ? Center(
-                          child: Text('Aún no has publicado recetas.',
-                              style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 16,
-                                  fontStyle: FontStyle.italic)))
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: _publishedRecipes.length,
-                          itemBuilder: (context, index) {
                             final recipe = _publishedRecipes[index];
+                            final profile =
+                                _authorProfiles[recipe.keycloakUserId];
+                            final chefName = profile != null
+                                ? '${profile.firstName} ${profile.lastName}'
+                                : 'Chef';
+                            final img = _fullImageUrl(
+                              rec.imageUrl,
+                              placeholder:
+                                  'assets/styles/recipe_placeholder.jpg',
+                            );
+
                             return Padding(
                               padding: const EdgeInsets.symmetric(vertical: 8),
                               child: GestureDetector(
@@ -281,9 +290,50 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 },
                                 child: RecipeCard(
                                   title: recipe.title,
-                                  chef: 'Tú',
+                                  chef: chefName,
                                   duration: '${recipe.cookingTime}',
-                                  imageUrl: image,
+                                  imageUrl: img,
+                                  rating: recipe.ratingAvg.round(),
+                                ),
+                              ),
+                            );
+                          },
+                        )
+                  : _publishedRecipes.isEmpty
+                      ? Center(
+                          child: Text('Aún no sigues a nadie.',
+                              style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 16,
+                                  fontStyle: FontStyle.italic)))
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: _publishedRecipes.length,
+                          itemBuilder: (context, index) {
+                            final recipe = _publishedRecipes[index];
+                            final profile =
+                                _authorProfiles[recipe.keycloakUserId];
+                            final chefName = profile != null
+                                ? '${profile.firstName} ${profile.lastName}'
+                                : 'Chef';
+                            final img = _fullImageUrl(
+                              recipe.imageUrl,
+                              placeholder:
+                                  'assets/styles/recipe_placeholder.jpg',
+                            );
+
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.pushNamed(context, '/recipe',
+                                      arguments: {'recipeId': recipe.recipeId});
+                                },
+                                child: RecipeCard(
+                                  title: recipe.title,
+                                  chef: chefName,
+                                  duration: '${recipe.cookingTime}',
+                                  imageUrl: img,
                                   rating: recipe.ratingAvg.round(),
                                 ),
                               ),
@@ -368,11 +418,19 @@ class RecipeCard extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Image.asset(
+            child: Image.network(
               imageUrl,
               height: 120,
               width: double.infinity,
               fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Image.asset(
+                  'assets/styles/recipe_placeholder.jpg',
+                  height: 120,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                );
+              },
             ),
           ),
           Padding(
