@@ -34,7 +34,7 @@ class SavedRecipeController {
   /// POST: Crear una receta guardada
   Future<void> createSavedRecipe(SavedRecipeRequest recipe) async {
     final response = await http.post(
-      Uri.parse(baseUrl),
+      Uri.parse('$baseUrl/saved_recipes/'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode(recipe.toJson()),
     );
@@ -59,7 +59,7 @@ class SavedRecipeController {
 
   /// DELETE: Eliminar una receta guardada
   Future<void> deleteSavedRecipe(int id) async {
-    final response = await http.delete(Uri.parse('$baseUrl/$id'));
+    final response = await http.delete(Uri.parse('$baseUrl/saved_recipes/$id'));
 
     if (response.statusCode != 200 && response.statusCode != 204) {
       throw Exception('Failed to delete saved recipe');

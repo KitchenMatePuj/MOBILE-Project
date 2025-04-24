@@ -11,6 +11,16 @@ import 'package:mobile_kitchenmate/controllers/Profiles/saved_recipe_controller.
 import '/controllers/authentication/auth_controller.dart';
 import '/models/authentication/login_request_advanced.dart' as advanced;
 import '/models/authentication/login_response.dart';
+import '/models/Profiles/saved_recipe_request.dart';
+import '/models/Profiles/saved_recipe_response.dart';
+import '/models/Profiles/follow_request.dart';
+import '/controllers/Profiles/follow_controller.dart';
+import '/models/Reports/report_request.dart';
+import '/models/Reports/report_response.dart';
+import 'package:mobile_kitchenmate/controllers/Reports/reports_controller.dart';
+import '/controllers/Profiles/shopping_list_controller.dart';
+import '/models/Profiles/shopping_list_request.dart';
+import '/models/Profiles/shopping_list_response.dart';
 
 class RecipeScreen extends StatefulWidget {
   final int recipeId;
@@ -35,6 +45,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
   int totalComments = 0;
   List<String> steps = [];
   List<Map<String, String>> ingredients = [];
+  bool isFollowing = false;
 
   final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
@@ -53,24 +64,39 @@ class _RecipeScreenState extends State<RecipeScreen> {
 
   Future<void> _loadRecipeData(int recipeId) async {
     try {
-      // receta principal y perfil del autor
+      // Carga la receta principal y el perfil del autor
       final recipe = await _recipeController.getRecipeById(recipeId);
       final chef = await _profileController.getProfile(recipe.keycloakUserId);
 
-      // pasos e ingredientes
+      // Verifica si el usuario ya sigue al chef
+      final profile = await _profileController.getProfile(keycloakUserId);
+      final followedKeycloakIds =
+          await FollowController(baseUrl: profileBaseUrl)
+              .getFollowedKeycloakUserIds(profile.profileId);
+      final isUserFollowing =
+          followedKeycloakIds.contains(recipe.keycloakUserId);
+
+      // Verifica si la receta ya está guardada
+      final savedRecipes =
+          await _savedController.getSavedRecipesByKeycloak(keycloakUserId);
+      final isRecipeSaved =
+          savedRecipes.any((saved) => saved.recipeId == recipeId);
+
+      // Carga pasos e ingredientes
       final stepRes = await _stepController.fetchSteps(recipeId);
       final ingRes = await _ingredientController.fetchIngredients();
       final ingOfRecipe = ingRes.where((i) => i.recipeId == recipeId);
 
+      // Carga comentarios
       final comments = await _commentController.fetchComments(recipeId);
 
       imageUrl = (recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty)
           ? (recipe.imageUrl!.startsWith('http')
-              ? recipe.imageUrl! // ya viene absoluta
-              : '$strapiBase${recipe.imageUrl!}') // relativa → la completamos
+              ? recipe.imageUrl! // URL absoluta
+              : '$strapiBase${recipe.imageUrl!}') // URL relativa → completar
           : 'assets/recipes/recipe_placeholder.jpg';
 
-      if (!mounted) return; // pantalla cerrada → salir
+      if (!mounted) return; // Si la pantalla fue cerrada, salir
       setState(() {
         recipeTitle = recipe.title;
         duration = recipe.cookingTime;
@@ -86,9 +112,9 @@ class _RecipeScreenState extends State<RecipeScreen> {
             .map((i) => {'name': i.name, 'unit': i.measurementUnit})
             .toList();
         totalComments = comments.length;
+        isSaved = isRecipeSaved; // Actualiza el estado del icono de guardar
       });
     } catch (e) {
-      // SnackBar tras el primer frame
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -96,6 +122,191 @@ class _RecipeScreenState extends State<RecipeScreen> {
           );
         }
       });
+    }
+  }
+
+  Future<void> _showReportDialog(BuildContext context) async {
+  final TextEditingController reportController = TextEditingController();
+  bool isButtonEnabled = false; // Estado inicial del botón
+
+  await showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return StatefulBuilder(
+        builder: (BuildContext context, StateSetter setState) {
+          return AlertDialog(
+            title: const Text('Estas a punto de reportar esta receta'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Por favor, escribe el motivo del reporte:'),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: reportController,
+                  maxLines: 3,
+                  onChanged: (value) {
+                    // Actualiza el estado del botón cuando cambia el texto
+                    setState(() {
+                      isButtonEnabled = value.trim().isNotEmpty;
+                    });
+                  },
+                  decoration: const InputDecoration(
+                    hintText: 'Escribe los detalles aquí...',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context); // Cerrar el popup
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 238, 99, 89),
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                onPressed: isButtonEnabled
+                    ? () async {
+                        await _submitReport(reportController.text); // Enviar reporte
+                        Navigator.pop(context); // Cerrar el popup
+                      }
+                    : null, // Deshabilita el botón si no hay texto
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF129575),
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Aceptar'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
+Future<void> _addToShoppingList() async {
+  try {
+    // Obtén el perfil del usuario logueado
+    final profile = await _profileController.getProfile(keycloakUserId);
+
+    // Crea una solicitud para la lista de compras
+    final shoppingListRequest = ShoppingListRequest(
+      profileId: profile.profileId,
+      recipeName: recipeTitle,
+      recipePhoto: imageUrl, // Usa la URL de la imagen de la receta
+    );
+
+    // Envía la solicitud al backend
+    await ShoppingListController(baseUrl: profileBaseUrl)
+        .createShoppingList(shoppingListRequest);
+
+    // Muestra un mensaje de éxito
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Receta añadida a la lista de compras')),
+    );
+  } catch (e) {
+    // Maneja errores y muestra un mensaje de error
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error al añadir a la lista de compras: $e')),
+    );
+  }
+}
+
+  Future<void> _submitReport(String description) async {
+    try {
+      final reportRequest = ReportRequest(
+        reporterUserId: keycloakUserId, // Usuario que reporta
+        resourceType: 'recipe', // Tipo de recurso (en este caso, receta)
+        description: description,
+        status: 'pending', // Estado inicial del reporte
+      );
+
+      await ReportsController()
+          .createReport(reportRequest); // Enviar el reporte
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Reporte enviado con éxito')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al enviar reporte: $e')),
+      );
+    }
+  }
+
+  Future<void> _toggleFollowState() async {
+    try {
+      final profile = await _profileController.getProfile(keycloakUserId);
+      final chefProfile = await _profileController.getProfile(recipeUserId);
+
+      if (isFollowing) {
+        // Dejar de seguir al chef
+        await FollowController(baseUrl: profileBaseUrl)
+            .deleteFollow(profile.profileId, chefProfile.profileId);
+      } else {
+        // Seguir al chef
+        final followRequest = FollowRequest(
+          followerId: profile.profileId,
+          followedId: chefProfile.profileId,
+        );
+        await FollowController(baseUrl: profileBaseUrl)
+            .createFollow(followRequest);
+      }
+
+      setState(() {
+        isFollowing = !isFollowing; // Alterna el estado
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(isFollowing
+                ? 'Siguiendo al chef'
+                : 'Dejaste de seguir al chef')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al actualizar seguimiento: $e')),
+      );
+    }
+  }
+
+  Future<void> _toggleSavedState() async {
+    try {
+      if (isSaved) {
+        // Elimina la receta guardada
+        final savedRecipes =
+            await _savedController.getSavedRecipesByKeycloak(keycloakUserId);
+        final savedRecipe =
+            savedRecipes.firstWhere((saved) => saved.recipeId == recipeId);
+        await _savedController.deleteSavedRecipe(savedRecipe.savedRecipeId);
+      } else {
+        // Crea una nueva receta guardada
+        final profile = await _profileController.getProfile(keycloakUserId);
+        final newSavedRecipe = SavedRecipeRequest(
+          profileId: profile.profileId,
+          recipeId: recipeId!,
+        );
+        await _savedController.createSavedRecipe(newSavedRecipe);
+      }
+
+      // Actualiza el estado del icono
+      setState(() {
+        isSaved = !isSaved;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(isSaved ? 'Receta guardada' : 'Receta eliminada')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al actualizar guardado: $e')),
+      );
     }
   }
 
@@ -157,7 +368,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
           IconButton(
             icon: const Icon(Icons.report),
             onPressed: () {
-              // Acción de reporte
+              _showReportDialog(context);
             },
           ),
         ],
@@ -231,11 +442,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
               isSaved ? Icons.bookmark : Icons.bookmark_border,
               color: isSaved ? Colors.yellow : Colors.white,
             ),
-            onPressed: () {
-              setState(() {
-                isSaved = !isSaved;
-              });
-            },
+            onPressed: _toggleSavedState, // Alterna el estado de guardado
           ),
         ),
       ],
@@ -271,45 +478,59 @@ class _RecipeScreenState extends State<RecipeScreen> {
   }
 
   Widget _buildChefInfo() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundImage: chefImage.startsWith('http')
-                  ? NetworkImage(chefImage)
-                  : AssetImage(chefImage) as ImageProvider,
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Row(
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundImage: chefImage.startsWith('http')
+                ? NetworkImage(chefImage)
+                : AssetImage(chefImage) as ImageProvider,
+          ),
+          const SizedBox(width: 10),
+          Text(
+            chefName,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(width: 10),
-            Text(chefName,
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          ],
-        ),
-        Row(
-          children: [
-            if (_authUserId != recipeUserId)
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF129575)),
-                child: const Text("Seguir"),
-              ),
-            const SizedBox(width: 5),
+          ),
+        ],
+      ),
+      Row(
+        children: [
+          if (_authUserId == recipeUserId)
             ElevatedButton(
-              onPressed: () {},
+              onPressed: _toggleFollowState, // Llama al método para alternar estado
               style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF129575)),
-              child:
-                  const Text("+ Lista\nCompras", textAlign: TextAlign.center),
+                backgroundColor: isFollowing
+                    ? Colors.grey // Color para "Dejar de seguir"
+                    : const Color(0xFF129575), // Color para "Seguir"
+              ),
+              child: Text(
+                isFollowing ? 'Siguiendo' : 'Seguir', // Texto dinámico
+                style: const TextStyle(color: Colors.white),
+              ),
             ),
-          ],
-        )
-      ],
-    );
-  }
+          const SizedBox(width: 5),
+          ElevatedButton(
+            onPressed: _addToShoppingList, // Llama al método para agregar a la lista
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF129575),
+            ),
+            child: const Text(
+              "+ Lista\nCompras",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    ],
+  );
+}
 
   Widget _buildTabs() {
     return Row(

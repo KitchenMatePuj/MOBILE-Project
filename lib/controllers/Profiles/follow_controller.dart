@@ -51,21 +51,23 @@ class FollowController {
 
   /// POST: Crear relación de seguimiento
   Future<void> createFollow(FollowRequest follow) async {
-    final response = await http.post(
-      Uri.parse(baseUrl),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode(follow.toJson()),
-    );
+  final response = await http.post(
+    Uri.parse('$baseUrl/follows/'),
+    headers: {'Content-Type': 'application/json'},
+    body: json.encode(follow.toJson()),
+  );
 
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to follow profile');
-    }
+  if (response.statusCode != 200 && response.statusCode != 201) {
+    final errorBody = response.body;
+    throw Exception('Failed to follow profile: $errorBody');
   }
+}
+
 
   /// DELETE: Eliminar relación de seguimiento
   Future<void> deleteFollow(int followerId, int followedId) async {
     final response = await http.delete(
-      Uri.parse('$baseUrl?follower_id=$followerId&followed_id=$followedId'),
+      Uri.parse('$baseUrl/follows/?follower_id=$followerId&followed_id=$followedId'),
     );
 
     if (response.statusCode != 200 && response.statusCode != 204) {
