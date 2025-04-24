@@ -26,6 +26,8 @@ import 'package:mobile_kitchenmate/models/Profiles/summary_response.dart';
 import 'package:mobile_kitchenmate/models/Profiles/profile_response.dart';
 import 'package:mobile_kitchenmate/models/Profiles/follow_response.dart';
 import 'package:mobile_kitchenmate/models/Recipes/recipes_response.dart';
+import 'package:mobile_kitchenmate/models/Profiles/saved_recipe_request.dart';
+import 'package:mobile_kitchenmate/models/Profiles/saved_recipe_response.dart';
 
 import '/controllers/authentication/auth_controller.dart';
 import '/models/authentication/login_request_advanced.dart' as advanced;
@@ -95,37 +97,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   /// Carga los distintos bloques de información en paralelo y refresca la UI
   Future<void> _loadAll() async {
-    // 1️⃣ Perfil principal ------------------------------------------------------
+    // Carga el perfil del usuario
     final profile = await _profileCtl.getProfile(_keycloakId);
     _profileF = Future.value(profile);
 
-    // 2️⃣ Resumen (ej. alergias, tiempo de cocción preferido…) ---------------
+    // Carga el resumen del perfil
     _summaryF = _summaryCtl.getProfileSummary(_keycloakId);
 
-    // 3️⃣ Seguidores / seguidos ------------------------------------------------
+    // Carga los seguidores y seguidos
     _followersF = _followCtl.listFollowers(profile.profileId);
     _followingF = _followCtl.listFollowed(profile.profileId);
 
-    // 4️⃣ Recetas publicadas ---------------------------------------------------
+    // Carga las recetas publicadas
     _publishedF = _recipeCtl.getRecipesByUser(_keycloakId);
 
-    // 5️⃣ Recetas guardadas ----------------------------------------------------
-    //    • primero obtenemos la lista de IDs guardados
-    //    • luego hacemos N peticiones paralelas para traer cada receta
+    // Carga las recetas guardadas
     _savedF = _savedCtl
         .getSavedRecipesByKeycloak(_keycloakId)
         .then((savedList) async {
-      final results = await Future.wait(savedList.map((s) async {
+      final results = await Future.wait(savedList.map((savedRecipe) async {
         try {
-          return await _recipeCtl.getRecipeById(s.recipeId);
+          return await _recipeCtl.getRecipeById(savedRecipe.recipeId);
         } catch (_) {
-          return null; // receta fue eliminada
+          return null; // Ignorar recetas que no se puedan cargar
         }
       }));
       return results.whereType<RecipeResponse>().toList();
     });
 
-    setState(() {}); // fuerza un rebuild cuando todos los futuros están listos
+    // Fuerza un rebuild cuando todos los futuros están listos
+    setState(() {});
   }
 
   // ---------------------------------------------------------------------------
@@ -348,67 +349,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ---------------------------------------------------------------------------
   // Lista (perezosa) de recetas ------------------------------------------------
   // ---------------------------------------------------------------------------
-  Widget _recipeList(Future<List<RecipeResponse>> future) =>
-      FutureBuilder<List<RecipeResponse>>(
-        future: future,
-        builder: (context, snap) {
-          if (!snap.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final list = snap.data!;
-          if (list.isEmpty) {
-            return const Center(child: Text('Sin recetas'));
-          }
+  Widget _recipeList(Future<List<RecipeResponse>> future) {
+    return FutureBuilder<List<RecipeResponse>>(
+      future: future,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 23, vertical: 16),
-            itemCount: list.length,
-            itemBuilder: (_, i) {
-              final r = list[i];
+        final recipes = snapshot.data!;
+        if (recipes.isEmpty) {
+          return const Center(child: Text('Sin recetas'));
+        }
 
-              // Imagen de la receta ------------------------------------------
-              final img = _fullImageUrl(
-                r.imageUrl,
-                placeholder: 'assets/styles/recipe_placeholder.jpg',
-              );
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 23, vertical: 16),
+          itemCount: recipes.length,
+          itemBuilder: (context, index) {
+            final recipe = recipes[index];
 
-              // Traemos perfil del autor para mostrar su nombre y avatar
-              return FutureBuilder<ProfileResponse>(
-                future: _profileCtl.getProfile(r.keycloakUserId),
-                builder: (context, chefSnap) {
-                  if (!chefSnap.hasData) {
-                    return const SizedBox.shrink();
-                  }
+            final imageUrl = _fullImageUrl(
+              recipe.imageUrl,
+              placeholder: 'assets/styles/recipe_placeholder.jpg',
+            );
 
-                  final chefProfile = chefSnap.data!;
-                  final chefName =
-                      chefProfile.firstName ?? chefProfile.keycloakUserId;
-                  final avatar = _fullImageUrl(
-                    chefProfile.profilePhoto,
-                    placeholder: 'assets/chefs/default_user.png',
-                  );
+            // Aquí viene la magia: obtenemos el perfil del chef
+            return FutureBuilder<ProfileResponse>(
+              future: _profileCtl.getProfile(recipe.keycloakUserId),
+              builder: (context, chefSnap) {
+                final chef = chefSnap.data;
+                final chefName = chef?.firstName?.isNotEmpty == true
+                    ? chef!.firstName!
+                    : recipe.keycloakUserId ?? 'Chef desconocido';
 
-                  return GestureDetector(
-                    onTap: () => Navigator.pushNamed(
-                      context,
-                      '/recipe',
-                      arguments: {'recipeId': r.recipeId},
-                    ),
-                    child: RecipeCard(
-                      title: r.title,
-                      chef: chefName, // ← mostramos nombre, no ID ✅
-                      duration: '${r.cookingTime}',
-                      imageUrl: img,
-                      avatarUrl: avatar,
-                      rating: r.ratingAvg.round(),
-                    ),
-                  );
-                },
-              );
-            },
-          );
-        },
-      );
+                final avatar = _fullImageUrl(
+                  chef?.profilePhoto,
+                  placeholder: 'assets/chefs/default_user.png',
+                );
+
+                return GestureDetector(
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    '/recipe',
+                    arguments: {'recipeId': recipe.recipeId},
+                  ),
+                  child: RecipeCard(
+                    title: recipe.title,
+                    chef: chefName,
+                    duration: '${recipe.cookingTime}',
+                    imageUrl: imageUrl,
+                    avatarUrl: avatar,
+                    rating: recipe.ratingAvg.round(),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
 
   // ---------------------------------------------------------------------------
   // Bottom navigation ---------------------------------------------------------
@@ -508,6 +508,7 @@ class RecipeCard extends StatelessWidget {
   final String imageUrl;
   final int? rating;
   final String avatarUrl;
+
   const RecipeCard({
     super.key,
     required this.title,
@@ -519,88 +520,98 @@ class RecipeCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Imagen de cabecera ------------------------------------------------
-            ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(12)),
-              child: imageUrl.startsWith('http')
-                  ? Image.network(
-                      imageUrl,
-                      height: 120,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    )
-                  : Image.asset(
-                      imageUrl,
-                      height: 120,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-            ),
-            // Detalles ---------------------------------------------------------
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Título de la receta
-                  Text(title,
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 8),
-                  // Nombre + avatar del chef
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 12,
-                        backgroundImage: avatarUrl.startsWith('http')
-                            ? NetworkImage(avatarUrl)
-                            : AssetImage(avatarUrl) as ImageProvider,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(chef, style: const TextStyle(fontSize: 14)),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  // Duración + rating
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('$duration mins',
-                          style: const TextStyle(color: Colors.grey)),
-                      Row(
-                        children: List.generate(
-                            5,
-                            (i) => Icon(
-                                  i < (rating ?? 0)
-                                      ? Icons.star
-                                      : Icons.star_border,
-                                  color: Colors.amber,
-                                  size: 12,
-                                )),
-                      ),
-                    ],
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Imagen de la receta
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: imageUrl.startsWith('http')
+                ? Image.network(
+                    imageUrl,
+                    height: 120,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
                   )
-                ],
-              ),
+                : Image.asset(
+                    imageUrl,
+                    height: 120,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+          ),
+          // Detalles de la receta
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Título de la receta
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Nombre del chef con avatar
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 12,
+                      backgroundImage: avatarUrl.startsWith('http')
+                          ? NetworkImage(avatarUrl)
+                          : AssetImage(avatarUrl) as ImageProvider,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      chef,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // Duración y rating
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '$duration mins',
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                    Row(
+                      children: List.generate(5, (index) {
+                        return Icon(
+                          index < (rating ?? 0)
+                              ? Icons.star
+                              : Icons.star_border,
+                          color: Colors.amber,
+                          size: 12,
+                        );
+                      }),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
+  }
 }
