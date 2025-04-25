@@ -98,7 +98,6 @@ class _RecipeScreenState extends State<RecipeScreen> {
       // Carga pasos e ingredientes
       final stepRes = await _stepController.fetchSteps(recipeId);
       final ingRes = await _ingredientController.fetchIngredients();
-      final ingOfRecipe = ingRes.where((i) => i.recipeId == recipeId);
 
       // Carga comentarios
       final comments = await _commentController.fetchComments(recipeId);
