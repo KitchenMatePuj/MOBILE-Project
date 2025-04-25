@@ -38,6 +38,7 @@ const List<String> defaultUnits = [
 final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
 final String strapiBaseUrl = dotenv.env['STRAPI_URL'] ?? '';
 final String authbaseUrl = dotenv.env['AUTH_URL'] ?? '';
+final String reportBaseUrl = dotenv.env['REPORT_URL'] ?? '';
 
 class CreateRecipeScreen extends StatefulWidget {
   const CreateRecipeScreen({super.key});
@@ -636,7 +637,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
                       await ingredientController.createIngredient(
                         IngredientRequest(
                           name: ing.name,
-                          measurementUnit: ing.unit,
+                          measurementUnit: '${ing.quantity} ${ing.unit}',
                           recipeId: recipeId,
                         ),
                       );

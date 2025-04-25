@@ -72,8 +72,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 _buildForgotPassword(context),
                 _buildLoginButton(context, authController),
                 if (_isLoading) CircularProgressIndicator(),
-                const SizedBox(height: 30),
+                const SizedBox(height: 10),
                 _buildLoginWith(context),
+                const SizedBox(height: 10),
                 _buildRegisterPrompt(context),
                 const SizedBox(height: 20),
               ],
@@ -273,50 +274,50 @@ class _LoginScreenState extends State<LoginScreen> {
                   endIndent: 12,
                 ),
               ),
-              Text(
-                "O inicia sesión mediante",
-                style: TextStyle(
-                  color: Color(0xFFD9D9D9),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              Flexible(
-                child: Divider(
-                  color: Color(0xFFD9D9D9),
-                  thickness: 1,
-                  indent: 12,
-                ),
-              ),
+          //     Text(
+          //       "O inicia sesión mediante",
+          //       style: TextStyle(
+          //         color: Color(0xFFD9D9D9),
+          //         fontWeight: FontWeight.w500,
+          //       ),
+          //     ),
+          //     Flexible(
+          //       child: Divider(
+          //         color: Color(0xFFD9D9D9),
+          //         thickness: 1,
+          //         indent: 12,
+          //       ),
+          //     ),
+          //   ],
+          // ),
+          // const SizedBox(height: 20),
+          // Row(
+          //   mainAxisSize: MainAxisSize.min,
+          //   children: [
+          //     GestureDetector(
+          //       onTap: () {
+          //         Navigator.pushNamed(context, '/dashboard');
+          //       },
+          //       child: Image.asset(
+          //         'assets/icons/googleIcon.png',
+          //         width: 55,
+          //         fit: BoxFit.contain,
+          //       ),
+          //     ),
+          //     const SizedBox(width: 20),
+          //     GestureDetector(
+          //       onTap: () {
+          //         Navigator.pushNamed(context, '/dashboard');
+          //       },
+          //       child: Image.asset(
+          //         'assets/icons/facebookIcon.png',
+          //         width: 55,
+          //         fit: BoxFit.contain,
+          //       ),
+          //     ),
             ],
           ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              GestureDetector(
-                onTap: () {
-                  Navigator.pushNamed(context, '/dashboard');
-                },
-                child: Image.asset(
-                  'assets/icons/googleIcon.png',
-                  width: 55,
-                  fit: BoxFit.contain,
-                ),
-              ),
-              const SizedBox(width: 20),
-              GestureDetector(
-                onTap: () {
-                  Navigator.pushNamed(context, '/dashboard');
-                },
-                child: Image.asset(
-                  'assets/icons/facebookIcon.png',
-                  width: 55,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
+          // const SizedBox(height: 15),
         ],
       ),
     );

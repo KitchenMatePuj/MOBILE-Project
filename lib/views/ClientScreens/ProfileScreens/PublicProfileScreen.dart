@@ -73,10 +73,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   Future<void> _toggleFollow() async {
     if (_isFollowing) {
       await _followController.deleteFollow(
-          2, widget.profileId); // profile_id del usuario logueado
+          int.parse(keycloakUserId), widget.profileId); // profile_id del usuario logueado
     } else {
       await _followController.createFollow(
-          FollowRequest(followerId: 2, followedId: widget.profileId));
+          FollowRequest(followerId: int.parse(keycloakUserId), followedId: widget.profileId));
     }
     setState(() {
       _isFollowing = !_isFollowing;

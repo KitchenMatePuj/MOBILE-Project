@@ -34,7 +34,7 @@ class ShoppingListController {
   /// POST: Crear una nueva lista de compras
   Future<void> createShoppingList(ShoppingListRequest list) async {
     final response = await http.post(
-      Uri.parse(baseUrl),
+      Uri.parse('$baseUrl/shopping_lists/'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode(list.toJson()),
     );
