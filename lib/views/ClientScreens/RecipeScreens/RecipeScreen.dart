@@ -1,12 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:mobile_kitchenmate/controllers/Recipes/comments.dart';
+import 'package:mobile_kitchenmate/controllers/Profiles/follow_controller.dart';
 
+import 'package:mobile_kitchenmate/controllers/Recipes/comments.dart';
 import 'package:mobile_kitchenmate/controllers/Recipes/recipes.dart';
 import 'package:mobile_kitchenmate/controllers/Recipes/ingredients.dart';
 import 'package:mobile_kitchenmate/controllers/Recipes/recipe_steps.dart';
+
 import 'package:mobile_kitchenmate/controllers/Profiles/profile_controller.dart';
 import 'package:mobile_kitchenmate/controllers/Profiles/saved_recipe_controller.dart';
+import 'package:mobile_kitchenmate/models/Profiles/follow_request.dart';
+
+import 'package:mobile_kitchenmate/models/Recipes/ingredients_response.dart'
+    as recipes;
+import 'package:mobile_kitchenmate/models/Profiles/ingredient_response.dart'
+    as profiles;
+
+import 'package:mobile_kitchenmate/models/Recipes/comments_response.dart';
+import 'package:mobile_kitchenmate/models/Recipes/recipe_steps_response.dart';
 
 import '/controllers/authentication/auth_controller.dart';
 import '/models/authentication/login_request_advanced.dart' as advanced;
@@ -48,47 +59,79 @@ class _RecipeScreenState extends State<RecipeScreen> {
   late SavedRecipeController _savedController;
   late CommentController _commentController;
   late AuthController _authController;
+  late FollowController _followController;
+
   late String _authUserId = '';
   late String recipeUserId = '';
 
   Future<void> _loadRecipeData(int recipeId) async {
     try {
-      // receta principal y perfil del autor
-      final recipe = await _recipeController.getRecipeById(recipeId);
-      final chef = await _profileController.getProfile(recipe.keycloakUserId);
+      final results = await Future.wait([
+        _recipeController.getRecipeById(recipeId),
+        _stepController.fetchSteps(recipeId),
+        _ingredientController.fetchIngredients(),
+        _commentController.fetchComments(recipeId),
+      ]);
 
-      // pasos e ingredientes
-      final stepRes = await _stepController.fetchSteps(recipeId);
-      final ingRes = await _ingredientController.fetchIngredients();
-      final ingOfRecipe = ingRes.where((i) => i.recipeId == recipeId);
+      final recipe = results[0] as dynamic;
+      final List<RecipeStepResponse> stepRes =
+          results[1] as List<RecipeStepResponse>;
+      final List<recipes.IngredientResponse> ingRes =
+          results[2] as List<recipes.IngredientResponse>;
+      final List<CommentResponse> comments =
+          results[3] as List<CommentResponse>;
 
-      final comments = await _commentController.fetchComments(recipeId);
+      recipeUserId = recipe.keycloakUserId ?? '';
+
+      // Intentar obtener el perfil, pero seguir incluso si falla
+      String fetchedChefName = 'Chef desconocido';
+      String fetchedChefImage = 'assets/chefs/default_user.png';
+
+      try {
+        final chef = await _profileController.getProfile(recipeUserId);
+        fetchedChefName = chef.firstName ?? 'Chef sin nombre';
+        fetchedChefImage =
+            (chef.profilePhoto != null && chef.profilePhoto!.isNotEmpty)
+                ? (chef.profilePhoto!.startsWith('http')
+                    ? chef.profilePhoto!
+                    : '$strapiBase${chef.profilePhoto!}')
+                : 'assets/chefs/default_user.png';
+      } catch (e) {
+        print(
+            '[WARNING] No se pudo cargar el perfil del chef ($recipeUserId): $e');
+      }
+
+      final ingOfRecipe = ingRes.where((i) => i.recipeId == recipeId).toList();
 
       imageUrl = (recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty)
           ? (recipe.imageUrl!.startsWith('http')
-              ? recipe.imageUrl! // ya viene absoluta
-              : '$strapiBase${recipe.imageUrl!}') // relativa → la completamos
+              ? recipe.imageUrl!
+              : '$strapiBase${recipe.imageUrl!}')
           : 'assets/recipes/recipe_placeholder.jpg';
 
-      if (!mounted) return; // pantalla cerrada → salir
+      if (!mounted) return;
+
       setState(() {
-        recipeTitle = recipe.title;
-        duration = recipe.cookingTime;
-        totalServings = recipe.totalPortions;
-        chefName = chef.firstName ?? '';
-        chefImage = (chef.profilePhoto != null && chef.profilePhoto!.isNotEmpty)
-            ? (chef.profilePhoto!.startsWith('http')
-                ? chef.profilePhoto!
-                : '$strapiBase${chef.profilePhoto!}')
-            : 'assets/chefs/default_user.png';
-        steps = stepRes.map((e) => e.description).toList();
+        recipeTitle = recipe.title ?? '';
+        duration = recipe.cookingTime ?? 0;
+        totalServings = recipe.totalPortions ?? 0;
+        chefName = fetchedChefName;
+        chefImage = fetchedChefImage;
+
+        steps = stepRes.map((e) => e.description ?? '').toList();
         ingredients = ingOfRecipe
-            .map((i) => {'name': i.name, 'unit': i.measurementUnit})
+            .map((i) => {
+                  'name': i.name ?? '',
+                  'unit': i.measurementUnit ?? '',
+                })
+            .cast<Map<String, String>>()
             .toList();
+
         totalComments = comments.length;
       });
-    } catch (e) {
-      // SnackBar tras el primer frame
+    } catch (e, stack) {
+      print('[ERROR] $e');
+      print('[STACK] $stack');
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -110,6 +153,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
     _profileController = ProfileController(baseUrl: profileBaseUrl);
     _savedController = SavedRecipeController(baseUrl: profileBaseUrl);
     _authController = AuthController(baseUrl: _authBase);
+    _followController = FollowController(baseUrl: profileBaseUrl);
 
     _authController.getKeycloakUserId().then((id) {
       keycloakUserId = id;
@@ -290,20 +334,66 @@ class _RecipeScreenState extends State<RecipeScreen> {
         ),
         Row(
           children: [
-            if (_authUserId != recipeUserId)
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF129575)),
-                child: const Text("Seguir"),
+            ElevatedButton(
+              onPressed: _authUserId != recipeUserId
+                  ? () async {
+                      try {
+                        final followerProfile =
+                            await _profileController.getProfile(_authUserId);
+                        final followedProfile =
+                            await _profileController.getProfile(recipeUserId);
+
+                        final followRequest = FollowRequest(
+                          followerId: followerProfile.profileId,
+                          followedId: followedProfile.profileId,
+                        );
+
+                        await _followController.createFollow(followRequest);
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Has seguido al chef')),
+                        );
+                      } catch (e) {
+                        print('[ERROR] al seguir usuario: $e');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error al seguir: $e')),
+                        );
+                      }
+                    }
+                  : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF129575),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
               ),
+              child: const Text(
+                "Seguir",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
             const SizedBox(width: 5),
             ElevatedButton(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF129575)),
-              child:
-                  const Text("+ Lista\nCompras", textAlign: TextAlign.center),
+                backgroundColor: const Color(0xFF129575),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text(
+                "+ Lista\nCompras",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         )
@@ -422,13 +512,14 @@ class _RecipeScreenState extends State<RecipeScreen> {
       type: BottomNavigationBarType.fixed,
       currentIndex: 1,
       selectedItemColor: const Color(0xFF129575),
-      unselectedItemColor: Colors.grey,
+      unselectedItemColor: Colors.black,
       onTap: (index) {
         switch (index) {
           case 0:
             Navigator.pushNamed(context, '/dashboard');
             break;
           case 1:
+            Navigator.pushNamed(context, '/recipe_search');
             break;
           case 2:
             Navigator.pushNamed(context, '/create');

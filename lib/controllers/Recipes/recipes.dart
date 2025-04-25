@@ -5,13 +5,14 @@ import '../../models/Recipes/recipes_response.dart';
 
 class RecipeController {
   final String baseUrl;
+  List<RecipeResponse> allRecipes = [];
 
   RecipeController({required this.baseUrl});
 
   /// Crear una receta (POST /recipes)
   Future<RecipeResponse> createRecipe(RecipeRequest request) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/recipes'),
+      Uri.parse('$baseUrl/recipes/'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(request.toJson()),
     );

@@ -4,6 +4,7 @@ import '/controllers/Recipes/recipes.dart';
 import '/controllers/Profiles/profile_controller.dart';
 import '/models/Recipes/recipes_response.dart';
 import '/models/Profiles/profile_response.dart';
+import 'package:intl/intl.dart';
 
 import '/controllers/authentication/auth_controller.dart';
 import '/models/authentication/login_request_advanced.dart' as advanced;
@@ -29,10 +30,13 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
   String selectedCuisine = "Todas";
   String keycloakUserId = '';
   int _recipesToShow = 8;
+  DateTime? selectedStartDate;
+  DateTime? selectedEndDate;
 
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
   final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
   final String _authBase = dotenv.env['AUTH_URL'] ?? '';
+  final String strapiBaseUrl = dotenv.env['STRAPI_URL'] ?? '';
 
   @override
   void initState() {
@@ -54,6 +58,7 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
       List<RecipeResponse> recipes = await _recipeController.fetchRecipes();
       setState(() {
         filteredRecipes = recipes;
+        _recipeController.allRecipes = recipes;
       });
     } catch (e) {
       // Manejar errores
@@ -69,17 +74,72 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
 
   void _applyFilters() {
     setState(() {
-      String query = _searchController.text.toLowerCase();
-      // filteredRecipes = _recipeController.allRecipes.where((recipe) {
-      //   bool matchesSearch = recipe.title.toLowerCase().contains(query) || recipe.keycloakUserId.toLowerCase().contains(query);
-      //   bool matchesDuration = selectedDuration == "Todos" || _matchesDuration(recipe.cookingTime);
-      //   bool matchesRating = selectedRating == "Todas" || recipe.ratingAvg == double.parse(selectedRating);
-      //   bool matchesCategory = selectedCategory == "Todos" || recipe.foodType == selectedCategory;
-      //   bool matchesMealType = selectedMealType == "Todos" || recipe.foodType == selectedMealType;
-      //   bool matchesCuisine = selectedCuisine == "Todas" || recipe.foodType == selectedCuisine;
-      //   return matchesSearch && matchesDuration && matchesRating && matchesCategory && matchesMealType && matchesCuisine;
-      // }).toList();
+      final query = _searchController.text.toLowerCase();
+
+      filteredRecipes = _recipeController.allRecipes.where((recipe) {
+        // Búsqueda por título o ID de usuario
+        final matchesQuery = recipe.title.toLowerCase().contains(query) ||
+            recipe.keycloakUserId.toLowerCase().contains(query);
+
+        // Filtro por tiempo de cocción
+        final matchesDuration =
+            selectedDuration == "Todos" || _matchesDuration(recipe.cookingTime);
+
+        // Filtro por rating
+        final matchesRating = selectedRating == "Todas" ||
+            recipe.ratingAvg.toInt().toString() == selectedRating;
+
+        // Filtro por tipo de comida (meal type)
+        final matchesFoodType = selectedMealType == "Todos" ||
+            recipe.foodType.toLowerCase() == selectedMealType.toLowerCase();
+
+        // Filtro por tipo de cocina (category -> ahora será totalPortions)
+        final matchesPortions = selectedCategory == "Todos" ||
+            recipe.totalPortions.toString() == selectedCategory;
+
+        // Filtro por cocina (placeholder - si agregas un nuevo campo más adelante)
+        final matchesCuisine = selectedCuisine == "Todas";
+
+        // Filtro por rango de fechas
+        bool matchesDate = true;
+        if (selectedStartDate != null) {
+          matchesDate = matchesDate &&
+              !recipe.createdAt.isBefore(
+                DateTime(selectedStartDate!.year, selectedStartDate!.month,
+                    selectedStartDate!.day),
+              );
+        }
+        if (selectedEndDate != null) {
+          matchesDate = matchesDate &&
+              !recipe.createdAt.isAfter(
+                DateTime(selectedEndDate!.year, selectedEndDate!.month,
+                    selectedEndDate!.day, 23, 59, 59),
+              );
+        }
+
+        return matchesQuery &&
+            matchesDuration &&
+            matchesRating &&
+            matchesFoodType &&
+            matchesPortions &&
+            matchesCuisine &&
+            matchesDate;
+      }).toList();
     });
+  }
+
+  String _fullImageUrl(String? path, {required String placeholder}) {
+    try {
+      if (path == null || path.isEmpty || path == 'example') return placeholder;
+      if (path.startsWith('http')) return path;
+      final cleanBase = strapiBaseUrl.endsWith('/')
+          ? strapiBaseUrl.substring(0, strapiBaseUrl.length - 1)
+          : strapiBaseUrl;
+      final fixedPath = path.startsWith('/') ? path : '/$path';
+      return '$cleanBase$fixedPath';
+    } catch (_) {
+      return placeholder;
+    }
   }
 
   bool _matchesDuration(int cookingTime) {
@@ -127,6 +187,8 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
                       selectedCategory: selectedCategory,
                       selectedMealType: selectedMealType,
                       selectedCuisine: selectedCuisine,
+                      selectedStartDate: selectedStartDate,
+                      selectedEndDate: selectedEndDate,
                       onApplyFilters: _applyFilters,
                       onUpdateFilters:
                           (duration, rating, category, mealType, cuisine) {
@@ -136,6 +198,18 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
                           selectedCategory = category;
                           selectedMealType = mealType;
                           selectedCuisine = cuisine;
+                        });
+                        _applyFilters();
+                      },
+                      onStartDateChanged: (date) {
+                        setState(() {
+                          selectedStartDate = date;
+                        });
+                        _applyFilters();
+                      },
+                      onEndDateChanged: (date) {
+                        setState(() {
+                          selectedEndDate = date;
                         });
                         _applyFilters();
                       },
@@ -170,10 +244,11 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
                               title: recipe.title,
                               chef: chefName,
                               duration: recipe.cookingTime.toString(),
-                              imageUrl: 'assets/recipes/recipe1.jpg',
+                              imageUrl: recipe.imageUrl ?? '',
                               width: cardWidth,
                               rating: recipe.ratingAvg.toInt(),
                               recipeId: recipe.recipeId,
+                              fullImageUrlBuilder: _fullImageUrl,
                             );
                           },
                         );
@@ -263,6 +338,8 @@ class RecipeCard extends StatelessWidget {
   final double width;
   final int? rating;
   final int recipeId;
+  final String Function(String?, {required String placeholder})
+      fullImageUrlBuilder;
 
   const RecipeCard({
     super.key,
@@ -273,10 +350,16 @@ class RecipeCard extends StatelessWidget {
     required this.width,
     this.rating,
     required this.recipeId,
+    required this.fullImageUrlBuilder,
   });
 
   @override
   Widget build(BuildContext context) {
+    final fullUrl = fullImageUrlBuilder(
+      imageUrl,
+      placeholder: 'assets/recipes/platovacio.png',
+    );
+
     return GestureDetector(
       onTap: () {
         Navigator.pushNamed(
@@ -296,17 +379,23 @@ class RecipeCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
-                ),
-                child: Image.asset(
-                  imageUrl,
-                  fit: BoxFit.cover,
-                  width: width,
-                  height: 100,
-                ),
-              ),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
+                  ),
+                  child: fullUrl.startsWith('http')
+                      ? Image.network(
+                          fullUrl,
+                          fit: BoxFit.cover,
+                          width: width,
+                          height: 100,
+                        )
+                      : Image.asset(
+                          fullUrl,
+                          fit: BoxFit.cover,
+                          width: width,
+                          height: 100,
+                        )),
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Column(
@@ -374,6 +463,10 @@ class SearchBar extends StatelessWidget {
   final String selectedMealType;
   final String selectedCuisine;
   final VoidCallback onApplyFilters;
+  final DateTime? selectedStartDate;
+  final DateTime? selectedEndDate;
+  final Function(DateTime?) onStartDateChanged;
+  final Function(DateTime?) onEndDateChanged;
   final Function(String, String, String, String, String) onUpdateFilters;
 
   const SearchBar({
@@ -386,6 +479,10 @@ class SearchBar extends StatelessWidget {
     required this.selectedCuisine,
     required this.onApplyFilters,
     required this.onUpdateFilters,
+    required this.selectedStartDate,
+    required this.selectedEndDate,
+    required this.onStartDateChanged,
+    required this.onEndDateChanged,
   });
 
   @override
@@ -617,6 +714,73 @@ class SearchBar extends StatelessWidget {
                                       cuisineOptions,
                                       tempSelectedCuisine,
                                       (val) => tempSelectedCuisine = val),
+                                  const Text(
+                                    "Fecha de Creación",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18),
+                                  ),
+                                  const SizedBox(height: 8),
+
+// Fecha Inicio
+                                  Row(
+                                    children: [
+                                      const Text("Desde: "),
+                                      TextButton(
+                                        onPressed: () async {
+                                          DateTime? picked =
+                                              await showDatePicker(
+                                            context: context,
+                                            initialDate: selectedStartDate ??
+                                                DateTime.now(),
+                                            firstDate: DateTime(2000),
+                                            lastDate: DateTime.now(),
+                                          );
+                                          if (picked != null) {
+                                            onStartDateChanged(picked);
+                                          }
+                                        },
+                                        child: Text(
+                                          selectedStartDate != null
+                                              ? "${selectedStartDate!.toLocal()}"
+                                                  .split(' ')[0]
+                                              : "Elegir fecha",
+                                          style: const TextStyle(
+                                              color: Color(0xFF129575)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+// Fecha Fin
+                                  Row(
+                                    children: [
+                                      const Text("Hasta: "),
+                                      TextButton(
+                                        onPressed: () async {
+                                          DateTime? picked =
+                                              await showDatePicker(
+                                            context: context,
+                                            initialDate: selectedEndDate ??
+                                                DateTime.now(),
+                                            firstDate: DateTime(2000),
+                                            lastDate: DateTime.now(),
+                                          );
+                                          if (picked != null) {
+                                            onEndDateChanged(picked);
+                                          }
+                                        },
+                                        child: Text(
+                                          selectedEndDate != null
+                                              ? "${selectedEndDate!.toLocal()}"
+                                                  .split(' ')[0]
+                                              : "Elegir fecha",
+                                          style: const TextStyle(
+                                              color: Color(0xFF129575)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 20),
                                   Center(
                                     child: ElevatedButton(
                                       style: ElevatedButton.styleFrom(

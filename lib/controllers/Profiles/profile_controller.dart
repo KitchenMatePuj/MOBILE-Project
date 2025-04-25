@@ -47,7 +47,7 @@ class ProfileController {
   /// POST: Crear perfil
   Future<ProfileResponse> createProfile(ProfileRequest request) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/profiles'),
+      Uri.parse('$baseUrl/profiles/'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(request.toJson()),
     );

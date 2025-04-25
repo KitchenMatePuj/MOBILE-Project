@@ -64,7 +64,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
       StrapiController(baseUrl: strapiBaseUrl);
 
   late StrapiController _strapiCtl;
-  final AuthController _authController=AuthController(baseUrl: authbaseUrl);
+  final AuthController _authController = AuthController(baseUrl: authbaseUrl);
   Uint8List? _imageBytes;
 
   List<String> steps = [
@@ -660,9 +660,20 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
                     );
                   }
                 },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      const Color(0xFF129575), // Verde personalizado
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15)),
+                ),
                 child: const Text(
                   "Confirmar Receta", // Este es el texto del botón
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
                 ),
               ),
             ),

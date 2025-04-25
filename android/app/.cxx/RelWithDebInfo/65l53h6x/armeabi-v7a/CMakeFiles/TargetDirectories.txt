@@ -1,0 +1,2 @@
+D:/GITHUB/MOBILE-Project/android/app/.cxx/RelWithDebInfo/65l53h6x/armeabi-v7a/CMakeFiles/edit_cache.dir
+D:/GITHUB/MOBILE-Project/android/app/.cxx/RelWithDebInfo/65l53h6x/armeabi-v7a/CMakeFiles/rebuild_cache.dir
