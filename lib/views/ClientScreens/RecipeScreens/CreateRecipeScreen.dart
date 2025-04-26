@@ -22,6 +22,10 @@ import '/controllers/authentication/auth_controller.dart';
 import '/models/authentication/login_request_advanced.dart' as advanced;
 import '/models/authentication/login_response.dart';
 
+import 'package:mobile_kitchenmate/controllers/Recipes/categories.dart';
+import 'package:mobile_kitchenmate/models/Recipes/categories_response.dart';
+import 'package:mobile_kitchenmate/models/Recipes/categories_request.dart';
+
 // Default lists for ingredients and units
 const List<String> defaultUnits = [
   'Otro',
@@ -48,7 +52,7 @@ class CreateRecipeScreen extends StatefulWidget {
 }
 
 class _CreateRecipeState extends State<CreateRecipeScreen> {
-  int selectedIndex = 0;
+  int selectedIndex = 0; // 0 = Detalles, 1 = Ingredientes, 2 = Procedimiento
   List<Ingredient> ingredients = [
     Ingredient(name: "", quantity: "", unit: ""),
     Ingredient(name: "", quantity: "", unit: ""),
@@ -63,6 +67,8 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
       RecipeStepController(baseUrl: recipeBaseUrl);
   final StrapiController strapiController =
       StrapiController(baseUrl: strapiBaseUrl);
+  final CategoryController categoryController =
+      CategoryController(baseUrl: recipeBaseUrl);
 
   late StrapiController _strapiCtl;
   final AuthController _authController = AuthController(baseUrl: authbaseUrl);
@@ -74,11 +80,25 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
     "Describa este paso por favor."
   ];
   List<IngredientResponse> fetchedIngredients = [];
-  String estimatedTime = "Tiempo estimado ";
-  String estimatedPortions = "Porciones estimadas ";
+  List<CategoryResponse> availableCategories = [];
+  CategoryResponse? selectedCategory;
+  String estimatedTime = "";
+  String estimatedPortions = "";
+  String category = '';
+  String recipeTitle = "";
   File? _image;
-  String recipeTitle = "Nombre de la Receta";
   String keycloakUserId = '';
+
+  Future<void> fetchCategoriesFromBackend() async {
+    try {
+      final categories = await categoryController.fetchCategories();
+      setState(() {
+        availableCategories = categories;
+      });
+    } catch (e) {
+      print("❌ Error al cargar categorías: $e");
+    }
+  }
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -198,187 +218,187 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
                   bottom: 8,
                   left: 8,
                   child: Row(
-                    children: [
-                      const Icon(Icons.access_time, color: Colors.white),
-                      const SizedBox(width: 4),
-                      GestureDetector(
-                        onTap: () async {
-                          final TextEditingController timeController =
-                              TextEditingController();
-                          final result = await showDialog<String>(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return StatefulBuilder(
-                                builder: (context, setState) {
-                                  return AlertDialog(
-                                    backgroundColor: Colors.white,
-                                    title: Center(
-                                      child: Text(
-                                        'Tiempo Estimado',
-                                        style: TextStyle(
-                                          color: Color(0xFF129575),
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                    ),
-                                    content: TextField(
-                                      controller: timeController,
-                                      keyboardType: TextInputType.number,
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly
-                                      ], // PRIMERA RESTRICCIÓN
-                                      decoration: const InputDecoration(
-                                          hintText:
-                                              "Ingrese el tiempo en minutos"),
-                                      onChanged: (value) {
-                                        setState(() {});
-                                      },
-                                    ),
-                                    actions: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceEvenly,
-                                        children: [
-                                          ElevatedButton(
-                                            onPressed: () {
-                                              Navigator.pop(context);
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor:
-                                                  const Color.fromARGB(
-                                                      255, 238, 99, 89),
-                                              foregroundColor: Colors.white,
-                                            ),
-                                            child: const Text('Cancelar'),
-                                          ),
-                                          ElevatedButton(
-                                            onPressed: timeController
-                                                    .text.isNotEmpty
-                                                ? () {
-                                                    Navigator.pop(context,
-                                                        timeController.text);
-                                                  }
-                                                : null,
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor:
-                                                  Color(0xFF129575),
-                                              foregroundColor: Colors.white,
-                                            ),
-                                            child: const Text('Aceptar'),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-                            },
-                          );
-                          if (result != null && result.isNotEmpty) {
-                            setState(() {
-                              estimatedTime = "$result min";
-                            });
-                          }
-                        },
-                        child: Row(
-                          children: [
-                            Text(
-                              estimatedTime,
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                            const SizedBox(width: 4),
-                            const Icon(Icons.edit,
-                                color: Colors.white, size: 16),
-                          ],
-                        ),
+                      // children: [
+                      //   const Icon(Icons.access_time, color: Colors.white),
+                      //   const SizedBox(width: 4),
+                      // GestureDetector(
+                      //   onTap: () async {
+                      //     final TextEditingController timeController =
+                      //         TextEditingController();
+                      //     final result = await showDialog<String>(
+                      //       context: context,
+                      //       builder: (BuildContext context) {
+                      //         return StatefulBuilder(
+                      //           builder: (context, setState) {
+                      //             return AlertDialog(
+                      //               backgroundColor: Colors.white,
+                      //               title: Center(
+                      //                 child: Text(
+                      //                   'Tiempo Estimado',
+                      //                   style: TextStyle(
+                      //                     color: Color(0xFF129575),
+                      //                     fontWeight: FontWeight.bold,
+                      //                     fontSize: 16,
+                      //                   ),
+                      //                 ),
+                      //               ),
+                      //               content: TextField(
+                      //                 controller: timeController,
+                      //                 keyboardType: TextInputType.number,
+                      //                 inputFormatters: [
+                      //                   FilteringTextInputFormatter.digitsOnly
+                      //                 ], // PRIMERA RESTRICCIÓN
+                      //                 decoration: const InputDecoration(
+                      //                     hintText:
+                      //                         "Ingrese el tiempo en minutos"),
+                      //                 onChanged: (value) {
+                      //                   setState(() {});
+                      //                 },
+                      //               ),
+                      //               actions: [
+                      //                 Row(
+                      //                   mainAxisAlignment:
+                      //                       MainAxisAlignment.spaceEvenly,
+                      //                   children: [
+                      //                     ElevatedButton(
+                      //                       onPressed: () {
+                      //                         Navigator.pop(context);
+                      //                       },
+                      //                       style: ElevatedButton.styleFrom(
+                      //                         backgroundColor:
+                      //                             const Color.fromARGB(
+                      //                                 255, 238, 99, 89),
+                      //                         foregroundColor: Colors.white,
+                      //                       ),
+                      //                       child: const Text('Cancelar'),
+                      //                     ),
+                      //                     ElevatedButton(
+                      //                       onPressed: timeController
+                      //                               .text.isNotEmpty
+                      //                           ? () {
+                      //                               Navigator.pop(context,
+                      //                                   timeController.text);
+                      //                             }
+                      //                           : null,
+                      //                       style: ElevatedButton.styleFrom(
+                      //                         backgroundColor:
+                      //                             Color(0xFF129575),
+                      //                         foregroundColor: Colors.white,
+                      //                       ),
+                      //                       child: const Text('Aceptar'),
+                      //                     ),
+                      //                   ],
+                      //                 ),
+                      //               ],
+                      //             );
+                      //           },
+                      //         );
+                      //       },
+                      //     );
+                      //     if (result != null && result.isNotEmpty) {
+                      //       setState(() {
+                      //         estimatedTime = "$result min";
+                      //       });
+                      //     }
+                      //   },
+                      //   child: Row(
+                      //     children: [
+                      //       Text(
+                      //         estimatedTime,
+                      //         style: const TextStyle(color: Colors.white),
+                      //       ),
+                      //       const SizedBox(width: 4),
+                      //       const Icon(Icons.edit,
+                      //           color: Colors.white, size: 16),
+                      //     ],
+                      //   ),
+                      // ),
+                      //],
                       ),
-                    ],
-                  ),
                 ),
               ],
             ),
             const SizedBox(height: 20),
 
             // Title input for recipe name
-            GestureDetector(
-              onTap: () async {
-                final TextEditingController titleController =
-                    TextEditingController();
-                final result = await showDialog<String>(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      backgroundColor: Colors.white,
-                      title: Center(
-                        child: Text(
-                          'Título de la Receta',
-                          style: TextStyle(
-                            color: Color(0xFF129575),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                      content: TextField(
-                        controller: titleController,
-                        keyboardType: TextInputType.text,
-                        decoration: const InputDecoration(
-                            hintText: "Ingrese el título de la receta"),
-                      ),
-                      actions: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            ElevatedButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    const Color.fromARGB(255, 238, 99, 89),
-                                foregroundColor: Colors.white,
-                              ),
-                              child: const Text('Cancelar'),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                Navigator.pop(context, titleController.text);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFF129575),
-                                foregroundColor: Colors.white,
-                              ),
-                              child: const Text('Aceptar'),
-                            ),
-                          ],
-                        ),
-                      ],
-                    );
-                  },
-                );
-                if (result != null && result.isNotEmpty) {
-                  setState(() {
-                    recipeTitle = result;
-                  });
-                }
-              },
-              child: Row(
-                children: [
-                  Text(
-                    recipeTitle,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  const Icon(Icons.edit, color: Colors.black, size: 16),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
+            // GestureDetector(
+            //   onTap: () async {
+            //     final TextEditingController titleController =
+            //         TextEditingController();
+            //     final result = await showDialog<String>(
+            //       context: context,
+            //       builder: (BuildContext context) {
+            //         return AlertDialog(
+            //           backgroundColor: Colors.white,
+            //           title: Center(
+            //             child: Text(
+            //               'Título de la Receta',
+            //               style: TextStyle(
+            //                 color: Color(0xFF129575),
+            //                 fontWeight: FontWeight.bold,
+            //                 fontSize: 16,
+            //               ),
+            //             ),
+            //           ),
+            //           content: TextField(
+            //             controller: titleController,
+            //             keyboardType: TextInputType.text,
+            //             decoration: const InputDecoration(
+            //                 hintText: "Ingrese el título de la receta"),
+            //           ),
+            //           actions: [
+            //             Row(
+            //               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            //               children: [
+            //                 ElevatedButton(
+            //                   onPressed: () {
+            //                     Navigator.pop(context);
+            //                   },
+            //                   style: ElevatedButton.styleFrom(
+            //                     backgroundColor:
+            //                         const Color.fromARGB(255, 238, 99, 89),
+            //                     foregroundColor: Colors.white,
+            //                   ),
+            //                   child: const Text('Cancelar'),
+            //                 ),
+            //                 ElevatedButton(
+            //                   onPressed: () {
+            //                     Navigator.pop(context, titleController.text);
+            //                   },
+            //                   style: ElevatedButton.styleFrom(
+            //                     backgroundColor: Color(0xFF129575),
+            //                     foregroundColor: Colors.white,
+            //                   ),
+            //                   child: const Text('Aceptar'),
+            //                 ),
+            //               ],
+            //             ),
+            //           ],
+            //         );
+            //       },
+            //     );
+            //     if (result != null && result.isNotEmpty) {
+            //       setState(() {
+            //         recipeTitle = result;
+            //       });
+            //     }
+            //   },
+            //   child: Row(
+            //     children: [
+            //       Text(
+            //         recipeTitle,
+            //         style: const TextStyle(
+            //           fontSize: 16,
+            //           fontWeight: FontWeight.bold,
+            //           color: Colors.black,
+            //         ),
+            //       ),
+            //       const SizedBox(width: 4),
+            //       const Icon(Icons.edit, color: Colors.black, size: 16),
+            //     ],
+            //   ),
+            // ),
+            // const SizedBox(height: 20),
 
             // Fila 3: Ingredientes y Procedimiento
             Column(
@@ -386,114 +406,113 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildTab('Ingredientes', 0),
-                    _buildTab('Procedimiento', 1),
+                    _buildTab('Detalles', 0),
+                    _buildTab('Ingredientes', 1),
+                    _buildTab('Procedimiento', 2),
                   ],
                 ),
-                const SizedBox(height: 30),
-
                 // New Row with portion and steps information
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    GestureDetector(
-                      onTap: () async {
-                        final TextEditingController portionsController =
-                            TextEditingController();
-                        final result = await showDialog<String>(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return StatefulBuilder(
-                              builder: (context, setState) {
-                                return AlertDialog(
-                                  backgroundColor: Colors.white,
-                                  title: Center(
-                                    child: Text(
-                                      'Porciones Estimadas',
-                                      style: TextStyle(
-                                        color: Color(0xFF129575),
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                  ),
-                                  content: TextField(
-                                    controller: portionsController,
-                                    keyboardType: TextInputType.number,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly
-                                    ], // SEGUNDA RESTRICCIÓN
-                                    decoration: const InputDecoration(
-                                        hintText:
-                                            "Ingrese el número de porciones"),
-                                    onChanged: (value) {
-                                      setState(() {});
-                                    },
-                                  ),
-                                  actions: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceEvenly,
-                                      children: [
-                                        ElevatedButton(
-                                          onPressed: () {
-                                            Navigator.pop(context);
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor:
-                                                const Color.fromARGB(
-                                                    255, 238, 99, 89),
-                                            foregroundColor: Colors.white,
-                                          ),
-                                          child: const Text('Cancelar'),
-                                        ),
-                                        ElevatedButton(
-                                          onPressed: portionsController
-                                                  .text.isNotEmpty
-                                              ? () {
-                                                  Navigator.pop(context,
-                                                      portionsController.text);
-                                                }
-                                              : null,
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Color(0xFF129575),
-                                            foregroundColor: Colors.white,
-                                          ),
-                                          child: const Text('Aceptar'),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          },
-                        );
-                        if (result != null && result.isNotEmpty) {
-                          setState(() {
-                            estimatedPortions = "$result porciones";
-                          });
-                        }
-                      },
-                      child: Row(
-                        children: [
-                          Icon(Icons.restaurant, color: Colors.grey),
-                          SizedBox(width: 4),
-                          Text(
-                            estimatedPortions,
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                          const SizedBox(width: 4),
-                          const Icon(Icons.edit, color: Colors.grey, size: 16),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      '${steps.length} Pasos',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ],
-                ),
+                // Row(
+                //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //   children: [
+                //     GestureDetector(
+                // onTap: () async {
+                //   final TextEditingController portionsController =
+                //       TextEditingController();
+                //   final result = await showDialog<String>(
+                //     context: context,
+                //     builder: (BuildContext context) {
+                //       return StatefulBuilder(
+                //         builder: (context, setState) {
+                //           return AlertDialog(
+                //             backgroundColor: Colors.white,
+                //             title: Center(
+                //               child: Text(
+                //                 'Porciones Estimadas',
+                //                 style: TextStyle(
+                //                   color: Color(0xFF129575),
+                //                   fontWeight: FontWeight.bold,
+                //                   fontSize: 16,
+                //                 ),
+                //               ),
+                //             ),
+                //             content: TextField(
+                //               controller: portionsController,
+                //               keyboardType: TextInputType.number,
+                //               inputFormatters: [
+                //                 FilteringTextInputFormatter.digitsOnly
+                //               ], // SEGUNDA RESTRICCIÓN
+                //               decoration: const InputDecoration(
+                //                   hintText:
+                //                       "Ingrese el número de porciones"),
+                //               onChanged: (value) {
+                //                 setState(() {});
+                //               },
+                //             ),
+                //             actions: [
+                //               Row(
+                //                 mainAxisAlignment:
+                //                     MainAxisAlignment.spaceEvenly,
+                //                 children: [
+                //                   ElevatedButton(
+                //                     onPressed: () {
+                //                       Navigator.pop(context);
+                //                     },
+                //                     style: ElevatedButton.styleFrom(
+                //                       backgroundColor:
+                //                           const Color.fromARGB(
+                //                               255, 238, 99, 89),
+                //                       foregroundColor: Colors.white,
+                //                     ),
+                //                     child: const Text('Cancelar'),
+                //                   ),
+                //                   ElevatedButton(
+                //                     onPressed: portionsController
+                //                             .text.isNotEmpty
+                //                         ? () {
+                //                             Navigator.pop(context,
+                //                                 portionsController.text);
+                //                           }
+                //                         : null,
+                //                     style: ElevatedButton.styleFrom(
+                //                       backgroundColor: Color(0xFF129575),
+                //                       foregroundColor: Colors.white,
+                //                     ),
+                //                     child: const Text('Aceptar'),
+                //                   ),
+                //                 ],
+                //               ),
+                //             ],
+                //           );
+                //         },
+                //       );
+                //     },
+                //   );
+                //   if (result != null && result.isNotEmpty) {
+                //     setState(() {
+                //       estimatedPortions = "$result porciones";
+                //     });
+                //   }
+                // },
+                //       child: Row(
+                //         children: [
+                //           Icon(Icons.restaurant, color: Colors.grey),
+                //           SizedBox(width: 4),
+                //           Text(
+                //             estimatedPortions,
+                //             style: TextStyle(color: Colors.grey),
+                //           ),
+                //           const SizedBox(width: 4),
+                //           const Icon(Icons.edit, color: Colors.grey, size: 16),
+                //         ],
+                //       ),
+                //     ),
+                //     Text(
+                //       '${steps.length} Pasos',
+                //       style: TextStyle(color: Colors.grey),
+                //     ),
+                //   ],
+                // ),
               ],
             ),
             const SizedBox(height: 6),
@@ -501,77 +520,81 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
             // Mostrar contenido según la pestaña seleccionada
             Expanded(
               child: selectedIndex == 0
-                  ? ListView.builder(
-                      itemCount: ingredients.length + 1,
-                      itemBuilder: (context, index) {
-                        if (index == ingredients.length) {
-                          return Center(
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  setState(() {
-                                    ingredients.add(Ingredient(
-                                        name: "", quantity: "", unit: ""));
-                                  });
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF129575),
-                                  foregroundColor: Colors.white,
+                  ? _buildDetailsSection()
+                  : selectedIndex == 1
+                      ? ListView.builder(
+                          itemCount: ingredients.length + 1,
+                          itemBuilder: (context, index) {
+                            if (index == ingredients.length) {
+                              return Center(
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        ingredients.add(Ingredient(
+                                            name: "", quantity: "", unit: ""));
+                                      });
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF129575),
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    child: Text("Agregar Ingrediente"),
+                                  ),
                                 ),
-                                child: Text("Agregar Ingrediente"),
-                              ),
-                            ),
-                          );
-                        }
-                        final ingredient = ingredients[index];
-                        return IngredientCard(
-                          ingredient: ingredient,
-                          index: index + 1,
-                          onDelete: () {
-                            setState(() {
-                              ingredients.removeAt(index);
-                            });
+                              );
+                            }
+                            final ingredient = ingredients[index];
+                            return IngredientCard(
+                              ingredient: ingredient,
+                              index: index + 1,
+                              onDelete: () {
+                                setState(() {
+                                  ingredients.removeAt(index);
+                                });
+                              },
+                              availableIngredients: fetchedIngredients,
+                            );
                           },
-                          availableIngredients: fetchedIngredients,
-                        );
-                      },
-                    )
-                  : ListView.builder(
-                      itemCount: steps.length + 1,
-                      itemBuilder: (context, index) {
-                        if (index == steps.length) {
-                          return Center(
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  setState(() {
-                                    steps.add("Describa este paso por favor.");
-                                  });
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF129575),
-                                  foregroundColor: Colors.white,
+                        )
+                      : ListView.builder(
+                          itemCount: steps.length + 1,
+                          itemBuilder: (context, index) {
+                            if (index == steps.length) {
+                              return Center(
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        steps.add(
+                                            "Describa este paso por favor.");
+                                      });
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF129575),
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    child: Text("Agregar Paso"),
+                                  ),
                                 ),
-                                child: Text("Agregar Paso"),
-                              ),
-                            ),
-                          );
-                        }
-                        final step = steps[index];
-                        return StepCard(
-                          step: step,
-                          stepNumber: index + 1,
-                          onDelete: () {
-                            setState(() {
-                              steps.removeAt(index);
-                            });
+                              );
+                            }
+                            final step = steps[index];
+                            return StepCard(
+                              step: step,
+                              stepNumber: index + 1,
+                              onDelete: () {
+                                setState(() {
+                                  steps.removeAt(index);
+                                });
+                              },
+                            );
                           },
-                        );
-                      },
-                    ),
+                        ),
             ),
+
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
@@ -734,6 +757,293 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
       ),
     );
   }
+
+  Widget _buildDetailsSection() {
+    return ListView(
+      children: [
+        _buildDetailRow(
+          label: "Nombre de la Receta",
+          value: recipeTitle.length > 14
+              ? "${recipeTitle.substring(0, 14)}..."
+              : recipeTitle,
+          onTap: () async {
+            final controller = TextEditingController(text: recipeTitle);
+            final result =
+                await _showTextInputDialog("Título de la Receta", controller);
+            if (result != null && result.isNotEmpty) {
+              setState(() {
+                recipeTitle = result;
+              });
+            }
+          },
+        ),
+        _buildDetailRow(
+          label: "Categoría de tu Receta",
+          value: selectedCategory?.name ?? '',
+          onTap: () async {
+            final result = await _showCategoryPickerDialog();
+            if (result != null) {
+              setState(() {
+                selectedCategory = result;
+              });
+            }
+          },
+        ),
+        _buildDetailRow(
+          label: "Tiempo Estimado",
+          value: estimatedTime,
+          onTap: () async {
+            final controller = TextEditingController();
+            final result = await _showNumberInputDialog(
+                "Tiempo Estimado", controller, "Ingrese el tiempo en minutos");
+            if (result != null && result.isNotEmpty) {
+              setState(() {
+                estimatedTime = "$result min";
+              });
+            }
+          },
+        ),
+        _buildDetailRow(
+          label: "Porciones Estimadas",
+          value: estimatedPortions,
+          onTap: () async {
+            final controller = TextEditingController();
+            final result = await _showNumberInputDialog("Porciones Estimadas",
+                controller, "Ingrese el número de porciones");
+            if (result != null && result.isNotEmpty) {
+              setState(() {
+                estimatedPortions = "$result porciones";
+              });
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailRow({
+    required String label,
+    required String value,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Card(
+        color: const Color.fromARGB(255, 238, 238, 238),
+        margin: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+              Row(
+                children: [
+                  Text(value, style: const TextStyle(color: Colors.grey)),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.edit, color: Colors.grey, size: 16),
+                ],
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<String?> _showTextInputDialog(
+    String title, TextEditingController controller) {
+  return showDialog<String>(
+    context: context,
+    builder: (BuildContext context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            title: Center(
+              child: Text(
+                title,
+                style: TextStyle(
+                  color: Color(0xFF129575),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            content: TextField(
+              controller: controller,
+              keyboardType: TextInputType.text,
+              decoration: const InputDecoration(
+                hintText: "Ingrese el texto",
+              ),
+              onTap: () {
+                controller.clear();
+              },
+              onChanged: (value) {
+                setState(() {});
+              },
+            ),
+            actions: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 238, 99, 89),
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Cancelar'),
+                  ),
+                  ElevatedButton(
+                    onPressed: controller.text.isNotEmpty
+                        ? () {
+                            Navigator.pop(context, controller.text);
+                          }
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF129575),
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Aceptar'),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
+Future<String?> _showNumberInputDialog(
+    String title, TextEditingController controller, String hint) {
+  return showDialog<String>(
+    context: context,
+    builder: (BuildContext context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            title: Center(
+              child: Text(
+                title,
+                style: TextStyle(
+                  color: Color(0xFF129575),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            content: TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: InputDecoration(hintText: hint),
+              onTap: () {
+                controller.clear();
+              },
+              onChanged: (value) {
+                setState(() {});
+              },
+            ),
+            actions: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 238, 99, 89),
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Cancelar'),
+                  ),
+                  ElevatedButton(
+                    onPressed: controller.text.isNotEmpty
+                        ? () {
+                            Navigator.pop(context, controller.text);
+                          }
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF129575),
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Aceptar'),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
+Future<CategoryResponse?> _showCategoryPickerDialog() async {
+  if (availableCategories.isEmpty) {
+    await fetchCategoriesFromBackend();
+  }
+
+  final options = availableCategories.map((c) => c.name).toList();
+  options.add("Otro");
+
+  return showDialog<CategoryResponse>(
+    context: context,
+    builder: (BuildContext context) {
+      return SimpleDialog(
+        title: const Center(
+          child: Text(
+            "Selecciona una Categoría",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF129575),
+            ),
+          ),
+        ),
+        children: options.map((cat) {
+          return SimpleDialogOption(
+            child: Text(cat),
+            onPressed: () async {
+              if (cat == "Otro") {
+                final TextEditingController newCatController = TextEditingController();
+                final String? newCatName = await _showTextInputDialog("Nueva Categoría", newCatController);
+                if (newCatName != null && newCatName.isNotEmpty) {
+                  try {
+                    final newCategory = await categoryController.createCategory(
+                      CategoryRequest(name: newCatName),
+                    );
+                    Navigator.pop(context, newCategory);
+                  } catch (e) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error al crear categoría: \$e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                } else {
+                  Navigator.pop(context);
+                }
+              } else {
+                final selected = availableCategories.firstWhere((c) => c.name == cat);
+                Navigator.pop(context, selected);
+              }
+            },
+          );
+        }).toList(),
+      );
+    },
+  );
+}
 
   Widget _buildTab(String label, int index) {
     return GestureDetector(
