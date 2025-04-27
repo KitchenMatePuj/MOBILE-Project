@@ -147,6 +147,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
 
         totalComments = comments.length;
         isSaved = isRecipeSaved; // Actualiza el estado del icono de guardar
+        isFollowing = isUserFollowing; // Actualiza el estado del seguimiento
       });
     } catch (e) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -543,12 +544,13 @@ class _RecipeScreenState extends State<RecipeScreen> {
                     _toggleFollowState, // Llama al método para alternar estado
                 style: ElevatedButton.styleFrom(
                   backgroundColor: isFollowing
-                      ? Colors.grey // Color para "Dejar de seguir"
+                      ? const Color.fromARGB(255, 181, 108, 106) // Color para "Dejar de seguir"
                       : const Color(0xFF129575), // Color para "Seguir"
                 ),
                 child: Text(
-                  isFollowing ? 'Siguiendo' : 'Seguir', // Texto dinámico
+                  isFollowing ? 'Dejar\nde Seguir' : 'Seguir', // Texto dinámico
                   style: const TextStyle(color: Colors.white),
+                  textAlign: TextAlign.center,
                 ),
               ),
             const SizedBox(width: 5),
