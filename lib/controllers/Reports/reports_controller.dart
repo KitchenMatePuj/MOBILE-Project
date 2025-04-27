@@ -1,13 +1,33 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../models/Reports/report_request.dart';
 import '../../models/Reports/report_response.dart';
 
 class ReportsController {
-  static const String baseUrl = 'http://localhost:8002/reports/'; 
+  final String baseUrl;
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+
+  ReportsController({required this.baseUrl});
+
+  /// Función privada para agregar Headers con Authorization
+  Future<Map<String, String>> _getHeaders() async {
+    final token = await _storage.read(key: 'jwt_token');
+    if (token == null || token.isEmpty) {
+      throw Exception('No JWT token found');
+    }
+    return {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+  }
 
   Future<List<ReportResponse>> fetchAllReports() async {
-    final response = await http.get(Uri.parse(baseUrl));
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/reports/'),
+      headers: headers,
+    );
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = json.decode(response.body);
@@ -18,7 +38,11 @@ class ReportsController {
   }
 
   Future<ReportResponse> fetchReportById(int id) async {
-    final response = await http.get(Uri.parse('$baseUrl/$id'));
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/reports/$id'),
+      headers: headers,
+    );
 
     if (response.statusCode == 200) {
       return ReportResponse.fromJson(json.decode(response.body));
@@ -28,9 +52,10 @@ class ReportsController {
   }
 
   Future<ReportResponse> createReport(ReportRequest report) async {
+    final headers = await _getHeaders();
     final response = await http.post(
-      Uri.parse(baseUrl),
-      headers: {'Content-Type': 'application/json'},
+      Uri.parse('$baseUrl/reports/'),
+      headers: headers,
       body: json.encode(report.toJson()),
     );
 
@@ -42,9 +67,10 @@ class ReportsController {
   }
 
   Future<ReportResponse> updateReport(int id, ReportRequest report) async {
+    final headers = await _getHeaders();
     final response = await http.put(
-      Uri.parse('$baseUrl/$id'),
-      headers: {'Content-Type': 'application/json'},
+      Uri.parse('$baseUrl/reports/$id'),
+      headers: headers,
       body: json.encode(report.toJson()),
     );
 
@@ -56,7 +82,11 @@ class ReportsController {
   }
 
   Future<void> deleteReport(int id) async {
-    final response = await http.delete(Uri.parse('$baseUrl/$id'));
+    final headers = await _getHeaders();
+    final response = await http.delete(
+      Uri.parse('$baseUrl/reports/$id'),
+      headers: headers,
+    );
 
     if (response.statusCode != 204) {
       throw Exception('Failed to delete report');

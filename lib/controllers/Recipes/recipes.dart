@@ -1,26 +1,40 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../models/Recipes/recipes_request.dart';
 import '../../models/Recipes/recipes_response.dart';
 
 class RecipeController {
   final String baseUrl;
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
   List<RecipeResponse> allRecipes = [];
 
   RecipeController({required this.baseUrl});
 
+  /// Función privada para agregar Headers con Authorization
+  Future<Map<String, String>> _getHeaders() async {
+    final token = await _storage.read(key: 'jwt_token');
+    if (token == null || token.isEmpty) {
+      throw Exception('No JWT token found');
+    }
+    return {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+  }
+
   /// Crear una receta (POST /recipes)
   Future<RecipeResponse> createRecipe(RecipeRequest request) async {
+    final headers = await _getHeaders();
     final response = await http.post(
       Uri.parse('$baseUrl/recipes/'),
-      headers: {'Content-Type': 'application/json'},
+      headers: headers,
       body: jsonEncode(request.toJson()),
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       return RecipeResponse.fromJson(jsonDecode(response.body));
     } else {
-      // ¡IMPORTANTE! Lanza excepción si falla:
       throw Exception(
           'Failed to create recipe: ${response.statusCode}, ${response.body}');
     }
@@ -28,7 +42,11 @@ class RecipeController {
 
   /// Obtener una receta por ID (GET /recipes/{id})
   Future<RecipeResponse> getRecipeById(int id) async {
-    final response = await http.get(Uri.parse('$baseUrl/recipes/$id'));
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/recipes/$id'),
+      headers: headers,
+    );
 
     if (response.statusCode == 200) {
       return RecipeResponse.fromJson(jsonDecode(response.body));
@@ -39,7 +57,11 @@ class RecipeController {
 
   /// Listar todas las recetas (GET /recipes)
   Future<List<RecipeResponse>> fetchRecipes() async {
-    final response = await http.get(Uri.parse('$baseUrl/recipes/'));
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/recipes/'),
+      headers: headers,
+    );
 
     if (response.statusCode == 200) {
       final List<dynamic> body = jsonDecode(response.body);
@@ -52,6 +74,7 @@ class RecipeController {
   /// Buscar recetas (GET /recipes/search?title=&cooking_time=&ingredient=)
   Future<List<RecipeResponse>> searchRecipes(
       {String? title, int? cookingTime, String? ingredient}) async {
+    final headers = await _getHeaders();
     final queryParams = {
       if (title != null) 'title': title,
       if (cookingTime != null) 'cooking_time': cookingTime.toString(),
@@ -60,8 +83,7 @@ class RecipeController {
 
     final uri = Uri.parse('$baseUrl/recipes/search')
         .replace(queryParameters: queryParams);
-
-    final response = await http.get(uri);
+    final response = await http.get(uri, headers: headers);
 
     if (response.statusCode == 200) {
       final List<dynamic> body = jsonDecode(response.body);
@@ -73,9 +95,10 @@ class RecipeController {
 
   /// Actualizar receta (PUT /recipes/{id})
   Future<RecipeResponse> updateRecipe(int id, RecipeRequest request) async {
+    final headers = await _getHeaders();
     final response = await http.put(
       Uri.parse('$baseUrl/recipes/$id'),
-      headers: {'Content-Type': 'application/json'},
+      headers: headers,
       body: jsonEncode(request.toJson()),
     );
 
@@ -88,7 +111,11 @@ class RecipeController {
 
   /// Eliminar receta (DELETE /recipes/{id})
   Future<void> deleteRecipe(int id) async {
-    final response = await http.delete(Uri.parse('$baseUrl/recipes/$id'));
+    final headers = await _getHeaders();
+    final response = await http.delete(
+      Uri.parse('$baseUrl/recipes/$id'),
+      headers: headers,
+    );
 
     if (response.statusCode != 204) {
       throw Exception('Failed to delete recipe');
@@ -97,7 +124,11 @@ class RecipeController {
 
   /// Obtener recetas por usuario (GET /recipes/user/{userId})
   Future<List<RecipeResponse>> getRecipesByUser(String userId) async {
-    final response = await http.get(Uri.parse('$baseUrl/recipes/user/$userId'));
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/recipes/user/$userId'),
+      headers: headers,
+    );
 
     if (response.statusCode == 200) {
       final List<dynamic> body = jsonDecode(response.body);
@@ -110,10 +141,10 @@ class RecipeController {
   /// Filtrar recetas por rating (GET /recipes/ratings/filter?min_rating=x&max_rating=y)
   Future<List<RecipeResponse>> filterRecipesByRating(
       double minRating, double maxRating) async {
+    final headers = await _getHeaders();
     final uri = Uri.parse(
         '$baseUrl/recipes/ratings/filter?min_rating=$minRating&max_rating=$maxRating');
-
-    final response = await http.get(uri);
+    final response = await http.get(uri, headers: headers);
 
     if (response.statusCode == 200) {
       final List<dynamic> body = jsonDecode(response.body);
@@ -125,8 +156,11 @@ class RecipeController {
 
   /// Obtener estadísticas por tiempo de cocción (GET /recipes/statistics/cooking-time)
   Future<List<Map<String, dynamic>>> getCookingTimeStats() async {
-    final response =
-        await http.get(Uri.parse('$baseUrl/recipes/statistics/cooking-time'));
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/recipes/statistics/cooking-time'),
+      headers: headers,
+    );
 
     if (response.statusCode == 200) {
       return List<Map<String, dynamic>>.from(jsonDecode(response.body));
@@ -137,8 +171,11 @@ class RecipeController {
 
   /// Obtener número total de recetas (GET /recipes/statistics/total)
   Future<int> getTotalRecipeCount() async {
-    final response =
-        await http.get(Uri.parse('$baseUrl/recipes/statistics/total'));
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/recipes/statistics/total'),
+      headers: headers,
+    );
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> json = jsonDecode(response.body);
@@ -148,10 +185,11 @@ class RecipeController {
     }
   }
 
+  /// Actualizar imagen de una receta
   Future<void> updateRecipeImage(int recipeId, String imageUrl) async {
+    final headers = await _getHeaders();
     final actual = await getRecipeById(recipeId);
 
-    // 2. Construye el payload completo
     final body = {
       'category_id': actual.categoryId,
       'title': actual.title,
@@ -162,17 +200,17 @@ class RecipeController {
       'total_portions': actual.totalPortions,
       'keycloak_user_id': actual.keycloakUserId,
       'rating_avg': actual.ratingAvg,
-      'image_url': imageUrl, //  << añadido
+      'image_url': imageUrl,
     };
 
     final resp = await http.put(
       Uri.parse('$baseUrl/recipes/$recipeId'),
-      headers: {'Content-Type': 'application/json'},
+      headers: headers,
       body: jsonEncode(body),
     );
 
     if (resp.statusCode != 200) {
-      throw Exception('PUT falló: ${resp.statusCode}  ${resp.body}');
+      throw Exception('PUT failed: ${resp.statusCode} ${resp.body}');
     }
   }
 }

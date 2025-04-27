@@ -1,16 +1,34 @@
 import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import '../../models/Profiles/ingredient_request.dart';
 import '../../models/Profiles/ingredient_response.dart';
 
 class IngredientController {
   final String baseUrl;
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   IngredientController({required this.baseUrl});
 
+  /// Función privada para agregar Headers con Authorization
+  Future<Map<String, String>> _getHeaders() async {
+    final token = await _storage.read(key: 'jwt_token');
+    if (token == null || token.isEmpty) {
+      throw Exception('No JWT token found');
+    }
+    return {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+  }
+
   /// GET: Obtener un ingrediente por ID
   Future<IngredientResponse> getIngredient(int ingredientId) async {
-    final response = await http.get(Uri.parse('$baseUrl/$ingredientId'));
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/$ingredientId'),
+      headers: headers,
+    );
 
     if (response.statusCode == 200) {
       return IngredientResponse.fromJson(json.decode(response.body));
@@ -20,8 +38,13 @@ class IngredientController {
   }
 
   /// GET: Listar todos los ingredientes de una lista de compras
-  Future<List<IngredientResponse>> listIngredientsByShoppingList(int shoppingListId) async {
-    final response = await http.get(Uri.parse('$baseUrl/ingredients/shopping_list/$shoppingListId'));
+  Future<List<IngredientResponse>> listIngredientsByShoppingList(
+      int shoppingListId) async {
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/ingredients/shopping_list/$shoppingListId'),
+      headers: headers,
+    );
 
     if (response.statusCode == 200) {
       final List<dynamic> body = json.decode(response.body);
@@ -33,9 +56,10 @@ class IngredientController {
 
   /// POST: Crear un nuevo ingrediente
   Future<void> createIngredient(IngredientRequest ingredient) async {
+    final headers = await _getHeaders();
     final response = await http.post(
       Uri.parse(baseUrl),
-      headers: {'Content-Type': 'application/json'},
+      headers: headers,
       body: json.encode(ingredient.toJson()),
     );
 
@@ -45,10 +69,12 @@ class IngredientController {
   }
 
   /// PUT: Actualizar un ingrediente
-  Future<void> updateIngredient(int ingredientId, Map<String, dynamic> updates) async {
+  Future<void> updateIngredient(
+      int ingredientId, Map<String, dynamic> updates) async {
+    final headers = await _getHeaders();
     final response = await http.put(
       Uri.parse('$baseUrl/$ingredientId'),
-      headers: {'Content-Type': 'application/json'},
+      headers: headers,
       body: json.encode(updates),
     );
 
@@ -59,7 +85,11 @@ class IngredientController {
 
   /// DELETE: Eliminar un ingrediente
   Future<void> deleteIngredient(int ingredientId) async {
-    final response = await http.delete(Uri.parse('$baseUrl/$ingredientId'));
+    final headers = await _getHeaders();
+    final response = await http.delete(
+      Uri.parse('$baseUrl/$ingredientId'),
+      headers: headers,
+    );
 
     if (response.statusCode != 200 && response.statusCode != 204) {
       throw Exception('Failed to delete ingredient');

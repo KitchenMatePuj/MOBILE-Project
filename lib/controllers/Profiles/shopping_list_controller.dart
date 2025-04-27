@@ -1,16 +1,34 @@
 import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import '../../models/Profiles/shopping_list_request.dart';
 import '../../models/Profiles/shopping_list_response.dart';
 
 class ShoppingListController {
   final String baseUrl;
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   ShoppingListController({required this.baseUrl});
 
+  /// Función privada para agregar Headers con Authorization
+  Future<Map<String, String>> _getHeaders() async {
+    final token = await _storage.read(key: 'jwt_token');
+    if (token == null || token.isEmpty) {
+      throw Exception('No JWT token found');
+    }
+    return {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+  }
+
   /// GET: Obtener una lista de compras por ID
   Future<ShoppingListResponse> getShoppingList(int shoppingListId) async {
-    final response = await http.get(Uri.parse('$baseUrl/$shoppingListId'));
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/$shoppingListId'),
+      headers: headers,
+    );
 
     if (response.statusCode == 200) {
       return ShoppingListResponse.fromJson(json.decode(response.body));
@@ -20,8 +38,13 @@ class ShoppingListController {
   }
 
   /// GET: Listar todas las listas de compras de un perfil
-  Future<List<ShoppingListResponse>> listShoppingListsByProfile(int profileId) async {
-    final response = await http.get(Uri.parse('$baseUrl/shopping_lists/profile/$profileId'));
+  Future<List<ShoppingListResponse>> listShoppingListsByProfile(
+      int profileId) async {
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/shopping_lists/profile/$profileId'),
+      headers: headers,
+    );
 
     if (response.statusCode == 200) {
       final List<dynamic> body = json.decode(response.body);
@@ -33,9 +56,10 @@ class ShoppingListController {
 
   /// POST: Crear una nueva lista de compras
   Future<void> createShoppingList(ShoppingListRequest list) async {
+    final headers = await _getHeaders();
     final response = await http.post(
       Uri.parse('$baseUrl/shopping_lists/'),
-      headers: {'Content-Type': 'application/json'},
+      headers: headers,
       body: json.encode(list.toJson()),
     );
 
@@ -45,10 +69,12 @@ class ShoppingListController {
   }
 
   /// PUT: Actualizar una lista de compras
-  Future<void> updateShoppingList(int listId, Map<String, dynamic> updates) async {
+  Future<void> updateShoppingList(
+      int listId, Map<String, dynamic> updates) async {
+    final headers = await _getHeaders();
     final response = await http.put(
       Uri.parse('$baseUrl/$listId'),
-      headers: {'Content-Type': 'application/json'},
+      headers: headers,
       body: json.encode(updates),
     );
 
@@ -59,7 +85,11 @@ class ShoppingListController {
 
   /// DELETE: Eliminar una lista de compras
   Future<void> deleteShoppingList(int listId) async {
-    final response = await http.delete(Uri.parse('$baseUrl/$listId'));
+    final headers = await _getHeaders();
+    final response = await http.delete(
+      Uri.parse('$baseUrl/$listId'),
+      headers: headers,
+    );
 
     if (response.statusCode != 200 && response.statusCode != 204) {
       throw Exception('Failed to delete shopping list');

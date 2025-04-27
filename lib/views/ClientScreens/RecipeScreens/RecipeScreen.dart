@@ -18,6 +18,7 @@ import 'package:mobile_kitchenmate/models/Profiles/ingredient_response.dart'
 
 import 'package:mobile_kitchenmate/models/Recipes/comments_response.dart';
 import 'package:mobile_kitchenmate/models/Recipes/recipe_steps_response.dart';
+import 'package:mobile_kitchenmate/views/ClientScreens/RecipeScreens/CreateRecipeScreen.dart';
 
 import '/controllers/authentication/auth_controller.dart';
 import '/models/authentication/login_request_advanced.dart' as advanced;
@@ -260,7 +261,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
         status: 'pending', // Estado inicial del reporte
       );
 
-      await ReportsController()
+      await ReportsController(baseUrl: reportBaseUrl)
           .createReport(reportRequest); // Enviar el reporte
 
       ScaffoldMessenger.of(context).showSnackBar(

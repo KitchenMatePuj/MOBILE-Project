@@ -6,14 +6,12 @@ import '../../models/strapi/strapi_response.dart';
 
 class StrapiController {
   final String baseUrl;
+
   StrapiController({required this.baseUrl});
 
   Future<StrapiUploadResponse> uploadImage(StrapiUploadRequest req) async {
     final uri = Uri.parse('$baseUrl/api/upload');
     final request = http.MultipartRequest('POST', uri);
-
-    // Encabezado explícito opcional
-    request.headers['Accept'] = 'application/json';
 
     // Selecciona el archivo correcto
     if (req.bytes != null) {

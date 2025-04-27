@@ -26,6 +26,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
   final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
   final String _authBase = dotenv.env['AUTH_URL'] ?? '';
+  final String _reportBase = dotenv.env['REPORT_URL'] ?? '';
 
   late final CommentController _commentCtl;
   late final ProfileController _profileCtl;
@@ -203,7 +204,8 @@ class _CommentsScreenState extends State<CommentsScreen> {
                             );
 
                             try {
-                              final reportController = ReportsController();
+                              final reportController =
+                                  ReportsController(baseUrl: _reportBase);
                               await reportController
                                   .createReport(reportRequest);
                               ScaffoldMessenger.of(context).showSnackBar(

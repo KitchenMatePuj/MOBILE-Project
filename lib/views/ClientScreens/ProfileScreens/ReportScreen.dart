@@ -21,6 +21,7 @@ class ReportsScreen extends StatefulWidget {
 
 class _ReportsScreenState extends State<ReportsScreen> {
   final String _authBase = dotenv.env['AUTH_URL'] ?? '';
+  final String _reportBase = dotenv.env['REPORT_URL'] ?? '';
   final List<int> _expandedReports = [];
   late Future<List<ReportResponse>> _reportsFuture;
   late ReportsController _reportsController;
@@ -38,7 +39,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       print('Keycloak User ID: $reporterUserIdd');
     });
 
-    _reportsController = ReportsController();
+    _reportsController = ReportsController(baseUrl: _reportBase);
     _reportsFuture = _reportsController.fetchAllReports();
   }
 

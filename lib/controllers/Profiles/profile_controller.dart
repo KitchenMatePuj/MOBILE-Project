@@ -1,17 +1,34 @@
 import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import '../../models/Profiles/profile_request.dart';
 import '../../models/Profiles/profile_response.dart';
 
 class ProfileController {
   final String baseUrl;
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   ProfileController({required this.baseUrl});
 
+  /// Función privada para agregar Headers con Authorization
+  Future<Map<String, String>> _getHeaders() async {
+    final token = await _storage.read(key: 'jwt_token');
+    if (token == null || token.isEmpty) {
+      throw Exception('No JWT token found');
+    }
+    return {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+  }
+
   /// GET: Obtener perfil por keycloak_user_id
   Future<ProfileResponse> getProfile(String keycloakUserId) async {
-    final response =
-        await http.get(Uri.parse('$baseUrl/profiles/$keycloakUserId'));
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/profiles/$keycloakUserId'),
+      headers: headers,
+    );
 
     if (response.statusCode == 200) {
       return ProfileResponse.fromJson(json.decode(response.body));
@@ -22,8 +39,11 @@ class ProfileController {
 
   /// GET: Obtener perfil por profile_id
   Future<ProfileResponse> getProfilebyid(String profile_id) async {
-    final response =
-        await http.get(Uri.parse('$baseUrl/profiles/id/$profile_id'));
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/profiles/id/$profile_id'),
+      headers: headers,
+    );
 
     if (response.statusCode == 200) {
       return ProfileResponse.fromJson(json.decode(response.body));
@@ -34,7 +54,11 @@ class ProfileController {
 
   /// GET: Listar todos los perfiles
   Future<List<ProfileResponse>> listProfiles() async {
-    final response = await http.get(Uri.parse('$baseUrl/profiles/'));
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/profiles/'),
+      headers: headers,
+    );
 
     if (response.statusCode == 200) {
       final List<dynamic> body = json.decode(response.body);
@@ -46,9 +70,10 @@ class ProfileController {
 
   /// POST: Crear perfil
   Future<ProfileResponse> createProfile(ProfileRequest request) async {
+    final headers = await _getHeaders();
     final response = await http.post(
       Uri.parse('$baseUrl/profiles/'),
-      headers: {'Content-Type': 'application/json'},
+      headers: headers,
       body: jsonEncode(request.toJson()),
     );
 
@@ -62,9 +87,10 @@ class ProfileController {
   /// PUT: Actualizar perfil
   Future<void> updateProfile(
       String keycloakUserId, ProfileRequest updatedProfile) async {
+    final headers = await _getHeaders();
     final response = await http.put(
       Uri.parse('$baseUrl/profiles/$keycloakUserId'),
-      headers: {'Content-Type': 'application/json'},
+      headers: headers,
       body: json.encode(updatedProfile.toJson()),
     );
 
@@ -75,8 +101,11 @@ class ProfileController {
 
   /// DELETE: Eliminar perfil
   Future<void> deleteProfile(String keycloakUserId) async {
-    final response =
-        await http.delete(Uri.parse('$baseUrl/profiles/$keycloakUserId'));
+    final headers = await _getHeaders();
+    final response = await http.delete(
+      Uri.parse('$baseUrl/profiles/$keycloakUserId'),
+      headers: headers,
+    );
 
     if (response.statusCode != 200 && response.statusCode != 204) {
       throw Exception('Failed to delete profile');
