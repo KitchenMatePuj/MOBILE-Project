@@ -671,6 +671,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
   BottomNavigationBar _buildBottomNavBar() {
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
+      backgroundColor: Colors.white,
       currentIndex: 1,
       selectedItemColor: const Color(0xFF129575),
       unselectedItemColor: Colors.black,
