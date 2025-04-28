@@ -183,58 +183,59 @@ class _LoginScreenState extends State<LoginScreen> {
     return Center(
       child: Column(
         children: [
-          ElevatedButton(
+            ElevatedButton(
             style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 85),
+              padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(10),
               ),
               backgroundColor: const Color(0xFF129575),
             ),
             onPressed: () async {
               setState(() {
-                _isLoading = true;
-                _errorMessage = '';
+              _isLoading = true;
+              _errorMessage = '';
               });
 
               final loginRequest = advanced.LoginRequest(
-                username: _emailController.text,
-                password: _passwordController.text,
+              username: _emailController.text,
+              password: _passwordController.text,
               );
 
               try {
-                final LoginResponse loginResponse =
-                    await authController.loginUser(loginRequest);
-                // Añadir un print statement para verificar la respuesta del backend
-                print('LoginResponse: ${loginResponse.accessToken}');
+              final LoginResponse loginResponse =
+                await authController.loginUser(loginRequest);
+              print('LoginResponse: ${loginResponse.accessToken}');
 
-                // Si el login es exitoso, navega al dashboard
-                if (loginResponse.accessToken.isNotEmpty) { 
-                  Navigator.pushNamed(context, '/dashboard');
-                  authController.saveToken(loginResponse.accessToken);
-                  
-                } else {
-                  setState(() {
-                    _isLoading = false;
-                    _errorMessage = 'Correo o contraseña incorrectos';
-                  });
-                }
-              } catch (e) {
+              if (loginResponse.accessToken.isNotEmpty) {
+                Navigator.pushNamed(context, '/dashboard');
+                authController.saveToken(loginResponse.accessToken);
+              } else {
                 setState(() {
-                  _isLoading = false;
-                  _errorMessage = 'Correo o contraseña incorrectos';
+                _isLoading = false;
+                _errorMessage = 'Correo o contraseña incorrectos';
                 });
               }
+              } catch (e) {
+              setState(() {
+                _isLoading = false;
+                _errorMessage = 'Correo o contraseña incorrectos';
+              });
+              }
             },
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 50), // Aumenta el ancho del botón
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
                 Text(
                   "Iniciar Sesión",
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                   ),
                 ),
                 SizedBox(width: 11),
@@ -243,9 +244,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   size: 20,
                   color: Colors.white,
                 ),
-              ],
+                ],
+              ),
+              ),
             ),
-          ),
+            ),
           if (_errorMessage.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 10),

@@ -74,19 +74,25 @@ class _RecipeScreenState extends State<RecipeScreen> {
   late FollowController _followController;
 
   late String _authUserId = '';
-  late String recipeUserId = '';
+  late int recipeUserId = 1;
+  late String recipeUserId1 = '';
 
   Future<void> _loadRecipeData(int recipeId) async {
     try {
-      // Carga la receta principal y el perfil del autor
+      // Carga la receta principal
       final recipe = await _recipeController.getRecipeById(recipeId);
+
+      // Carga el perfil del chef relacionado con la receta
       final chef = await _profileController.getProfile(recipe.keycloakUserId);
+      recipeUserId =
+          chef.profileId; // Asigna el profileId del chef correctamente
+      recipeUserId1 = chef.profileId
+          .toString(); // Asigna el profileId del chef correctamente
 
       // Verifica si el usuario ya sigue al chef
       final profile = await _profileController.getProfile(keycloakUserId);
       final followedKeycloakIds =
-          await FollowController(baseUrl: profileBaseUrl)
-              .getFollowedKeycloakUserIds(profile.profileId);
+          await _followController.getFollowedKeycloakUserIds(profile.profileId);
       final isUserFollowing =
           followedKeycloakIds.contains(recipe.keycloakUserId);
 
@@ -99,28 +105,10 @@ class _RecipeScreenState extends State<RecipeScreen> {
       // Carga pasos e ingredientes
       final stepRes = await _stepController.fetchSteps(recipeId);
       final ingRes = await _ingredientController.fetchIngredients();
+      final ingOfRecipe = ingRes.where((i) => i.recipeId == recipeId).toList();
 
       // Carga comentarios
       final comments = await _commentController.fetchComments(recipeId);
-      // Intentar obtener el perfil, pero seguir incluso si falla
-      String fetchedChefName = 'Chef desconocido';
-      String fetchedChefImage = 'assets/chefs/default_user.png';
-
-      try {
-        final chef = await _profileController.getProfile(recipeUserId);
-        fetchedChefName = chef.firstName ?? 'Chef sin nombre';
-        fetchedChefImage =
-            (chef.profilePhoto != null && chef.profilePhoto!.isNotEmpty)
-                ? (chef.profilePhoto!.startsWith('http')
-                    ? chef.profilePhoto!
-                    : '$strapiBase${chef.profilePhoto!}')
-                : 'assets/chefs/default_user.png';
-      } catch (e) {
-        print(
-            '[WARNING] No se pudo cargar el perfil del chef ($recipeUserId): $e');
-      }
-
-      final ingOfRecipe = ingRes.where((i) => i.recipeId == recipeId).toList();
 
       imageUrl = (recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty)
           ? (recipe.imageUrl!.startsWith('http')
@@ -129,12 +117,18 @@ class _RecipeScreenState extends State<RecipeScreen> {
           : 'assets/recipes/recipe_placeholder.jpg';
 
       if (!mounted) return; // Si la pantalla fue cerrada, salir
+
+      // Actualiza el estado con los datos correctos
       setState(() {
         recipeTitle = recipe.title ?? '';
         duration = recipe.cookingTime ?? 0;
         totalServings = recipe.totalPortions ?? 0;
-        chefName = fetchedChefName;
-        chefImage = fetchedChefImage;
+        chefName = chef.firstName ?? 'Chef sin nombre';
+        chefImage = (chef.profilePhoto != null && chef.profilePhoto!.isNotEmpty)
+            ? (chef.profilePhoto!.startsWith('http')
+                ? chef.profilePhoto!
+                : '$strapiBase${chef.profilePhoto!}')
+            : 'assets/chefs/default_user.png';
 
         steps = stepRes.map((e) => e.description ?? '').toList();
         ingredients = ingOfRecipe
@@ -285,7 +279,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
   Future<void> _toggleFollowState() async {
     try {
       final profile = await _profileController.getProfile(keycloakUserId);
-      final chefProfile = await _profileController.getProfile(recipeUserId);
+      final chefProfile = await _profileController.getProfile(recipeUserId1);
 
       if (isFollowing) {
         // Dejar de seguir al chef
@@ -535,41 +529,42 @@ class _RecipeScreenState extends State<RecipeScreen> {
       children: [
         Row(
           children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundImage: chefImage.startsWith('http')
-                  ? NetworkImage(chefImage)
-                  : AssetImage(chefImage) as ImageProvider,
+            GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  '/public_profile',
+                  arguments: {'profile_id': recipeUserId}, // Usa el profileId
+                );
+              },
+              child: CircleAvatar(
+                radius: 20,
+                backgroundImage: chefImage.startsWith('http')
+                    ? NetworkImage(chefImage)
+                    : AssetImage(chefImage) as ImageProvider,
+              ),
             ),
             const SizedBox(width: 10),
-            Text(
-              chefName,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+            GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  '/public_profile',
+                  arguments: {'profile_id': recipeUserId}, // Usa el profileId
+                );
+              },
+              child: Text(
+                chefName,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
         ),
         Row(
           children: [
-            if (_authUserId == recipeUserId)
-              ElevatedButton(
-                onPressed:
-                    _toggleFollowState, // Llama al método para alternar estado
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isFollowing
-                      ? const Color.fromARGB(
-                          255, 181, 108, 106) // Color para "Dejar de seguir"
-                      : const Color(0xFF129575), // Color para "Seguir"
-                ),
-                child: Text(
-                  isFollowing ? 'Dejar\nde Seguir' : 'Seguir', // Texto dinámico
-                  style: const TextStyle(color: Colors.white),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            const SizedBox(width: 5),
             ElevatedButton(
               onPressed:
                   _addToShoppingList, // Llama al método para agregar a la lista
