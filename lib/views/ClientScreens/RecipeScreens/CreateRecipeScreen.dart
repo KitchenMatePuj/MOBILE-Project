@@ -109,7 +109,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
       final bytes = await pickedFile.readAsBytes();
       final imageFile = File(pickedFile.path);
 
-      // 2. actualización síncrona del estado
+      // 2. actualización síncrona del estado.
       setState(() {
         _image = imageFile;
         _imageBytes = bytes;
