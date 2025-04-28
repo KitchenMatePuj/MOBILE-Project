@@ -55,16 +55,19 @@ class ShoppingListController {
   }
 
   /// POST: Crear una nueva lista de compras
-  Future<void> createShoppingList(ShoppingListRequest list) async {
-    final headers = await _getHeaders();
+  Future<ShoppingListResponse> createShoppingList(
+      ShoppingListRequest request) async {
+    final headers = await _getHeaders(); // ← ¡Aquí!
     final response = await http.post(
       Uri.parse('$baseUrl/shopping_lists/'),
-      headers: headers,
-      body: json.encode(list.toJson()),
+      headers: headers, // ← ¡Aquí!
+      body: jsonEncode(request.toJson()),
     );
 
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to create shopping list');
+    if (response.statusCode == 200) {
+      return ShoppingListResponse.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to create shopping list: ${response.body}');
     }
   }
 

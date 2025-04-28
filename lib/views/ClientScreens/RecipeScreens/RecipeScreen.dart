@@ -238,8 +238,15 @@ class _RecipeScreenState extends State<RecipeScreen> {
       );
 
       // Envía la solicitud al backend
-      await ShoppingListController(baseUrl: profileBaseUrl)
-          .createShoppingList(shoppingListRequest);
+      final shoppingListResponse =
+          await ShoppingListController(baseUrl: profileBaseUrl)
+              .createShoppingList(shoppingListRequest);
+
+      // Ahora ya tienes el ID de la nueva lista
+      final shoppingListId = shoppingListResponse.shoppingListId;
+
+      // Aquí podrías agregar ingredientes si quieres
+      print('Lista de compras creada con ID: $shoppingListId');
 
       // Muestra un mensaje de éxito
       ScaffoldMessenger.of(context).showSnackBar(
@@ -359,11 +366,13 @@ class _RecipeScreenState extends State<RecipeScreen> {
     _authController = AuthController(baseUrl: _authBase);
     _followController = FollowController(baseUrl: profileBaseUrl);
 
-    _authController.getKeycloakUserId().then((id) {
-      keycloakUserId = id;
-    });
+    _initializeAuthUser();
+  }
 
+  Future<void> _initializeAuthUser() async {
+    keycloakUserId = await _authController.getKeycloakUserId();
     _authUserId = keycloakUserId;
+    setState(() {}); // ← Refresca la pantalla cuando termine de cargar
   }
 
   // ──────────────── 3) didChangeDependencies → leer arguments ──────────
@@ -437,6 +446,20 @@ class _RecipeScreenState extends State<RecipeScreen> {
   }
 
   Widget _buildImageHeader() {
+    Widget displayedImage = imageUrl.startsWith('http')
+        ? Image.network(
+            imageUrl,
+            width: double.infinity,
+            height: 150,
+            fit: BoxFit.cover,
+          )
+        : Image.asset(
+            imageUrl,
+            width: double.infinity,
+            height: 150,
+            fit: BoxFit.cover,
+          );
+
     return Stack(
       children: [
         ClipRRect(
@@ -444,19 +467,11 @@ class _RecipeScreenState extends State<RecipeScreen> {
           child: ColorFiltered(
             colorFilter: ColorFilter.mode(
                 Colors.black.withOpacity(0.3), BlendMode.darken),
-            child: imageUrl.startsWith('http')
-                ? Image.network(
-                    imageUrl,
-                    width: double.infinity,
-                    height: 150,
-                    fit: BoxFit.cover,
-                  )
-                : Image.asset(
-                    imageUrl,
-                    width: double.infinity,
-                    height: 150,
-                    fit: BoxFit.cover,
-                  ),
+            child: Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.rotationX(3.14159), // ← rotar 180°
+              child: displayedImage, // ← aquí ya usas el widget
+            ),
           ),
         ),
         Positioned(
@@ -479,7 +494,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
               isSaved ? Icons.bookmark : Icons.bookmark_border,
               color: isSaved ? Colors.yellow : Colors.white,
             ),
-            onPressed: _toggleSavedState, // Alterna el estado de guardado
+            onPressed: _toggleSavedState,
           ),
         ),
       ],
@@ -544,7 +559,8 @@ class _RecipeScreenState extends State<RecipeScreen> {
                     _toggleFollowState, // Llama al método para alternar estado
                 style: ElevatedButton.styleFrom(
                   backgroundColor: isFollowing
-                      ? const Color.fromARGB(255, 181, 108, 106) // Color para "Dejar de seguir"
+                      ? const Color.fromARGB(
+                          255, 181, 108, 106) // Color para "Dejar de seguir"
                       : const Color(0xFF129575), // Color para "Seguir"
                 ),
                 child: Text(

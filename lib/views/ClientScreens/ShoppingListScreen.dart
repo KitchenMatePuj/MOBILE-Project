@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_kitchenmate/controllers/Profiles/profile_controller.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '/controllers/Profiles/shopping_list_controller.dart';
@@ -7,6 +8,7 @@ import '/models/Profiles/ingredient_response.dart';
 import '/models/Profiles/shopping_list_response.dart';
 import '/models/Recipes/recipes_response.dart';
 import '/controllers/Recipes/recipes.dart';
+import '/controllers/authentication/auth_controller.dart';
 import '/providers/user_provider.dart';
 
 class ShoppingListScreen extends StatefulWidget {
@@ -23,17 +25,37 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   late IngredientController ingredientController;
   late RecipeController recipeController;
   ShoppingListResponse? selectedShoppingList;
-  int profileId = 2; // profile_id del usuario logueado
+  int? profileId; // profile_id del usuario logueado
+  late AuthController authController;
+  late ProfileController profileController;
+  String keycloakUserId = '';
 
   final profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
   final recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
+  final authBaseUrl = dotenv.env['AUTH_URL'] ?? '';
 
   @override
   void initState() {
     super.initState();
     shoppingListController = ShoppingListController(baseUrl: profileBaseUrl);
-    ingredientController = IngredientController(baseUrl: recipeBaseUrl);
+    ingredientController = IngredientController(baseUrl: profileBaseUrl);
     recipeController = RecipeController(baseUrl: recipeBaseUrl);
+    authController = AuthController(baseUrl: authBaseUrl);
+    profileController = ProfileController(baseUrl: profileBaseUrl);
+
+    _loadProfileId();
+  }
+
+  Future<void> _loadProfileId() async {
+    try {
+      keycloakUserId = await authController.getKeycloakUserId();
+      final profile = await profileController.getProfile(keycloakUserId);
+      setState(() {
+        profileId = profile.profileId;
+      });
+    } catch (e) {
+      print('Error cargando profileId: $e');
+    }
   }
 
   @override
@@ -80,9 +102,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                       });
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 20),
                       decoration: BoxDecoration(
-                        color: isIngredientSelected ? const Color(0xFF129575) : Colors.white,
+                        color: isIngredientSelected
+                            ? const Color(0xFF129575)
+                            : Colors.white,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: const Color(0xFF129575)),
                       ),
@@ -91,7 +116,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: isIngredientSelected ? Colors.white : const Color(0xFF129575),
+                          color: isIngredientSelected
+                              ? Colors.white
+                              : const Color(0xFF129575),
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -109,9 +136,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                       });
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 20),
                       decoration: BoxDecoration(
-                        color: isIngredientSelected ? Colors.white : const Color(0xFF129575),
+                        color: isIngredientSelected
+                            ? Colors.white
+                            : const Color(0xFF129575),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: const Color(0xFF129575)),
                       ),
@@ -120,7 +150,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: isIngredientSelected ? const Color(0xFF129575) : Colors.white,
+                          color: isIngredientSelected
+                              ? const Color(0xFF129575)
+                              : Colors.white,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -136,24 +168,25 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                    Flexible(
+                  Flexible(
                     child: Text(
                       isIngredientSelected
-                        ? 'Ingredientes Pendientes'
-                        : selectedShoppingList == null
-                          ? 'Recetas en Lista de Compras'
-                          : selectedShoppingList!.recipeName,
+                          ? 'Ingredientes Pendientes'
+                          : selectedShoppingList == null
+                              ? 'Recetas en Lista de Compras'
+                              : selectedShoppingList!.recipeName,
                       style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF121212),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF121212),
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
-                    ),
+                  ),
                   if (selectedShoppingList != null)
                     IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Color(0xFF129575)),
+                      icon: const Icon(Icons.arrow_back,
+                          color: Color(0xFF129575)),
                       onPressed: () {
                         setState(() {
                           selectedShoppingList = null;
@@ -167,14 +200,23 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             Expanded(
               child: isIngredientSelected
                   ? FutureBuilder<List<ShoppingListResponse>>(
-                      future: shoppingListController.listShoppingListsByProfile(profileId),
+                      future: profileId == null
+                          ? Future.value([])
+                          : shoppingListController
+                              .listShoppingListsByProfile(profileId!),
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator());
                         } else if (snapshot.hasError) {
-                          return Center(child: Text('Error: ${snapshot.error}'));
-                        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                          return const Center(child: Text('No se encontraron listas de compras'));
+                          return Center(
+                              child: Text('Error: ${snapshot.error}'));
+                        } else if (!snapshot.hasData ||
+                            snapshot.data!.isEmpty) {
+                          return const Center(
+                              child:
+                                  Text('No se encontraron listas de compras'));
                         }
                         final shoppingLists = snapshot.data!;
                         return IngredientsPendingList(
@@ -186,14 +228,24 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                     )
                   : selectedShoppingList == null
                       ? FutureBuilder<List<ShoppingListResponse>>(
-                          future: shoppingListController.listShoppingListsByProfile(profileId),
+                          future: profileId == null
+                              ? Future.value(
+                                  []) // No cargar todavía si no hay profileId
+                              : shoppingListController
+                                  .listShoppingListsByProfile(profileId!),
                           builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return const Center(child: CircularProgressIndicator());
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                  child: CircularProgressIndicator());
                             } else if (snapshot.hasError) {
-                              return Center(child: Text('Error: ${snapshot.error}'));
-                            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                              return const Center(child: Text('No se encontraron listas de compras'));
+                              return Center(
+                                  child: Text('Error: ${snapshot.error}'));
+                            } else if (!snapshot.hasData ||
+                                snapshot.data!.isEmpty) {
+                              return const Center(
+                                  child: Text(
+                                      'No se encontraron listas de compras'));
                             }
                             final shoppingLists = snapshot.data!;
                             return RecipesPendingList(
@@ -272,7 +324,10 @@ class IngredientsPendingList extends StatelessWidget {
   final IngredientController ingredientController;
   final String searchTerm;
 
-  const IngredientsPendingList({required this.shoppingLists, required this.ingredientController, required this.searchTerm});
+  const IngredientsPendingList(
+      {required this.shoppingLists,
+      required this.ingredientController,
+      required this.searchTerm});
 
   @override
   Widget build(BuildContext context) {
@@ -289,7 +344,9 @@ class IngredientsPendingList extends StatelessWidget {
 
         // Filtrar ingredientes por término de búsqueda
         final filteredIngredients = snapshot.data!.where((ingredient) {
-          return ingredient.ingredientName.toLowerCase().contains(searchTerm.toLowerCase());
+          return ingredient.ingredientName
+              .toLowerCase()
+              .contains(searchTerm.toLowerCase());
         }).toList();
 
         return ListView.builder(
@@ -309,7 +366,8 @@ class IngredientsPendingList extends StatelessWidget {
     Set<IngredientResponse> ingredients = {};
     for (var shoppingList in shoppingLists) {
       // Aquí puedes obtener la lista de ingredientes por lista de compras
-      final shoppingListIngredients = await ingredientController.listIngredientsByShoppingList(shoppingList.shoppingListId);
+      final shoppingListIngredients = await ingredientController
+          .listIngredientsByShoppingList(shoppingList.shoppingListId);
       ingredients.addAll(shoppingListIngredients);
     }
     return ingredients.toList();
@@ -321,13 +379,18 @@ class RecipesPendingList extends StatelessWidget {
   final Function(ShoppingListResponse) onShoppingListSelected;
   final String searchTerm;
 
-  const RecipesPendingList({required this.shoppingLists, required this.onShoppingListSelected, required this.searchTerm});
+  const RecipesPendingList(
+      {required this.shoppingLists,
+      required this.onShoppingListSelected,
+      required this.searchTerm});
 
   @override
   Widget build(BuildContext context) {
     // Filtrar listas de compras por término de búsqueda
     final filteredShoppingLists = shoppingLists.where((shoppingList) {
-      return shoppingList.recipeName.toLowerCase().contains(searchTerm.toLowerCase());
+      return shoppingList.recipeName
+          .toLowerCase()
+          .contains(searchTerm.toLowerCase());
     }).toList();
 
     return ListView.builder(
@@ -350,12 +413,16 @@ class RecipeIngredientsList extends StatelessWidget {
   final IngredientController ingredientController;
   final String searchTerm;
 
-  const RecipeIngredientsList({required this.shoppingList, required this.ingredientController, required this.searchTerm});
+  const RecipeIngredientsList(
+      {required this.shoppingList,
+      required this.ingredientController,
+      required this.searchTerm});
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<IngredientResponse>>(
-      future: ingredientController.listIngredientsByShoppingList(shoppingList.shoppingListId),
+      future: ingredientController
+          .listIngredientsByShoppingList(shoppingList.shoppingListId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -367,7 +434,9 @@ class RecipeIngredientsList extends StatelessWidget {
 
         // Filtrar ingredientes por término de búsqueda
         final filteredIngredients = snapshot.data!.where((ingredient) {
-          return ingredient.ingredientName.toLowerCase().contains(searchTerm.toLowerCase());
+          return ingredient.ingredientName
+              .toLowerCase()
+              .contains(searchTerm.toLowerCase());
         }).toList();
 
         return ListView.builder(
@@ -401,11 +470,15 @@ class IngredientCard extends StatelessWidget {
           children: [
             Text(
               ingredient.ingredientName,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+              style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black),
             ),
             Text(
               "${ingredient.quantity} ${ingredient.measurementUnit}",
-              style: const TextStyle(fontSize: 16, color: Color.fromARGB(255, 51, 50, 50)),
+              style: const TextStyle(
+                  fontSize: 16, color: Color.fromARGB(255, 51, 50, 50)),
             ),
           ],
         ),
@@ -431,7 +504,10 @@ class ShoppingListCard extends StatelessWidget {
           children: [
             Text(
               shoppingList.recipeName,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+              style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black),
             ),
           ],
         ),

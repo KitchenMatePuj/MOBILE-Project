@@ -112,17 +112,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _publishedF = _recipeCtl.getRecipesByUser(_keycloakId);
 
     // Carga las recetas guardadas
-    _savedF = _savedCtl
-        .getSavedRecipesByKeycloak(_keycloakId)
-        .then((savedList) async {
-      final results = await Future.wait(savedList.map((savedRecipe) async {
-        try {
-          return await _recipeCtl.getRecipeById(savedRecipe.recipeId);
-        } catch (_) {
-          return null; // Ignorar recetas que no se puedan cargar
-        }
-      }));
-      return results.whereType<RecipeResponse>().toList();
+    final savedList = await _savedCtl.getSavedRecipesByKeycloak(_keycloakId);
+
+    _savedF = Future.wait(savedList.map((savedRecipe) async {
+      try {
+        return await _recipeCtl.getRecipeById(savedRecipe.recipeId);
+      } catch (_) {
+        return null;
+      }
+    })).then((resolvedList) {
+      return resolvedList.whereType<RecipeResponse>().toList();
     });
 
     // Fuerza un rebuild cuando todos los futuros están listos
