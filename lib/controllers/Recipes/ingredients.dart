@@ -53,6 +53,21 @@ class IngredientController {
     }
   }
 
+  /// GET: Fetch ingredients without Authorization
+  Future<List<IngredientResponse>> fetchPublicIngredients() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/ingredients/'),
+      headers: {'Content-Type': 'application/json'}, // sin Authorization
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> body = jsonDecode(response.body);
+      return body.map((item) => IngredientResponse.fromJson(item)).toList();
+    } else {
+      throw Exception('Failed to fetch public ingredients');
+    }
+  }
+
   /// Obtener todos los ingredientes (GET /ingredients)
   Future<List<IngredientResponse>> fetchIngredients() async {
     final headers = await _getHeaders();

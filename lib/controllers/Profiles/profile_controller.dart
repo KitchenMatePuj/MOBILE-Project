@@ -52,6 +52,28 @@ class ProfileController {
     }
   }
 
+  /// POST: Crear perfil PÚBLICO (sin Authorization)
+  Future<ProfileResponse> createPublicProfile(ProfileRequest request) async {
+    final url = Uri.parse('$baseUrl/profiles/');
+    print('POST a: $url');
+    print('Payload enviado: ${jsonEncode(request.toJson())}');
+
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(request.toJson()),
+    );
+
+    print('Código de respuesta: ${response.statusCode}');
+    print('Body de respuesta: ${response.body}');
+
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      return ProfileResponse.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Error al crear perfil públicamente: ${response.body}');
+    }
+  }
+
   /// GET: Listar todos los perfiles
   Future<List<ProfileResponse>> listProfiles() async {
     final headers = await _getHeaders();

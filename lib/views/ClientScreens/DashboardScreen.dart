@@ -269,7 +269,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           itemCount: _recommendations.length,
                           itemBuilder: (context, index) {
                             final rec = _recommendations[index];
-                            final recipe = _publishedRecipes[index];
+                            final recipe = _recommendations[index];
+
                             final profile =
                                 _authorProfiles[recipe.keycloakUserId];
                             final chefName = profile != null
@@ -286,7 +287,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               child: GestureDetector(
                                 onTap: () {
                                   Navigator.pushNamed(context, '/recipe',
-                                      arguments: {'recipeId': recipe.recipeId});
+                                      arguments: {'recipeId': rec.recipeId});
                                 },
                                 child: RecipeCard(
                                   title: recipe.title,

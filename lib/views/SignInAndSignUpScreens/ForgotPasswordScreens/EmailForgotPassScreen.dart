@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '/controllers/authentication/auth_controller.dart';
 import '/models/authentication/reset_password_request.dart';
 
@@ -14,20 +15,23 @@ class _EmailForgotPassScreenState extends State<EmailForgotPassScreen> {
   String? _emailError;
   bool _canSendEmail = false;
   bool _isLoading = false;
+  final authBaseUrl = dotenv.env['AUTH_URL'] ?? '';
 
   late AuthController _authController;
 
   @override
   void initState() {
     super.initState();
-    _authController = AuthController(baseUrl: 'http://localhost:8008');
+    _authController = AuthController(baseUrl: authBaseUrl);
   }
 
   void _validateEmail() {
     final email = _emailController.text;
 
     setState(() {
-      _emailError = _isValidEmail(email) ? null : 'Por favor ingrese un correo electrónico válido';
+      _emailError = _isValidEmail(email)
+          ? null
+          : 'Por favor ingrese un correo electrónico válido';
       _canSendEmail = _emailError == null;
     });
   }
@@ -164,7 +168,8 @@ class _EmailForgotPassScreenState extends State<EmailForgotPassScreen> {
                 width: 1.5,
               ),
             ),
-            contentPadding: const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
+            contentPadding:
+                const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
           ),
           onChanged: (value) => _validateEmail(),
         ),

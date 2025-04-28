@@ -75,7 +75,7 @@ class SignUpScreenState extends State<SignUpScreen> {
   Future<void> _fetchIngredients() async {
     try {
       List<IngredientResponse> ingredients =
-          await _ingredientController.fetchIngredients();
+          await _ingredientController.fetchPublicIngredients();
       setState(() {
         _allIngredients =
             ingredients.map((ingredient) => ingredient.name).toSet().toList();
@@ -100,17 +100,20 @@ class SignUpScreenState extends State<SignUpScreen> {
       final phone = _phoneController.text;
       final cookingTime = int.tryParse(_cookingTimeController.text) ?? 30;
 
+      // 1. Primero registramos el usuario en Keycloak
       final jwt = await _authController.registerUser(
-        username: firstName,
-        password: password,
         email: email,
+        username: email,
+        password: password,
         firstName: firstName,
         lastName: lastName,
       );
 
+      // 2. Decodificamos el token para extraer el keycloakUserId
       final decodedToken = JwtDecoder.decode(jwt);
       final keycloakUserId = decodedToken['sub'];
 
+      // 3. Preparamos el request para el perfil
       final profileRequest = ProfileRequest(
         keycloakUserId: keycloakUserId,
         firstName: firstName,
@@ -121,9 +124,11 @@ class SignUpScreenState extends State<SignUpScreen> {
         cookingTime: cookingTime,
       );
 
+      // 4. Crear perfil usando PUBLIC create (sin autenticación)
       final profileResponse =
           await _profileController.createProfile(profileRequest);
 
+      // 5. Crear las alergias seleccionadas (requiere ID del perfil)
       for (final ingredientName in _selectedIngredients) {
         final allergyRequest = IngredientAllergyRequest(
           profileId: profileResponse.profileId,
@@ -132,6 +137,7 @@ class SignUpScreenState extends State<SignUpScreen> {
         await _ingredientAllergyController.createAllergy(allergyRequest);
       }
 
+      // 6. Ir al login después de éxito
       Navigator.pushNamed(context, '/login');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -210,7 +216,6 @@ class SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Creación de Cuenta'),
