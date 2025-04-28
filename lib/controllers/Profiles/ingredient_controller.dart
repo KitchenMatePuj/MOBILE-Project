@@ -58,7 +58,7 @@ class IngredientController {
   Future<void> createIngredient(IngredientRequest ingredient) async {
     final headers = await _getHeaders();
     final response = await http.post(
-      Uri.parse(baseUrl),
+      Uri.parse('$baseUrl/ingredients/'),
       headers: headers,
       body: json.encode(ingredient.toJson()),
     );
