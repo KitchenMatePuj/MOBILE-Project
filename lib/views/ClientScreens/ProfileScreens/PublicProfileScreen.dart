@@ -417,7 +417,7 @@ class PublishedRecipesGrid extends StatelessWidget {
             chef:
                 'Chef: ${profile.firstName} ${profile.lastName}', // Placeholder for chef name
             duration: recipe.cookingTime.toString(),
-            imageUrl: 'assets/recipes/recipe1.jpg', // Default image
+            imageUrl: profile.profilePhoto.toString(), // Default image
             rating: recipe.ratingAvg.toInt(),
           ),
         );
