@@ -126,7 +126,7 @@ class SignUpScreenState extends State<SignUpScreen> {
 
       // 4. Crear perfil usando PUBLIC create (sin autenticación)
       final profileResponse =
-          await _profileController.createProfile(profileRequest);
+          await _profileController.createPublicProfile(profileRequest);
 
       // 5. Crear las alergias seleccionadas (requiere ID del perfil)
       for (final ingredientName in _selectedIngredients) {
@@ -195,7 +195,6 @@ class SignUpScreenState extends State<SignUpScreen> {
       } else {
         _selectedIngredients.remove(ingredient);
       }
-      _validateForm();
     });
   }
 
@@ -248,7 +247,7 @@ class SignUpScreenState extends State<SignUpScreen> {
                 keyboardType: TextInputType.number),
             _buildTextInput(_passwordController, 'Contraseña', obscure: true),
             _buildTextInput(_confirmPasswordController, 'Confirmar Contraseña',
-                obscure: true),
+                obscure: true, errorText: _confirmPasswordError),
             const SizedBox(height: 20),
             const Text('Selecciona ingredientes a los que eres alérgico:'),
             Wrap(
@@ -295,8 +294,13 @@ class SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  Widget _buildTextInput(TextEditingController controller, String label,
-      {bool obscure = false, TextInputType keyboardType = TextInputType.text}) {
+  Widget _buildTextInput(
+    TextEditingController controller,
+    String label, {
+    bool obscure = false,
+    TextInputType keyboardType = TextInputType.text,
+    String? errorText,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -307,6 +311,7 @@ class SignUpScreenState extends State<SignUpScreen> {
           controller: controller,
           obscureText: obscure,
           keyboardType: keyboardType,
+          onChanged: (_) => _validateForm(),
           decoration: InputDecoration(
             hintText: label,
             border: OutlineInputBorder(
@@ -318,6 +323,15 @@ class SignUpScreenState extends State<SignUpScreen> {
                 const EdgeInsets.symmetric(vertical: 19, horizontal: 20),
           ),
         ),
+        if (errorText !=
+            null) // <-- NUEVO: mostrar texto abajo en rojo si hay error
+          Padding(
+            padding: const EdgeInsets.only(top: 5, left: 10),
+            child: Text(
+              errorText,
+              style: const TextStyle(color: Colors.red, fontSize: 12),
+            ),
+          ),
         const SizedBox(height: 15),
       ],
     );

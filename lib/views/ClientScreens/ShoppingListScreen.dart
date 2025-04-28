@@ -515,7 +515,7 @@ class IngredientCard extends StatelessWidget {
                   color: Colors.black),
             ),
             Text(
-              "${ingredient.quantity} ${ingredient.measurementUnit}",
+              "${ingredient.measurementUnit}",
               style: const TextStyle(
                   fontSize: 16, color: Color.fromARGB(255, 51, 50, 50)),
             ),

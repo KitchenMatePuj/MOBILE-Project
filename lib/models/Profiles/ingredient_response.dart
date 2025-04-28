@@ -4,7 +4,6 @@ class IngredientResponse {
   final int shoppingListId;
   final String ingredientName;
   final String measurementUnit;
-  final String quantity;
 
   IngredientResponse({
     required this.recipeId, // ← agregado
@@ -12,7 +11,6 @@ class IngredientResponse {
     required this.shoppingListId,
     required this.ingredientName,
     required this.measurementUnit,
-    required this.quantity,
   });
 
   factory IngredientResponse.fromJson(Map<String, dynamic> json) {
@@ -22,7 +20,6 @@ class IngredientResponse {
       shoppingListId: json['shopping_list_id'],
       ingredientName: json['ingredient_name'],
       measurementUnit: json['measurement_unit'],
-      quantity: json['quantity'],
     );
   }
 }
