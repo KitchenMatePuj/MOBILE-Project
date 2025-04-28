@@ -33,6 +33,18 @@ import 'package:mobile_kitchenmate/controllers/Reports/reports_controller.dart';
 import '/controllers/Profiles/shopping_list_controller.dart';
 import '/models/Profiles/shopping_list_request.dart';
 import '/models/Profiles/shopping_list_response.dart';
+import '/controllers/Profiles/shopping_list_controller.dart';
+import '/models/Profiles/shopping_list_response.dart';
+
+import 'package:mobile_kitchenmate/controllers/Profiles/ingredient_controller.dart'
+    as profile_ingredient;
+import 'package:mobile_kitchenmate/controllers/Recipes/ingredients.dart'
+    as recipe_ingredient;
+import 'package:mobile_kitchenmate/models/Profiles/ingredient_request.dart';
+import 'package:mobile_kitchenmate/models/Profiles/ingredient_response.dart';
+import 'package:mobile_kitchenmate/models/Profiles/ingredient_request.dart' as profile_ingredient;
+import 'package:mobile_kitchenmate/models/Recipes/ingredients_request.dart';
+import 'package:mobile_kitchenmate/models/Profiles/ingredient_response.dart';
 
 class RecipeScreen extends StatefulWidget {
   final int recipeId;
@@ -65,7 +77,10 @@ class _RecipeScreenState extends State<RecipeScreen> {
   final String _authBase = dotenv.env['AUTH_URL'] ?? '';
 
   late RecipeController _recipeController;
-  late IngredientController _ingredientController;
+  late recipe_ingredient.IngredientController
+      _ingredientController; // Usamos el alias 'recipe_ingredient' para ingredientes de recetas
+  late profile_ingredient.IngredientController
+      _profileIngredientController; // Usamos el alias 'profile_ingredient' para ingredientes de perfiles
   late RecipeStepController _stepController;
   late ProfileController _profileController;
   late SavedRecipeController _savedController;
@@ -231,20 +246,35 @@ class _RecipeScreenState extends State<RecipeScreen> {
         recipePhoto: imageUrl, // Usa la URL de la imagen de la receta
       );
 
-      // Envía la solicitud al backend
+      // Envía la solicitud al backend y obtiene la respuesta
       final shoppingListResponse =
           await ShoppingListController(baseUrl: profileBaseUrl)
               .createShoppingList(shoppingListRequest);
 
-      // Ahora ya tienes el ID de la nueva lista
       final shoppingListId = shoppingListResponse.shoppingListId;
 
-      // Aquí podrías agregar ingredientes si quieres
-      print('Lista de compras creada con ID: $shoppingListId');
+      // Obtén todos los ingredientes de la receta actual
+      final allIngredients = await _ingredientController.fetchIngredients();
+      final recipeIngredients = allIngredients
+          .where((ingredient) => ingredient.recipeId == recipeId)
+          .toList();
+
+      // Guarda todos los ingredientes en el backend de Profiles
+      for (final ingredient in recipeIngredients) {
+        final ingredientRequest = profile_ingredient.IngredientRequest(
+          shoppingListId: shoppingListId,
+          ingredientName: ingredient.name,
+          measurementUnit: ingredient.measurementUnit,
+        );
+
+        await _profileIngredientController.createIngredient(ingredientRequest);
+      }
 
       // Muestra un mensaje de éxito
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Receta añadida a la lista de compras')),
+        const SnackBar(
+            content:
+                Text('Receta e ingredientes añadidos a la lista de compras')),
       );
     } catch (e) {
       // Maneja errores y muestra un mensaje de error
@@ -352,7 +382,10 @@ class _RecipeScreenState extends State<RecipeScreen> {
   void initState() {
     super.initState();
     _recipeController = RecipeController(baseUrl: recipeBaseUrl);
-    _ingredientController = IngredientController(baseUrl: recipeBaseUrl);
+    _ingredientController = recipe_ingredient.IngredientController(
+        baseUrl: recipeBaseUrl); // Controlador de recetas
+    _profileIngredientController = profile_ingredient.IngredientController(
+        baseUrl: profileBaseUrl); // Controlador de perfiles
     _stepController = RecipeStepController(baseUrl: recipeBaseUrl);
     _commentController = CommentController(baseUrl: recipeBaseUrl);
     _profileController = ProfileController(baseUrl: profileBaseUrl);
