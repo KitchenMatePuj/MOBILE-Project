@@ -182,33 +182,33 @@ class _EmailForgotPassScreenState extends State<EmailForgotPassScreen> {
     return Center(
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 85),
+          padding: const EdgeInsets.symmetric(vertical: 18),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(10),
           ),
           backgroundColor: const Color(0xFF129575),
         ),
         onPressed: _canSendEmail ? _sendResetPasswordEmail : null,
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              "Enviar Correo",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(width: 11),
-            const Icon(
-              Icons.arrow_forward,
-              size: 20,
-              color: Colors.white,
-            ),
+        const Text(
+          "Enviar Correo",
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(width: 11),
+        const Icon(
+          Icons.arrow_forward,
+          size: 20,
+          color: Colors.white,
+        ),
           ],
         ),
       ),
-    );
+        );
   }
 }

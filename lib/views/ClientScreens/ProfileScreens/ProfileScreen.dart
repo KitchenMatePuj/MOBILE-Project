@@ -358,7 +358,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         final recipes = snapshot.data!;
         if (recipes.isEmpty) {
-          return const Center(child: Text('Sin recetas'));
+          return const Center(child: Text('Sin Recetas'));
         }
 
         return ListView.builder(
