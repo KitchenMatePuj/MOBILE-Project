@@ -42,9 +42,14 @@ import 'package:mobile_kitchenmate/controllers/Recipes/ingredients.dart'
     as recipe_ingredient;
 import 'package:mobile_kitchenmate/models/Profiles/ingredient_request.dart';
 import 'package:mobile_kitchenmate/models/Profiles/ingredient_response.dart';
-import 'package:mobile_kitchenmate/models/Profiles/ingredient_request.dart' as profile_ingredient;
+import 'package:mobile_kitchenmate/models/Profiles/ingredient_request.dart'
+    as profile_ingredient;
 import 'package:mobile_kitchenmate/models/Recipes/ingredients_request.dart';
 import 'package:mobile_kitchenmate/models/Profiles/ingredient_response.dart';
+
+import 'package:mobile_kitchenmate/models/Reports/report_request.dart';
+import 'package:mobile_kitchenmate/models/Reports/report_response.dart';
+import 'package:mobile_kitchenmate/controllers/Reports/reports_controller.dart';
 
 class RecipeScreen extends StatefulWidget {
   final int recipeId;
@@ -75,6 +80,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
   final strapiBase = dotenv.env['STRAPI_URL'] ?? '';
   final String _authBase = dotenv.env['AUTH_URL'] ?? '';
+  final String _reportBase = dotenv.env['REPORTS_URL'] ?? '';
 
   late RecipeController _recipeController;
   late recipe_ingredient.IngredientController
@@ -87,6 +93,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
   late CommentController _commentController;
   late AuthController _authController;
   late FollowController _followController;
+  late ReportsController _reportController;
 
   late String _authUserId = '';
   late int recipeUserId = 1;
@@ -179,6 +186,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
             return AlertDialog(
+              backgroundColor: Colors.white, // Fondo blanco para todo el cuadro
               title: const Text('Estas a punto de reportar esta receta'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -286,20 +294,28 @@ class _RecipeScreenState extends State<RecipeScreen> {
 
   Future<void> _submitReport(String description) async {
     try {
+      // Obtén el perfil del usuario logueado
+      final profile = await _profileController.getProfile(keycloakUserId);
+
+      // Configura el objeto ReportRequest
       final reportRequest = ReportRequest(
-        reporterUserId: keycloakUserId, // Usuario que reporta
-        resourceType: 'recipe', // Tipo de recurso (en este caso, receta)
+        reporterUserId: profile.profileId
+            .toString(), // Usa el profileId del usuario logueado
+        resourceType: "Receta", // Tipo de recurso fijo
         description: description,
-        status: 'pending', // Estado inicial del reporte
+        status: "pending", // Estado inicial del reporte
       );
 
-      await ReportsController(baseUrl: reportBaseUrl)
-          .createReport(reportRequest); // Enviar el reporte
+      // Envía el reporte al backend
+      await ReportsController(baseUrl: _reportBase)
+          .createReport(reportRequest);
 
+      // Muestra un mensaje de éxito
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Reporte enviado con éxito')),
       );
     } catch (e) {
+      // Maneja errores y muestra un mensaje de error
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al enviar reporte: $e')),
       );
@@ -392,6 +408,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
     _savedController = SavedRecipeController(baseUrl: profileBaseUrl);
     _authController = AuthController(baseUrl: _authBase);
     _followController = FollowController(baseUrl: profileBaseUrl);
+    _reportController = ReportsController(baseUrl: _reportBase);
 
     _initializeAuthUser();
   }
