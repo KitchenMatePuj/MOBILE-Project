@@ -463,13 +463,13 @@ class SearchBar extends StatelessWidget {
   final String selectedMealType;
   final String selectedCuisine;
   final VoidCallback onApplyFilters;
-  final DateTime? selectedStartDate;
-  final DateTime? selectedEndDate;
+  DateTime? selectedStartDate;
+  DateTime? selectedEndDate;
   final Function(DateTime?) onStartDateChanged;
   final Function(DateTime?) onEndDateChanged;
   final Function(String, String, String, String, String) onUpdateFilters;
 
-  const SearchBar({
+  SearchBar({
     super.key,
     required this.controller,
     required this.selectedDuration,
@@ -738,12 +738,16 @@ class SearchBar extends StatelessWidget {
                                           );
                                           if (picked != null) {
                                             onStartDateChanged(picked);
+                                            setState(() {
+                                              selectedStartDate =
+                                                  picked; // Actualiza la fecha seleccionada
+                                            });
                                           }
                                         },
                                         child: Text(
                                           selectedStartDate != null
-                                              ? "${selectedStartDate!.toLocal()}"
-                                                  .split(' ')[0]
+                                              ? DateFormat('yyyy-MM-dd').format(
+                                                  selectedStartDate!) // Formato de fecha
                                               : "Elegir fecha",
                                           style: const TextStyle(
                                               color: Color(0xFF129575)),
@@ -751,7 +755,6 @@ class SearchBar extends StatelessWidget {
                                       ),
                                     ],
                                   ),
-// Fecha Fin
                                   Row(
                                     children: [
                                       const Text("Hasta: "),
@@ -767,12 +770,16 @@ class SearchBar extends StatelessWidget {
                                           );
                                           if (picked != null) {
                                             onEndDateChanged(picked);
+                                            setState(() {
+                                              selectedEndDate =
+                                                  picked; // Actualiza la fecha seleccionada
+                                            });
                                           }
                                         },
                                         child: Text(
                                           selectedEndDate != null
-                                              ? "${selectedEndDate!.toLocal()}"
-                                                  .split(' ')[0]
+                                              ? DateFormat('yyyy-MM-dd').format(
+                                                  selectedEndDate!) // Formato de fecha
                                               : "Elegir fecha",
                                           style: const TextStyle(
                                               color: Color(0xFF129575)),

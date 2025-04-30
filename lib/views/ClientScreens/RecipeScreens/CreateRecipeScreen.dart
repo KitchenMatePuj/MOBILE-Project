@@ -218,189 +218,11 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
                   bottom: 8,
                   left: 8,
                   child: Row(
-                      // children: [
-                      //   const Icon(Icons.access_time, color: Colors.white),
-                      //   const SizedBox(width: 4),
-                      // GestureDetector(
-                      //   onTap: () async {
-                      //     final TextEditingController timeController =
-                      //         TextEditingController();
-                      //     final result = await showDialog<String>(
-                      //       context: context,
-                      //       builder: (BuildContext context) {
-                      //         return StatefulBuilder(
-                      //           builder: (context, setState) {
-                      //             return AlertDialog(
-                      //               backgroundColor: Colors.white,
-                      //               title: Center(
-                      //                 child: Text(
-                      //                   'Tiempo Estimado',
-                      //                   style: TextStyle(
-                      //                     color: Color(0xFF129575),
-                      //                     fontWeight: FontWeight.bold,
-                      //                     fontSize: 16,
-                      //                   ),
-                      //                 ),
-                      //               ),
-                      //               content: TextField(
-                      //                 controller: timeController,
-                      //                 keyboardType: TextInputType.number,
-                      //                 inputFormatters: [
-                      //                   FilteringTextInputFormatter.digitsOnly
-                      //                 ], // PRIMERA RESTRICCIÓN
-                      //                 decoration: const InputDecoration(
-                      //                     hintText:
-                      //                         "Ingrese el tiempo en minutos"),
-                      //                 onChanged: (value) {
-                      //                   setState(() {});
-                      //                 },
-                      //               ),
-                      //               actions: [
-                      //                 Row(
-                      //                   mainAxisAlignment:
-                      //                       MainAxisAlignment.spaceEvenly,
-                      //                   children: [
-                      //                     ElevatedButton(
-                      //                       onPressed: () {
-                      //                         Navigator.pop(context);
-                      //                       },
-                      //                       style: ElevatedButton.styleFrom(
-                      //                         backgroundColor:
-                      //                             const Color.fromARGB(
-                      //                                 255, 238, 99, 89),
-                      //                         foregroundColor: Colors.white,
-                      //                       ),
-                      //                       child: const Text('Cancelar'),
-                      //                     ),
-                      //                     ElevatedButton(
-                      //                       onPressed: timeController
-                      //                               .text.isNotEmpty
-                      //                           ? () {
-                      //                               Navigator.pop(context,
-                      //                                   timeController.text);
-                      //                             }
-                      //                           : null,
-                      //                       style: ElevatedButton.styleFrom(
-                      //                         backgroundColor:
-                      //                             Color(0xFF129575),
-                      //                         foregroundColor: Colors.white,
-                      //                       ),
-                      //                       child: const Text('Aceptar'),
-                      //                     ),
-                      //                   ],
-                      //                 ),
-                      //               ],
-                      //             );
-                      //           },
-                      //         );
-                      //       },
-                      //     );
-                      //     if (result != null && result.isNotEmpty) {
-                      //       setState(() {
-                      //         estimatedTime = "$result min";
-                      //       });
-                      //     }
-                      //   },
-                      //   child: Row(
-                      //     children: [
-                      //       Text(
-                      //         estimatedTime,
-                      //         style: const TextStyle(color: Colors.white),
-                      //       ),
-                      //       const SizedBox(width: 4),
-                      //       const Icon(Icons.edit,
-                      //           color: Colors.white, size: 16),
-                      //     ],
-                      //   ),
-                      // ),
-                      //],
                       ),
                 ),
               ],
             ),
             const SizedBox(height: 20),
-
-            // Title input for recipe name
-            // GestureDetector(
-            //   onTap: () async {
-            //     final TextEditingController titleController =
-            //         TextEditingController();
-            //     final result = await showDialog<String>(
-            //       context: context,
-            //       builder: (BuildContext context) {
-            //         return AlertDialog(
-            //           backgroundColor: Colors.white,
-            //           title: Center(
-            //             child: Text(
-            //               'Título de la Receta',
-            //               style: TextStyle(
-            //                 color: Color(0xFF129575),
-            //                 fontWeight: FontWeight.bold,
-            //                 fontSize: 16,
-            //               ),
-            //             ),
-            //           ),
-            //           content: TextField(
-            //             controller: titleController,
-            //             keyboardType: TextInputType.text,
-            //             decoration: const InputDecoration(
-            //                 hintText: "Ingrese el título de la receta"),
-            //           ),
-            //           actions: [
-            //             Row(
-            //               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            //               children: [
-            //                 ElevatedButton(
-            //                   onPressed: () {
-            //                     Navigator.pop(context);
-            //                   },
-            //                   style: ElevatedButton.styleFrom(
-            //                     backgroundColor:
-            //                         const Color.fromARGB(255, 238, 99, 89),
-            //                     foregroundColor: Colors.white,
-            //                   ),
-            //                   child: const Text('Cancelar'),
-            //                 ),
-            //                 ElevatedButton(
-            //                   onPressed: () {
-            //                     Navigator.pop(context, titleController.text);
-            //                   },
-            //                   style: ElevatedButton.styleFrom(
-            //                     backgroundColor: Color(0xFF129575),
-            //                     foregroundColor: Colors.white,
-            //                   ),
-            //                   child: const Text('Aceptar'),
-            //                 ),
-            //               ],
-            //             ),
-            //           ],
-            //         );
-            //       },
-            //     );
-            //     if (result != null && result.isNotEmpty) {
-            //       setState(() {
-            //         recipeTitle = result;
-            //       });
-            //     }
-            //   },
-            //   child: Row(
-            //     children: [
-            //       Text(
-            //         recipeTitle,
-            //         style: const TextStyle(
-            //           fontSize: 16,
-            //           fontWeight: FontWeight.bold,
-            //           color: Colors.black,
-            //         ),
-            //       ),
-            //       const SizedBox(width: 4),
-            //       const Icon(Icons.edit, color: Colors.black, size: 16),
-            //     ],
-            //   ),
-            // ),
-            // const SizedBox(height: 20),
-
-            // Fila 3: Ingredientes y Procedimiento
             Column(
               children: [
                 Row(
@@ -411,108 +233,6 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
                     _buildTab('Procedimiento', 2),
                   ],
                 ),
-                // New Row with portion and steps information
-                // Row(
-                //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                //   children: [
-                //     GestureDetector(
-                // onTap: () async {
-                //   final TextEditingController portionsController =
-                //       TextEditingController();
-                //   final result = await showDialog<String>(
-                //     context: context,
-                //     builder: (BuildContext context) {
-                //       return StatefulBuilder(
-                //         builder: (context, setState) {
-                //           return AlertDialog(
-                //             backgroundColor: Colors.white,
-                //             title: Center(
-                //               child: Text(
-                //                 'Porciones Estimadas',
-                //                 style: TextStyle(
-                //                   color: Color(0xFF129575),
-                //                   fontWeight: FontWeight.bold,
-                //                   fontSize: 16,
-                //                 ),
-                //               ),
-                //             ),
-                //             content: TextField(
-                //               controller: portionsController,
-                //               keyboardType: TextInputType.number,
-                //               inputFormatters: [
-                //                 FilteringTextInputFormatter.digitsOnly
-                //               ], // SEGUNDA RESTRICCIÓN
-                //               decoration: const InputDecoration(
-                //                   hintText:
-                //                       "Ingrese el número de porciones"),
-                //               onChanged: (value) {
-                //                 setState(() {});
-                //               },
-                //             ),
-                //             actions: [
-                //               Row(
-                //                 mainAxisAlignment:
-                //                     MainAxisAlignment.spaceEvenly,
-                //                 children: [
-                //                   ElevatedButton(
-                //                     onPressed: () {
-                //                       Navigator.pop(context);
-                //                     },
-                //                     style: ElevatedButton.styleFrom(
-                //                       backgroundColor:
-                //                           const Color.fromARGB(
-                //                               255, 238, 99, 89),
-                //                       foregroundColor: Colors.white,
-                //                     ),
-                //                     child: const Text('Cancelar'),
-                //                   ),
-                //                   ElevatedButton(
-                //                     onPressed: portionsController
-                //                             .text.isNotEmpty
-                //                         ? () {
-                //                             Navigator.pop(context,
-                //                                 portionsController.text);
-                //                           }
-                //                         : null,
-                //                     style: ElevatedButton.styleFrom(
-                //                       backgroundColor: Color(0xFF129575),
-                //                       foregroundColor: Colors.white,
-                //                     ),
-                //                     child: const Text('Aceptar'),
-                //                   ),
-                //                 ],
-                //               ),
-                //             ],
-                //           );
-                //         },
-                //       );
-                //     },
-                //   );
-                //   if (result != null && result.isNotEmpty) {
-                //     setState(() {
-                //       estimatedPortions = "$result porciones";
-                //     });
-                //   }
-                // },
-                //       child: Row(
-                //         children: [
-                //           Icon(Icons.restaurant, color: Colors.grey),
-                //           SizedBox(width: 4),
-                //           Text(
-                //             estimatedPortions,
-                //             style: TextStyle(color: Colors.grey),
-                //           ),
-                //           const SizedBox(width: 4),
-                //           const Icon(Icons.edit, color: Colors.grey, size: 16),
-                //         ],
-                //       ),
-                //     ),
-                //     Text(
-                //       '${steps.length} Pasos',
-                //       style: TextStyle(color: Colors.grey),
-                //     ),
-                //   ],
-                // ),
               ],
             ),
             const SizedBox(height: 6),
@@ -852,198 +572,202 @@ class _CreateRecipeState extends State<CreateRecipeScreen> {
   }
 
   Future<String?> _showTextInputDialog(
-    String title, TextEditingController controller) {
-  return showDialog<String>(
-    context: context,
-    builder: (BuildContext context) {
-      return StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            backgroundColor: Colors.white,
-            title: Center(
-              child: Text(
-                title,
-                style: TextStyle(
-                  color: Color(0xFF129575),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+      String title, TextEditingController controller) {
+    return showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              title: Center(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: Color(0xFF129575),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
               ),
-            ),
-            content: TextField(
-              controller: controller,
-              keyboardType: TextInputType.text,
-              decoration: const InputDecoration(
-                hintText: "Ingrese el texto",
-              ),
-              onTap: () {
-                controller.clear();
-              },
-              onChanged: (value) {
-                setState(() {});
-              },
-            ),
-            actions: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 238, 99, 89),
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text('Cancelar'),
-                  ),
-                  ElevatedButton(
-                    onPressed: controller.text.isNotEmpty
-                        ? () {
-                            Navigator.pop(context, controller.text);
-                          }
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF129575),
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text('Aceptar'),
-                  ),
-                ],
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
-}
-
-Future<String?> _showNumberInputDialog(
-    String title, TextEditingController controller, String hint) {
-  return showDialog<String>(
-    context: context,
-    builder: (BuildContext context) {
-      return StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            backgroundColor: Colors.white,
-            title: Center(
-              child: Text(
-                title,
-                style: TextStyle(
-                  color: Color(0xFF129575),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+              content: TextField(
+                controller: controller,
+                keyboardType: TextInputType.text,
+                decoration: const InputDecoration(
+                  hintText: "Ingrese el texto",
                 ),
+                onTap: () {
+                  controller.clear();
+                },
+                onChanged: (value) {
+                  setState(() {});
+                },
               ),
-            ),
-            content: TextField(
-              controller: controller,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: InputDecoration(hintText: hint),
-              onTap: () {
-                controller.clear();
-              },
-              onChanged: (value) {
-                setState(() {});
-              },
-            ),
-            actions: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 238, 99, 89),
-                      foregroundColor: Colors.white,
+              actions: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 238, 99, 89),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Cancelar'),
                     ),
-                    child: const Text('Cancelar'),
-                  ),
-                  ElevatedButton(
-                    onPressed: controller.text.isNotEmpty
-                        ? () {
-                            Navigator.pop(context, controller.text);
-                          }
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF129575),
-                      foregroundColor: Colors.white,
+                    ElevatedButton(
+                      onPressed: controller.text.isNotEmpty
+                          ? () {
+                              Navigator.pop(context, controller.text);
+                            }
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF129575),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Aceptar'),
                     ),
-                    child: const Text('Aceptar'),
-                  ),
-                ],
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
-}
-
-Future<CategoryResponse?> _showCategoryPickerDialog() async {
-  if (availableCategories.isEmpty) {
-    await fetchCategoriesFromBackend();
+                  ],
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
-  final options = availableCategories.map((c) => c.name).toList();
-  options.add("Otro");
+  Future<String?> _showNumberInputDialog(
+      String title, TextEditingController controller, String hint) {
+    return showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              title: Center(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: Color(0xFF129575),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              content: TextField(
+                controller: controller,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: InputDecoration(hintText: hint),
+                onTap: () {
+                  controller.clear();
+                },
+                onChanged: (value) {
+                  setState(() {});
+                },
+              ),
+              actions: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 238, 99, 89),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Cancelar'),
+                    ),
+                    ElevatedButton(
+                      onPressed: controller.text.isNotEmpty
+                          ? () {
+                              Navigator.pop(context, controller.text);
+                            }
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF129575),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Aceptar'),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 
-  return showDialog<CategoryResponse>(
-    context: context,
-    builder: (BuildContext context) {
-      return SimpleDialog(
-        title: const Center(
-          child: Text(
-            "Selecciona una Categoría",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF129575),
+  Future<CategoryResponse?> _showCategoryPickerDialog() async {
+    if (availableCategories.isEmpty) {
+      await fetchCategoriesFromBackend();
+    }
+
+    final options = availableCategories.map((c) => c.name).toList();
+    options.add("Otro");
+
+    return showDialog<CategoryResponse>(
+      context: context,
+      builder: (BuildContext context) {
+        return SimpleDialog(
+          title: const Center(
+            child: Text(
+              "Selecciona una Categoría",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF129575),
+              ),
             ),
           ),
-        ),
-        children: options.map((cat) {
-          return SimpleDialogOption(
-            child: Text(cat),
-            onPressed: () async {
-              if (cat == "Otro") {
-                final TextEditingController newCatController = TextEditingController();
-                final String? newCatName = await _showTextInputDialog("Nueva Categoría", newCatController);
-                if (newCatName != null && newCatName.isNotEmpty) {
-                  try {
-                    final newCategory = await categoryController.createCategory(
-                      CategoryRequest(name: newCatName),
-                    );
-                    Navigator.pop(context, newCategory);
-                  } catch (e) {
+          children: options.map((cat) {
+            return SimpleDialogOption(
+              child: Text(cat),
+              onPressed: () async {
+                if (cat == "Otro") {
+                  final TextEditingController newCatController =
+                      TextEditingController();
+                  final String? newCatName = await _showTextInputDialog(
+                      "Nueva Categoría", newCatController);
+                  if (newCatName != null && newCatName.isNotEmpty) {
+                    try {
+                      final newCategory =
+                          await categoryController.createCategory(
+                        CategoryRequest(name: newCatName),
+                      );
+                      Navigator.pop(context, newCategory);
+                    } catch (e) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error al crear categoría: \$e'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  } else {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Error al crear categoría: \$e'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
                   }
                 } else {
-                  Navigator.pop(context);
+                  final selected =
+                      availableCategories.firstWhere((c) => c.name == cat);
+                  Navigator.pop(context, selected);
                 }
-              } else {
-                final selected = availableCategories.firstWhere((c) => c.name == cat);
-                Navigator.pop(context, selected);
-              }
-            },
-          );
-        }).toList(),
-      );
-    },
-  );
-}
+              },
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
 
   Widget _buildTab(String label, int index) {
     return GestureDetector(
@@ -1118,50 +842,59 @@ class IngredientCard extends StatelessWidget {
             ),
             Row(
               children: [
-                Expanded(
+                Flexible(
                   flex: 3,
-                  child: DropdownButtonFormField<String>(
-                    value: _getValidValue(ingredient.name),
-                    items: _buildIngredientItems(),
-                    onChanged: (value) {
-                      if (value == 'Otro') {
-                        _showCustomIngredientDialog(context, ingredient);
-                      } else if (value != null) {
-                        ingredient.name = value;
-                        final selected = availableIngredients.firstWhere(
-                          (i) => i.name == value,
-                          orElse: () => IngredientResponse(
-                            ingredientId: -1,
-                            recipeId: -1, // ID ficticio para "Otro"
-                            name: value,
-                            measurementUnit: '',
+                  fit: FlexFit.tight,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return DropdownButtonFormField<String>(
+                        value: _getValidValue(ingredient.name),
+                        items: _buildIngredientItems(),
+                        onChanged: (value) {
+                          if (value == 'Otro') {
+                            _showCustomIngredientDialog(context, ingredient);
+                          } else if (value != null) {
+                            ingredient.name = value;
+                            final selected = availableIngredients.firstWhere(
+                              (i) => i.name == value,
+                              orElse: () => IngredientResponse(
+                                ingredientId: -1,
+                                recipeId: -1,
+                                name: value,
+                                measurementUnit: '',
+                              ),
+                            );
+                            ingredient.unit = selected.measurementUnit;
+                          }
+                          (context as Element).markNeedsBuild();
+                        },
+                        decoration: InputDecoration(
+                          hintText: "Seleccione un ingrediente",
+                          hintStyle: const TextStyle(
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        );
-                        ingredient.unit = selected.measurementUnit;
-                      }
-                      (context as Element).markNeedsBuild();
+                        ),
+                        isExpanded:
+                            true, // importante para permitir truncamiento
+                        dropdownColor: Colors.white,
+                      );
                     },
-                    decoration: const InputDecoration(
-                      hintText: "Seleccione un ingrediente",
-                    ),
-                    dropdownColor: Colors.white,
                   ),
                 ),
                 const SizedBox(width: 16),
-                Expanded(
-                  flex: 1,
+                IntrinsicWidth(
                   child: GestureDetector(
                     onTap: () {
                       _showQuantityDialog(context, ingredient);
                     },
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         Text(
                           ingredient.quantity.isEmpty && ingredient.unit.isEmpty
                               ? "Cantidad"
                               : "${ingredient.quantity} ${ingredient.unit}",
                           style: TextStyle(color: Colors.grey[800]),
+                          overflow: TextOverflow.visible,
                         ),
                         const SizedBox(width: 4),
                         const Icon(Icons.edit, color: Colors.grey, size: 16),
