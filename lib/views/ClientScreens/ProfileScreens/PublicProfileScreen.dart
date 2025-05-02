@@ -9,8 +9,9 @@ import '/models/Profiles/follow_request.dart';
 import '/models/Recipes/recipes_response.dart';
 
 import '/controllers/authentication/auth_controller.dart';
-import '/models/authentication/login_request_advanced.dart' as advanced;
-import '/models/authentication/login_response.dart';
+
+import 'package:mobile_kitchenmate/models/Reports/report_request.dart';
+import 'package:mobile_kitchenmate/controllers/Reports/reports_controller.dart';
 
 class PublicProfileScreen extends StatefulWidget {
   final int profileId;
@@ -25,6 +26,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
   final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
   final _authBase = dotenv.env['AUTH_URL'] ?? '';
+  final String _reportBase = dotenv.env['REPORTS_URL'] ?? '';
+
+  late ReportsController _reportController;
   late ProfileController _profileController;
   late FollowController _followController;
   late RecipeController _recipeController;
@@ -46,6 +50,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     _followController = FollowController(baseUrl: profileBaseUrl);
     _recipeController = RecipeController(baseUrl: recipeBaseUrl);
     _authController = AuthController(baseUrl: _authBase);
+    _reportController = ReportsController(baseUrl: _reportBase);
 
     _authController.getKeycloakUserId().then((id) async {
       keycloakUserId = id;
@@ -101,6 +106,94 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     });
   }
 
+  Future<void> _showReportDialog(BuildContext context) async {
+    final TextEditingController reportController = TextEditingController();
+    bool isButtonEnabled = false;
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              title: const Text('Estás a punto de reportar este perfil'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Por favor, escribe el motivo del reporte:'),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: reportController,
+                    maxLines: 3,
+                    onChanged: (value) {
+                      setState(() {
+                        isButtonEnabled = value.trim().isNotEmpty;
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      hintText: 'Escribe los detalles aquí...',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 238, 99, 89),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: isButtonEnabled
+                      ? () async {
+                          await _submitReport(reportController.text);
+                          Navigator.pop(context);
+                        }
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF129575),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Aceptar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _submitReport(String description) async {
+    try {
+      // Obtén el profileId del usuario logueado
+      final profile = await _profileController.getProfile(keycloakUserId);
+
+      final reportRequest = ReportRequest(
+        reporterUserId: profile.profileId.toString(), // Usa el profileId
+        resourceType: "Perfil",
+        description: description,
+        status: "pending", // Estado inicial del reporte
+      );
+
+      await _reportController.createReport(reportRequest);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Reporte enviado con éxito')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al enviar reporte: $e')),
+      );
+    }
+  }
+
   Widget buildFollowButton() {
     return Expanded(
       child: ElevatedButton(
@@ -133,7 +226,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     return Expanded(
       child: ElevatedButton(
         onPressed: () {
-          // Lógica de reporte
+          _showReportDialog(context);
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color.fromARGB(255, 181, 108, 106),
