@@ -101,6 +101,55 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     });
   }
 
+  Widget buildFollowButton() {
+    return Expanded(
+      child: ElevatedButton(
+        onPressed: _isFollowLoading ? null : _toggleFollow,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF129575),
+        ),
+        child: _isFollowLoading
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : Text(
+                _isFollowing ? 'Dejar de Seguir' : 'Seguir',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+      ),
+    );
+  }
+
+  Widget buildReportButton() {
+    return Expanded(
+      child: ElevatedButton(
+        onPressed: () {
+          // Lógica de reporte
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color.fromARGB(255, 181, 108, 106),
+        ),
+        child: const Text(
+          'Reportar',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -189,56 +238,15 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                               description:
                                   'Biografía del usuario'), // Biografía quemada
                           const SizedBox(height: 16),
+
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Expanded(
-                                child: ElevatedButton(
-                                  onPressed:
-                                      _isFollowLoading ? null : _toggleFollow,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF129575),
-                                  ),
-                                  child: _isFollowLoading
-                                      ? const SizedBox(
-                                          width: 16,
-                                          height: 16,
-                                          child: CircularProgressIndicator(
-                                            color: Colors.white,
-                                            strokeWidth: 2,
-                                          ),
-                                        )
-                                      : Text(
-                                          _isFollowing
-                                              ? 'Dejar de Seguir'
-                                              : 'Seguir',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    // Lógica de reporte
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color.fromARGB(
-                                        255, 181, 108, 106),
-                                  ),
-                                  child: const Text(
-                                    'Reportar',
-                                    style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                              ),
+                              if (loggedProfileId != widget.profileId)
+                                buildFollowButton(),
+                              if (loggedProfileId != widget.profileId)
+                                const SizedBox(width: 10),
+                              buildReportButton(),
                             ],
                           ),
                         ],
