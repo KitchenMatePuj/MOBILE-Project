@@ -510,14 +510,16 @@ class RecipeCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Image.asset(
-              imageUrl,
-              height: 120,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
-          ),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(12)),
+              child: Image.network(
+                imageUrl.startsWith('http')
+                    ? imageUrl
+                    : '${dotenv.env['STRAPI_URL']}$imageUrl',
+                height: 120,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              )),
           Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
