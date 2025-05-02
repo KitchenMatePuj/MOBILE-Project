@@ -34,7 +34,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   late Future<List<RecipeResponse>> _recipesFuture;
   late AuthController _authController;
   bool _isFollowing = false;
+  bool _isInitialized = false;
+  bool _isFollowLoading = false;
   String keycloakUserId = '';
+  int? loggedProfileId;
 
   @override
   void initState() {
@@ -44,21 +47,30 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     _recipeController = RecipeController(baseUrl: recipeBaseUrl);
     _authController = AuthController(baseUrl: _authBase);
 
-    _authController.getKeycloakUserId().then((id) {
+    _authController.getKeycloakUserId().then((id) async {
       keycloakUserId = id;
-    });
 
-    _profileFuture =
-        _profileController.getProfilebyid(widget.profileId.toString());
-    _followersFuture = _followController.listFollowers(widget.profileId);
-    _followingFuture = _followController.listFollowed(widget.profileId);
-    _recipesFuture = _loadRecipes();
-    _checkIfFollowing();
+      final myProfile = await _profileController.getProfile(keycloakUserId);
+      setState(() {
+        loggedProfileId = myProfile.profileId;
+
+        _profileFuture =
+            _profileController.getProfilebyid(widget.profileId.toString());
+        _followersFuture = _followController.listFollowers(widget.profileId);
+        _followingFuture = _followController.listFollowed(widget.profileId);
+        _recipesFuture = _loadRecipes();
+        _isInitialized = true;
+      });
+
+      _checkIfFollowing();
+    });
   }
 
   Future<void> _checkIfFollowing() async {
-    final followed = await _followController
-        .listFollowed(2); // profile_id del usuario logueado
+    if (loggedProfileId == null) return;
+
+    final followed = await _followController.listFollowed(loggedProfileId!);
+
     setState(() {
       _isFollowing =
           followed.any((follow) => follow.followedId == widget.profileId);
@@ -71,15 +83,21 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   }
 
   Future<void> _toggleFollow() async {
-    if (_isFollowing) {
-      await _followController.deleteFollow(
-          int.parse(keycloakUserId), widget.profileId); // profile_id del usuario logueado
-    } else {
-      await _followController.createFollow(
-          FollowRequest(followerId: int.parse(keycloakUserId), followedId: widget.profileId));
-    }
     setState(() {
-      _isFollowing = !_isFollowing;
+      _isFollowLoading = true;
+    });
+    if (_isFollowing) {
+      await _followController.deleteFollow(loggedProfileId!,
+          widget.profileId); // profile_id del usuario logueado
+    } else {
+      await _followController.createFollow(FollowRequest(
+        followerId: loggedProfileId!,
+        followedId: widget.profileId,
+      ));
+    }
+    await _checkIfFollowing();
+    setState(() {
+      _isFollowLoading = false;
     });
   }
 
@@ -99,139 +117,159 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
         ),
       ),
       backgroundColor: Colors.white,
-      body: FutureBuilder<ProfileResponse>(
-        future: _profileFuture,
-        builder: (context, profileSnapshot) {
-          if (profileSnapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (profileSnapshot.hasError) {
-            return Center(child: Text('Error: ${profileSnapshot.error}'));
-          } else if (!profileSnapshot.hasData) {
-            return const Center(child: Text('No se encontró el perfil'));
-          }
+      body: !_isInitialized
+          ? const Center(child: CircularProgressIndicator())
+          : FutureBuilder<ProfileResponse>(
+              future: _profileFuture,
+              builder: (context, profileSnapshot) {
+                if (profileSnapshot.connectionState ==
+                    ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (profileSnapshot.hasError) {
+                  return Center(child: Text('Error: ${profileSnapshot.error}'));
+                } else if (!profileSnapshot.hasData) {
+                  return const Center(child: Text('No se encontró el perfil'));
+                }
 
-          final profile = profileSnapshot.data!;
-          return Column(
-            children: [
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 23),
-                child: Column(
+                final profile = profileSnapshot.data!;
+                return Column(
                   children: [
-                    FutureBuilder<List<FollowResponse>>(
-                      future: _followersFuture,
-                      builder: (context, followersSnapshot) {
-                        if (followersSnapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const CircularProgressIndicator();
-                        } else if (followersSnapshot.hasError) {
-                          return Text('Error: ${followersSnapshot.error}');
-                        }
-                        final followers = followersSnapshot.data ?? [];
-                        return FutureBuilder<List<FollowResponse>>(
-                          future: _followingFuture,
-                          builder: (context, followingSnapshot) {
-                            if (followingSnapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const CircularProgressIndicator();
-                            } else if (followingSnapshot.hasError) {
-                              return Text('Error: ${followingSnapshot.error}');
-                            }
-                            final following = followingSnapshot.data ?? [];
-                            return ProfileStats(
-                              profile: profile,
-                              followersCount: followers.length,
-                              followingCount: following.length,
-                              recipesFuture: _recipesFuture,
-                            );
-                          },
-                        );
-                      },
-                    ),
                     const SizedBox(height: 16),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        profile.firstName ?? 'Nombre no disponible',
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 23),
+                      child: Column(
+                        children: [
+                          FutureBuilder<List<FollowResponse>>(
+                            future: _followersFuture,
+                            builder: (context, followersSnapshot) {
+                              if (followersSnapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const CircularProgressIndicator();
+                              } else if (followersSnapshot.hasError) {
+                                return Text(
+                                    'Error: ${followersSnapshot.error}');
+                              }
+                              final followers = followersSnapshot.data ?? [];
+                              return FutureBuilder<List<FollowResponse>>(
+                                future: _followingFuture,
+                                builder: (context, followingSnapshot) {
+                                  if (followingSnapshot.connectionState ==
+                                      ConnectionState.waiting) {
+                                    return const CircularProgressIndicator();
+                                  } else if (followingSnapshot.hasError) {
+                                    return Text(
+                                        'Error: ${followingSnapshot.error}');
+                                  }
+                                  final following =
+                                      followingSnapshot.data ?? [];
+                                  return ProfileStats(
+                                    profile: profile,
+                                    followersCount: followers.length,
+                                    followingCount: following.length,
+                                    recipesFuture: _recipesFuture,
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              profile.firstName ?? 'Nombre no disponible',
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          ProfileBio(
+                              description:
+                                  'Biografía del usuario'), // Biografía quemada
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed:
+                                      _isFollowLoading ? null : _toggleFollow,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF129575),
+                                  ),
+                                  child: _isFollowLoading
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : Text(
+                                          _isFollowing
+                                              ? 'Dejar de Seguir'
+                                              : 'Seguir',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    // Lógica de reporte
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color.fromARGB(
+                                        255, 181, 108, 106),
+                                  ),
+                                  child: const Text(
+                                    'Reportar',
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    ProfileBio(
-                        description:
-                            'Biografía del usuario'), // Biografía quemada
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _toggleFollow,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF129575),
-                            ),
-                            child: Text(
-                              _isFollowing ? 'Dejar de Seguir' : 'Seguir',
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              // Lógica de reporte
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  const Color.fromARGB(255, 181, 108, 106),
-                            ),
-                            child: const Text(
-                              'Reportar',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                      ],
+                    Expanded(
+                      child: FutureBuilder<List<RecipeResponse>>(
+                        future: _recipesFuture,
+                        builder: (context, recipesSnapshot) {
+                          if (recipesSnapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                                child: CircularProgressIndicator());
+                          } else if (recipesSnapshot.hasError) {
+                            return Center(
+                                child: Text('Error: ${recipesSnapshot.error}'));
+                          } else if (!recipesSnapshot.hasData) {
+                            return const Center(
+                                child: Text('No se encontraron recetas'));
+                          }
+
+                          final recipes = recipesSnapshot.data!;
+                          return PublishedRecipesGrid(
+                              recipes: recipes, profile: profile);
+                        },
+                      ),
                     ),
                   ],
-                ),
-              ),
-              Expanded(
-                child: FutureBuilder<List<RecipeResponse>>(
-                  future: _recipesFuture,
-                  builder: (context, recipesSnapshot) {
-                    if (recipesSnapshot.connectionState ==
-                        ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (recipesSnapshot.hasError) {
-                      return Center(
-                          child: Text('Error: ${recipesSnapshot.error}'));
-                    } else if (!recipesSnapshot.hasData) {
-                      return const Center(
-                          child: Text('No se encontraron recetas'));
-                    }
-
-                    final recipes = recipesSnapshot.data!;
-                    return PublishedRecipesGrid(
-                        recipes: recipes, profile: profile);
-                  },
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+                );
+              },
+            ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
@@ -299,7 +337,9 @@ class ProfileStats extends StatelessWidget {
             CircleAvatar(
               radius: 45,
               backgroundImage: profile.profilePhoto != null
-                  ? NetworkImage(profile.profilePhoto!)
+                  ? NetworkImage(profile.profilePhoto!.startsWith('http')
+                      ? profile.profilePhoto!
+                      : '${dotenv.env['STRAPI_URL']}${profile.profilePhoto!}')
                   : AssetImage('assets/default_profile.png') as ImageProvider,
             ),
             const SizedBox(width: 2),

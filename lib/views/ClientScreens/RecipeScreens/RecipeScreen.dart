@@ -270,10 +270,9 @@ class _RecipeScreenState extends State<RecipeScreen> {
       // Guarda todos los ingredientes en el backend de Profiles
       for (final ingredient in recipeIngredients) {
         final ingredientRequest = profile_ingredient.IngredientRequest(
-          shoppingListId: shoppingListId,
-          ingredientName: ingredient.name,
-          measurementUnit: ingredient.measurementUnit,
-        );
+            shoppingListId: shoppingListId,
+            ingredientName: ingredient.name,
+            measurementUnit: ingredient.measurementUnit);
 
         await _profileIngredientController.createIngredient(ingredientRequest);
       }
@@ -307,8 +306,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
       );
 
       // Envía el reporte al backend
-      await ReportsController(baseUrl: _reportBase)
-          .createReport(reportRequest);
+      await ReportsController(baseUrl: _reportBase).createReport(reportRequest);
 
       // Muestra un mensaje de éxito
       ScaffoldMessenger.of(context).showSnackBar(
