@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:mobile_kitchenmate/controllers/Reports/reports_controller.dart';
-import 'package:mobile_kitchenmate/models/Reports/report_request.dart';
-import 'package:mobile_kitchenmate/views/ClientScreens/RecipeScreens/CreateRecipeScreen.dart';
 
 import '/controllers/Recipes/comments.dart';
 import '/controllers/Profiles/profile_controller.dart';
@@ -11,8 +8,9 @@ import '/models/Recipes/comments_response.dart';
 import '/models/Profiles/profile_response.dart';
 
 import '/controllers/authentication/auth_controller.dart';
-import '/models/authentication/login_request_advanced.dart' as advanced;
-import '/models/authentication/login_response.dart';
+
+import 'package:mobile_kitchenmate/models/Reports/report_request.dart';
+import 'package:mobile_kitchenmate/controllers/Reports/reports_controller.dart';
 
 class CommentsScreen extends StatefulWidget {
   const CommentsScreen({super.key});
@@ -26,11 +24,12 @@ class _CommentsScreenState extends State<CommentsScreen> {
   final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
   final String _authBase = dotenv.env['AUTH_URL'] ?? '';
-  final String _reportBase = dotenv.env['REPORT_URL'] ?? '';
+  final String _reportBase = dotenv.env['REPORTS_URL'] ?? '';
 
   late final CommentController _commentCtl;
   late final ProfileController _profileCtl;
   late AuthController _authController;
+  late ReportsController _reportController;
 
   /* ---------- ids & estado ---------- */
   late int recipeId; // llega por ruta
@@ -51,6 +50,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
     _commentCtl = CommentController(baseUrl: recipeBaseUrl);
     _profileCtl = ProfileController(baseUrl: profileBaseUrl);
     _authController = AuthController(baseUrl: _authBase);
+    _reportController = ReportsController(baseUrl: _reportBase);
 
     _authController.getKeycloakUserId().then((id) {
       keycloakUserId = id;
@@ -116,6 +116,93 @@ class _CommentsScreenState extends State<CommentsScreen> {
     }
   }
 
+  Future<void> _showReportDialog(BuildContext context, String commentId) async {
+    final TextEditingController reportController = TextEditingController();
+    bool isButtonEnabled = false;
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              title: const Text('Estás a punto de reportar este comentario'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Por favor, escribe el motivo del reporte:'),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: reportController,
+                    maxLines: 3,
+                    onChanged: (value) {
+                      setState(() {
+                        isButtonEnabled = value.trim().isNotEmpty;
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      hintText: 'Escribe los detalles aquí...',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 238, 99, 89),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: isButtonEnabled
+                      ? () async {
+                          await _submitReport(reportController.text, commentId);
+                          Navigator.pop(context);
+                        }
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF129575),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Aceptar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _submitReport(String description, String commentId) async {
+    try {
+      // Obtén el profileId del usuario logueado
+      final profile = await _profileCtl.getProfile(keycloakUserId);
+
+      final reportRequest = ReportRequest(
+        reporterUserId: profile.profileId.toString(), // Usa el profileId
+        resourceType: "Comentario",
+        description: description,
+      );
+
+      await _reportController.createReport(reportRequest);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Reporte enviado con éxito')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al enviar reporte: $e')),
+      );
+    }
+  }
+
   /* ---------- UI ---------- */
 
   @override
@@ -168,8 +255,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (c.rating !=
-                                null) // solo si el usuario dejó calificación
+                            if (c.rating != null)
                               Row(
                                 children: List.generate(
                                   5,
@@ -194,32 +280,8 @@ class _CommentsScreenState extends State<CommentsScreen> {
                         trailing: IconButton(
                           icon: const Icon(Icons.report,
                               color: Color.fromARGB(255, 181, 108, 106)),
-                          onPressed: () async {
-                            final reportRequest = ReportRequest(
-                              reporterUserId:
-                                  keycloakUserId, // ← este es fijo por ahora
-                              resourceType: 'comment',
-                              description:
-                                  'Comentario reportado automáticamente.',
-                            );
-
-                            try {
-                              final reportController =
-                                  ReportsController(baseUrl: _reportBase);
-                              await reportController
-                                  .createReport(reportRequest);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text(
-                                        'Comentario reportado correctamente.')),
-                              );
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content: Text(
-                                        'Error al reportar el comentario: $e')),
-                              );
-                            }
+                          onPressed: () {
+                            _showReportDialog(context, c.commentId.toString());
                           },
                         ),
                       ),
@@ -236,7 +298,6 @@ class _CommentsScreenState extends State<CommentsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ⭐ Estrellas centradas
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(5, (i) {
@@ -255,8 +316,6 @@ class _CommentsScreenState extends State<CommentsScreen> {
                   }),
                 ),
                 const SizedBox(height: 8),
-
-                // Campo de texto + botón enviar
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
