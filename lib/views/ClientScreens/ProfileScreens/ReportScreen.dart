@@ -9,8 +9,6 @@ import '/models/Reports/report_response.dart';
 import '/providers/user_provider.dart';
 
 import '/controllers/authentication/auth_controller.dart';
-import '/models/authentication/login_request_advanced.dart' as advanced;
-import '/models/authentication/login_response.dart';
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
@@ -21,26 +19,50 @@ class ReportsScreen extends StatefulWidget {
 
 class _ReportsScreenState extends State<ReportsScreen> {
   final String _authBase = dotenv.env['AUTH_URL'] ?? '';
-  final String _reportBase = dotenv.env['REPORT_URL'] ?? '';
+  final String _reportBase = dotenv.env['REPORTS_URL'] ?? '';
+  final String _profileBase = dotenv.env['PROFILE_URL'] ?? '';
   final List<int> _expandedReports = [];
-  late Future<List<ReportResponse>> _reportsFuture;
   late ReportsController _reportsController;
   late AuthController _authController;
-  String reporterUserIdd = ''; // Cambiar segun necesitemos Probar
-  String keycloakUserId = '';
+  late ProfileController _profileController;
+  late Future<List<ReportResponse>> _reportsFuture;
+
+  String profileId = '';
 
   @override
   void initState() {
     super.initState();
     _authController = AuthController(baseUrl: _authBase);
-
-    _authController.getKeycloakUserId().then((id) {
-      reporterUserIdd = id;
-      print('Keycloak User ID: $reporterUserIdd');
-    });
-
+    _profileController = ProfileController(baseUrl: _profileBase);
     _reportsController = ReportsController(baseUrl: _reportBase);
-    _reportsFuture = _reportsController.fetchAllReports();
+
+    // Inicializar _reportsFuture con un Future vacío para evitar errores.
+    _reportsFuture = Future.value([]);
+    _initializeUser();
+  }
+
+  Future<void> _initializeUser() async {
+    try {
+      final keycloakUserId = await _authController.getKeycloakUserId();
+      final profile = await _profileController.getProfile(keycloakUserId);
+      setState(() {
+        profileId = profile.profileId.toString();
+        _reportsFuture = _fetchUserReports();
+      });
+    } catch (e) {
+      setState(() {
+        _reportsFuture = Future.error('Error al obtener datos del usuario: $e');
+      });
+    }
+  }
+
+  Future<List<ReportResponse>> _fetchUserReports() async {
+    try {
+      final allReports = await _reportsController.fetchAllReports();
+      return allReports.where((report) => report.reporterUserId == profileId).toList();
+    } catch (e) {
+      throw Exception('Error al cargar los reportes: $e');
+    }
   }
 
   @override
@@ -74,9 +96,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
               future: _reportsFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator();
+                  return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
-                  return Text('Error: ${snapshot.error}');
+                  return Center(
+                    child: Text(
+                      'Error al cargar reportes: ${snapshot.error}',
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  );
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return const Expanded(
                     child: Center(
@@ -91,9 +118,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   );
                 }
 
-                final userReports = snapshot.data!
-                    .where((report) => report.reporterUserId == reporterUserIdd)
-                    .toList();
+                final userReports = snapshot.data!;
 
                 return Expanded(
                   child: ListView.builder(
