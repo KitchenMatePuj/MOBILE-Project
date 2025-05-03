@@ -20,13 +20,25 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isPasswordVisible = false;
   bool _isLoading = false;
   String _errorMessage = '';
+  late AuthController authController;
 
   final authBaseUrl = dotenv.env['AUTH_URL'] ?? '';
 
   @override
-  Widget build(BuildContext context) {
-    final authController = AuthController(baseUrl: authBaseUrl);
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
+  @override
+  void initState() {
+    super.initState();
+    authController = AuthController(baseUrl: authBaseUrl);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Iniciar Sesión'),
@@ -35,17 +47,13 @@ class _LoginScreenState extends State<LoginScreen> {
         automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minHeight: MediaQuery.of(context).size.height,
-          ),
+        child: IntrinsicHeight(
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(30),
               color: Colors.white,
             ),
-            padding: const EdgeInsets.symmetric(
-                horizontal: 30), // Márgenes simétricos
+            padding: const EdgeInsets.symmetric(horizontal: 30),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment
                   .start, // Mantiene textos alineados a la izquierda
@@ -71,7 +79,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 _buildPasswordInput(),
                 _buildForgotPassword(context),
                 _buildLoginButton(context, authController),
-                if (_isLoading) CircularProgressIndicator(),
+                if (_isLoading)
+                  const Center(child: CircularProgressIndicator()),
                 const SizedBox(height: 10),
                 _buildLoginWith(context),
                 const SizedBox(height: 10),
@@ -183,74 +192,77 @@ class _LoginScreenState extends State<LoginScreen> {
     return Center(
       child: Column(
         children: [
-            ElevatedButton(
+          ElevatedButton(
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
               shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(10),
               ),
               backgroundColor: const Color(0xFF129575),
             ),
             onPressed: () async {
               setState(() {
-              _isLoading = true;
-              _errorMessage = '';
+                _isLoading = true;
+                _errorMessage = '';
               });
 
               final loginRequest = advanced.LoginRequest(
-              username: _emailController.text,
-              password: _passwordController.text,
+                username: _emailController.text,
+                password: _passwordController.text,
               );
 
               try {
-              final LoginResponse loginResponse =
-                await authController.loginUser(loginRequest);
-              print('LoginResponse: ${loginResponse.accessToken}');
+                final LoginResponse loginResponse =
+                    await authController.loginUser(loginRequest);
+                print('LoginResponse: ${loginResponse.accessToken}');
 
-              if (loginResponse.accessToken.isNotEmpty) {
-                Navigator.pushNamed(context, '/dashboard');
-                authController.saveToken(loginResponse.accessToken);
-              } else {
-                setState(() {
-                _isLoading = false;
-                _errorMessage = 'Correo o contraseña incorrectos';
-                });
-              }
+                if (loginResponse.accessToken.isNotEmpty) {
+                  Navigator.pushNamed(context, '/dashboard');
+                  authController.saveToken(loginResponse.accessToken);
+                } else {
+                  setState(() {
+                    _isLoading = false;
+                    _errorMessage = 'Correo o contraseña incorrectos';
+                  });
+                }
               } catch (e) {
-              setState(() {
-                _isLoading = false;
-                _errorMessage = 'Correo o contraseña incorrectos';
-              });
+                setState(() {
+                  _isLoading = false;
+                  _errorMessage = 'Correo o contraseña incorrectos';
+                });
               }
             },
             child: FittedBox(
               fit: BoxFit.scaleDown,
               child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 50), // Aumenta el ancho del botón
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                Text(
-                  "Iniciar Sesión",
-                  style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  ),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 50), // Aumenta el ancho del botón
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Text(
+                      "Iniciar Sesión",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(width: 11),
+                    Icon(
+                      Icons.arrow_forward,
+                      size: 20,
+                      color: Colors.white,
+                    ),
+                  ],
                 ),
-                SizedBox(width: 11),
-                Icon(
-                  Icons.arrow_forward,
-                  size: 20,
-                  color: Colors.white,
-                ),
-                ],
-              ),
               ),
             ),
-            ),
-          if (_errorMessage.isNotEmpty)
-            Padding(
+          ),
+          AnimatedOpacity(
+            opacity: _errorMessage.isEmpty ? 0 : 1,
+            duration: const Duration(milliseconds: 300),
+            child: Padding(
               padding: const EdgeInsets.only(top: 10),
               child: Text(
                 _errorMessage,
@@ -258,6 +270,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 textAlign: TextAlign.center,
               ),
             ),
+          ),
         ],
       ),
     );
@@ -277,47 +290,47 @@ class _LoginScreenState extends State<LoginScreen> {
                   endIndent: 12,
                 ),
               ),
-          //     Text(
-          //       "O inicia sesión mediante",
-          //       style: TextStyle(
-          //         color: Color(0xFFD9D9D9),
-          //         fontWeight: FontWeight.w500,
-          //       ),
-          //     ),
-          //     Flexible(
-          //       child: Divider(
-          //         color: Color(0xFFD9D9D9),
-          //         thickness: 1,
-          //         indent: 12,
-          //       ),
-          //     ),
-          //   ],
-          // ),
-          // const SizedBox(height: 20),
-          // Row(
-          //   mainAxisSize: MainAxisSize.min,
-          //   children: [
-          //     GestureDetector(
-          //       onTap: () {
-          //         Navigator.pushNamed(context, '/dashboard');
-          //       },
-          //       child: Image.asset(
-          //         'assets/icons/googleIcon.png',
-          //         width: 55,
-          //         fit: BoxFit.contain,
-          //       ),
-          //     ),
-          //     const SizedBox(width: 20),
-          //     GestureDetector(
-          //       onTap: () {
-          //         Navigator.pushNamed(context, '/dashboard');
-          //       },
-          //       child: Image.asset(
-          //         'assets/icons/facebookIcon.png',
-          //         width: 55,
-          //         fit: BoxFit.contain,
-          //       ),
-          //     ),
+              //     Text(
+              //       "O inicia sesión mediante",
+              //       style: TextStyle(
+              //         color: Color(0xFFD9D9D9),
+              //         fontWeight: FontWeight.w500,
+              //       ),
+              //     ),
+              //     Flexible(
+              //       child: Divider(
+              //         color: Color(0xFFD9D9D9),
+              //         thickness: 1,
+              //         indent: 12,
+              //       ),
+              //     ),
+              //   ],
+              // ),
+              // const SizedBox(height: 20),
+              // Row(
+              //   mainAxisSize: MainAxisSize.min,
+              //   children: [
+              //     GestureDetector(
+              //       onTap: () {
+              //         Navigator.pushNamed(context, '/dashboard');
+              //       },
+              //       child: Image.asset(
+              //         'assets/icons/googleIcon.png',
+              //         width: 55,
+              //         fit: BoxFit.contain,
+              //       ),
+              //     ),
+              //     const SizedBox(width: 20),
+              //     GestureDetector(
+              //       onTap: () {
+              //         Navigator.pushNamed(context, '/dashboard');
+              //       },
+              //       child: Image.asset(
+              //         'assets/icons/facebookIcon.png',
+              //         width: 55,
+              //         fit: BoxFit.contain,
+              //       ),
+              //     ),
             ],
           ),
           // const SizedBox(height: 15),

@@ -15,6 +15,8 @@ import 'package:mobile_kitchenmate/models/Recommendations/recommendation_request
 import 'package:mobile_kitchenmate/models/Recommendations/recommendation_response.dart';
 import 'package:mobile_kitchenmate/controllers/recommendations/recommendations_controller.dart';
 
+import 'package:mobile_kitchenmate/utils/image_utils.dart';
+
 import '/controllers/authentication/auth_controller.dart';
 import '/models/authentication/login_request_advanced.dart' as advanced;
 import '/models/authentication/login_response.dart';
@@ -55,18 +57,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String query = '';
   int _recipesToShow = 4;
   int selectedIndex = 0;
-
-  String _fullImageUrl(String? path, {required String placeholder}) {
-    try {
-      if (path == null || path.isEmpty || path == 'example') return placeholder;
-      if (path.startsWith('http')) return path;
-      final base = dotenv.env['STRAPIURL']?.replaceAll(RegExp(r'/$'), '') ?? '';
-      final fixedPath = path.startsWith('/') ? path : '/$path';
-      return '$base$fixedPath';
-    } catch (_) {
-      return placeholder;
-    }
-  }
 
   @override
   void initState() {
@@ -276,7 +266,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             final chefName = profile != null
                                 ? '${profile.firstName} ${profile.lastName}'
                                 : 'Chef';
-                            final img = _fullImageUrl(
+                            final img = getFullImageUrl(
                               rec.imageUrl,
                               placeholder:
                                   'assets/styles/recipe_placeholder.jpg',
@@ -317,7 +307,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             final chefName = profile != null
                                 ? '${profile.firstName} ${profile.lastName}'
                                 : 'Chef';
-                            final img = _fullImageUrl(
+                            final img = getFullImageUrl(
                               recipe.imageUrl,
                               placeholder:
                                   'assets/styles/recipe_placeholder.jpg',
@@ -420,7 +410,8 @@ class RecipeCard extends StatelessWidget {
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             child: Image.network(
-              imageUrl,
+              getFullImageUrl(imageUrl,
+                  placeholder: 'assets/styles/recipe_placeholder.jpg'),
               height: 120,
               width: double.infinity,
               fit: BoxFit.cover,
@@ -523,8 +514,10 @@ class UserHeader extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               image: DecorationImage(
-                image: NetworkImage(user.profilePhoto ??
-                    'default_image_url'), // Utilizamos NetworkImage para imágenes desde una URL
+                image: NetworkImage(
+                  getFullImageUrl(user.profilePhoto,
+                      placeholder: 'assets/styles/recipe_placeholder.jpg'),
+                ),
                 fit: BoxFit.cover,
               ),
             ),

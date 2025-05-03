@@ -1,18 +1,48 @@
 import 'package:flutter/material.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _isLoading = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    precacheImage(AssetImage('assets/icons/backgroundLanding2.png'), context);
+    precacheImage(AssetImage('assets/icons/chefIcon.png'), context);
+    precacheImage(AssetImage('assets/icons/arrow.png'), context);
+  }
+
+  void _navigateToLogin() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    await Navigator.pushReplacementNamed(context, '/login');
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       body: Stack(
         children: [
           // Background image
           Container(
             width: double.infinity,
-            height: MediaQuery.of(context).size.height,
-            decoration: BoxDecoration(
+            height: screenHeight,
+            decoration: const BoxDecoration(
               image: DecorationImage(
                 image: AssetImage('assets/icons/backgroundLanding2.png'),
                 fit: BoxFit.cover,
@@ -27,18 +57,19 @@ class HomeScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    SizedBox(height: 100),
+                    const SizedBox(height: 100),
                     Container(
-                      constraints: BoxConstraints(maxWidth: 292),
+                      constraints: const BoxConstraints(maxWidth: 292),
                       child: Column(
                         children: [
                           Image.asset(
                             'assets/icons/chefIcon.png',
                             width: 110,
                             fit: BoxFit.contain,
+                            gaplessPlayback: true,
                           ),
-                          SizedBox(height: 14),
-                          Text(
+                          const SizedBox(height: 14),
+                          const Text(
                             'Amantes de la cocina y principiantes sean bienvenidos',
                             style: TextStyle(
                               color: Colors.white,
@@ -50,8 +81,8 @@ class HomeScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    SizedBox(height: 200),
-                    Text(
+                    const SizedBox(height: 200),
+                    const Text(
                       'KitchenMate',
                       style: TextStyle(
                         color: Colors.white,
@@ -61,28 +92,23 @@ class HomeScreen extends StatelessWidget {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    SizedBox(
-                        height:
-                            10), // Ajusté el margen entre KitchenMate y el siguiente texto
-                    Text(
+                    const SizedBox(height: 10),
+                    const Text(
                       '¡Descubre el chef que llevas\ndentro!',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                       ),
-                      textAlign: TextAlign
-                          .center, // Esto asegura que el texto esté centrado
+                      textAlign: TextAlign.center,
                     ),
-                    SizedBox(height: 80),
+                    const SizedBox(height: 80),
                     ElevatedButton(
-                      onPressed: () {
-                        // Redirects to the login screen
-                        Navigator.pushNamed(context, '/login');
-                      },
+                      onPressed: _isLoading ? null : _navigateToLogin,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF129575),
-                        padding: EdgeInsets.symmetric(
+                        backgroundColor:
+                            _isLoading ? Colors.grey : const Color(0xFF129575),
+                        padding: const EdgeInsets.symmetric(
                           horizontal: 48,
                           vertical: 16,
                         ),
@@ -90,28 +116,39 @@ class HomeScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Empieza tus recetas',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                                strokeWidth: 3,
+                              ),
+                            )
+                          : Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text(
+                                  'Empieza tus recetas',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Image.asset(
+                                  'assets/icons/arrow.png',
+                                  width: 20,
+                                  height: 20,
+                                  fit: BoxFit.contain,
+                                  gaplessPlayback: true,
+                                ),
+                              ],
                             ),
-                          ),
-                          SizedBox(width: 10),
-                          Image.asset(
-                            'assets/icons/arrow.png',
-                            width: 20,
-                            height: 20,
-                            fit: BoxFit.contain,
-                          ),
-                        ],
-                      ),
                     ),
-                    SizedBox(height: 48),
+                    const SizedBox(height: 48),
                   ],
                 ),
               ),
@@ -119,7 +156,7 @@ class HomeScreen extends StatelessWidget {
           ),
           Positioned(
             bottom: 20,
-            left: MediaQuery.of(context).size.width / 2 - 67.5,
+            left: screenWidth / 2 - 67.5,
             child: Container(
               width: 135,
               height: 5,

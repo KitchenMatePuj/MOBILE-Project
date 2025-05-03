@@ -27,7 +27,7 @@ class CommentController {
       int recipeId, CommentRequest request) async {
     final headers = await _getHeaders();
     final response = await http.post(
-      Uri.parse('$baseUrl/recipes/$recipeId/comments'),
+      Uri.parse('$baseUrl/recipes/$recipeId/comments/'),
       headers: headers,
       body: jsonEncode(request.toJson()),
     );
@@ -35,6 +35,9 @@ class CommentController {
     if (response.statusCode == 200 || response.statusCode == 201) {
       return CommentResponse.fromJson(jsonDecode(response.body));
     } else {
+      print("ERROR al agregar comentario");
+      print("Status code: ${response.statusCode}");
+      print("Response body: ${response.body}");
       throw Exception('Failed to add comment');
     }
   }

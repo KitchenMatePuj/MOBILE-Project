@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mobile_kitchenmate/controllers/Reports/reports_controller.dart';
 import 'package:mobile_kitchenmate/models/Reports/report_request.dart';
+import 'package:mobile_kitchenmate/utils/image_utils.dart';
 import 'package:mobile_kitchenmate/views/ClientScreens/RecipeScreens/CreateRecipeScreen.dart';
 
 import '/controllers/Recipes/comments.dart';
@@ -96,8 +97,16 @@ class _CommentsScreenState extends State<CommentsScreen> {
     final txt = _newComment.text.trim();
     if (txt.isEmpty || _rating == 0) return;
 
+    if (keycloakUserId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Espera un momento... aún cargando usuario')),
+      );
+      return;
+    }
+
     final req = CommentRequest(
-      authorUserId: keycloakUserId, // ← pon aquí el userId real
+      authorUserId: keycloakUserId,
       text: txt,
       rating: _rating,
     );
@@ -156,73 +165,81 @@ class _CommentsScreenState extends State<CommentsScreen> {
                     final c = comments[i];
                     return FutureBuilder<ProfileResponse>(
                       future: _author(c.authorUserId),
-                      builder: (_, p) => ListTile(
-                        leading: CircleAvatar(
-                          backgroundImage: (p.data?.profilePhoto != null)
-                              ? NetworkImage(p.data!.profilePhoto!)
-                              : const AssetImage(
-                                      'assets/chefs/default_chef.jpg')
-                                  as ImageProvider,
-                        ),
-                        title: Text(p.data?.firstName ?? 'Chef'),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (c.rating !=
-                                null) // solo si el usuario dejó calificación
-                              Row(
-                                children: List.generate(
-                                  5,
-                                  (index) => Icon(
-                                    index < c.rating!.round()
-                                        ? Icons.star
-                                        : Icons.star_border,
-                                    size: 16,
-                                    color: Colors.amber,
+                      builder: (_, p) {
+                        if (!p.hasData) {
+                          return const SizedBox(height: 48);
+                        }
+                        final profile = p.data;
+                        final imageUrl = getFullImageUrl(
+                          profile?.profilePhoto,
+                          placeholder: 'assets/chefs/default_chef.jpg',
+                        );
+                        final imageProvider = (imageUrl.startsWith('http')
+                            ? NetworkImage(imageUrl)
+                            : AssetImage(imageUrl)) as ImageProvider<Object>;
+
+                        return ListTile(
+                          leading: CircleAvatar(
+                            backgroundImage: imageProvider,
+                          ),
+                          title: Text(profile?.firstName ?? 'Chef'),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (c.rating != null)
+                                Row(
+                                  children: List.generate(
+                                    5,
+                                    (index) => Icon(
+                                      index < c.rating!.round()
+                                          ? Icons.star
+                                          : Icons.star_border,
+                                      size: 16,
+                                      color: Colors.amber,
+                                    ),
                                   ),
                                 ),
+                              const SizedBox(height: 4),
+                              Text(c.text),
+                              Text(
+                                '${c.createdAt.toLocal()}'.split(' ')[0],
+                                style: const TextStyle(
+                                    fontSize: 11, color: Colors.grey),
                               ),
-                            const SizedBox(height: 4),
-                            Text(c.text),
-                            Text(
-                              '${c.createdAt.toLocal()}'.split(' ')[0],
-                              style: const TextStyle(
-                                  fontSize: 11, color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.report,
-                              color: Color.fromARGB(255, 181, 108, 106)),
-                          onPressed: () async {
-                            final reportRequest = ReportRequest(
-                              reporterUserId:
-                                  keycloakUserId, // ← este es fijo por ahora
-                              resourceType: 'comment',
-                              description:
-                                  'Comentario reportado automáticamente.',
-                            );
+                            ],
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.report,
+                                color: Color.fromARGB(255, 181, 108, 106)),
+                            onPressed: () async {
+                              final reportRequest = ReportRequest(
+                                reporterUserId: keycloakUserId,
+                                resourceType: 'comment',
+                                description:
+                                    'Comentario reportado automáticamente.',
+                              );
 
-                            try {
-                              final reportController =
-                                  ReportsController(baseUrl: _reportBase);
-                              await reportController
-                                  .createReport(reportRequest);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text(
-                                        'Comentario reportado correctamente.')),
-                              );
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content: Text(
-                                        'Error al reportar el comentario: $e')),
-                              );
-                            }
-                          },
-                        ),
-                      ),
+                              try {
+                                final reportController =
+                                    ReportsController(baseUrl: _reportBase);
+                                await reportController
+                                    .createReport(reportRequest);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          'Comentario reportado correctamente.')),
+                                );
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text(
+                                          'Error al reportar el comentario: $e')),
+                                );
+                              }
+                            },
+                          ),
+                        );
+                      },
                     );
                   },
                 );
