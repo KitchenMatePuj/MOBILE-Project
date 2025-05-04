@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:mobile_kitchenmate/models/Recipes/full_recipe_response.dart';
 import '../../models/Recipes/recipes_request.dart';
 import '../../models/Recipes/recipes_response.dart';
 
@@ -212,5 +214,20 @@ class RecipeController {
     if (resp.statusCode != 200) {
       throw Exception('PUT failed: ${resp.statusCode} ${resp.body}');
     }
+  }
+
+  Future<FullRecipeResponse> getFullRecipe(int id) async {
+    final url = Uri.parse('$baseUrl/recipes/$id/full');
+    final res = await http.get(url).timeout(const Duration(seconds: 6));
+
+    if (res.statusCode != 200) {
+      throw Exception('Error ${res.statusCode} al obtener receta completa');
+    }
+    return compute(_parseFullRecipe, res.body); // isolate
+  }
+
+  static FullRecipeResponse _parseFullRecipe(String body) {
+    final json = jsonDecode(body) as Map<String, dynamic>;
+    return FullRecipeResponse.fromJson(json);
   }
 }

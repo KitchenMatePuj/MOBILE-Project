@@ -41,6 +41,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late CategoryController _categoryController;
   late RecommendationsController _recommendationController;
   late AuthController _authController;
+  ImageProvider _profileImage =
+      const AssetImage('assets/recipes/platovacio.png');
+  bool _profileImageLoaded = false;
+  bool _recommendationsLoaded = false;
+  bool _publishedRecipesLoaded = false;
 
   List<RecipeResponse> _savedRecipeDetails = [];
   List<RecipeResponse> _publishedRecipes = [];
@@ -50,7 +55,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<ProfileResponse>? _profileFuture;
   Future<ProfileSummaryResponse>? _summaryFuture;
-  bool _publishedRecipesLoaded = false;
 
   String keycloakUserId = '';
 
@@ -77,37 +81,71 @@ class _DashboardScreenState extends State<DashboardScreen> {
     try {
       keycloakUserId = await _authController.getKeycloakUserId();
 
-      _profileFuture = _profileController.getProfile(keycloakUserId);
+      // 1. Perfil
+      _profileFuture =
+          _profileController.getProfile(keycloakUserId).then((profile) async {
+        // Imagen (igual que antes)
+        if ((profile.profilePhoto ?? '').isNotEmpty) {
+          final fullImageUrl = getFullImageUrl(profile.profilePhoto!,
+              placeholder: 'assets/recipes/platovacio.png');
 
-      _summaryFuture = _summaryController.getProfileSummary(keycloakUserId)
-        ..then((summary) async {
-          await _loadSavedRecipes(summary.savedRecipes);
-          await _loadCategoriesForRecipes(_savedRecipeDetails);
+          final imageProvider = NetworkImage(fullImageUrl);
+          await precacheImage(imageProvider, context);
 
-          final categoryNames = _savedRecipeDetails
-              .map((r) => r.categoryId)
-              .where((id) => _categoriesById.containsKey(id))
-              .map((id) => _categoriesById[id]!.name)
-              .toList();
+          if (mounted) {
+            setState(() {
+              _profileImage = imageProvider;
+              _profileImageLoaded = true;
+            });
+          }
+        } else {
+          _profileImage = const AssetImage('assets/recipes/platovacio.png');
+          _profileImageLoaded = true;
+        }
 
-          final recommendationRequest = RecommendationRequest(
-            keycloakUserId: keycloakUserId,
-            favoriteCategories: categoryNames,
-            allergies: summary.ingredientAllergies,
-            cookingTime: summary.cookingTime,
-          );
+        return profile;
+      });
 
-          final recs = await _recommendationController
-              .fetchRecommendations(recommendationRequest);
+      // 2. Resumen
+      final summary =
+          await _summaryController.getProfileSummary(keycloakUserId);
 
-          setState(() {
-            _recommendations = recs;
-          });
+      // 3. Recetas guardadas y categorías
+      await _loadSavedRecipes(summary.savedRecipes);
+      await _loadCategoriesForRecipes(_savedRecipeDetails);
 
-          await _loadPublishedRecipes(keycloakUserId);
+      // 4. Preparar categorías favoritas
+      final categoryNames = _savedRecipeDetails
+          .map((r) => r.categoryId)
+          .where((id) => _categoriesById.containsKey(id))
+          .map((id) => _categoriesById[id]!.name)
+          .toList();
+
+      final recommendationRequest = RecommendationRequest(
+        keycloakUserId: keycloakUserId,
+        favoriteCategories: categoryNames,
+        allergies: summary.ingredientAllergies,
+        cookingTime: summary.cookingTime,
+      );
+
+      // 🚀 Lanzar las recomendaciones sin await (en paralelo)
+      final recommendationsFuture =
+          _recommendationController.fetchRecommendations(recommendationRequest);
+
+      // 🚀 Mientras tanto, cargar published recipes
+      final publishedRecipes = await _loadPublishedRecipes(keycloakUserId);
+
+      // ✅ Finalmente esperamos a que terminen las recomendaciones
+      final recs = await recommendationsFuture;
+
+      if (mounted) {
+        setState(() {
+          _recommendations = recs;
+          _recommendationsLoaded = true;
+          _publishedRecipes = publishedRecipes;
+          _publishedRecipesLoaded = true;
         });
-
-      setState(() {}); // fuerza rebuild
+      }
     } catch (e) {
       print('❌ Error al cargar usuario: $e');
     }
@@ -143,48 +181,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  Future<void> _loadPublishedRecipes(String userId) async {
-    if (_publishedRecipesLoaded) return; // ← evita recarga
+  Future<List<RecipeResponse>> _loadPublishedRecipes(String userId) async {
+    if (_publishedRecipesLoaded)
+      return []; // ← evita recarga si ya están cargadas
     _publishedRecipesLoaded = true;
 
     try {
+      // Obtener perfil para obtener el profileId
       final profile = await _profileController.getProfile(userId);
+
+      // Instanciar FollowController SOLO aquí → optimizado
       final followController = FollowController(baseUrl: profileBaseUrl);
 
+      // Obtener Keycloak de los usuarios seguidos
       final followedKeycloaks =
           await followController.getFollowedKeycloakUserIds(profile.profileId);
 
       final List<RecipeResponse> allRecipes = [];
 
+      // Cargar recetas de cada seguido
       for (String followedUserId in followedKeycloaks) {
         try {
           final userRecipes =
               await _recipeController.getRecipesByUser(followedUserId);
           allRecipes.addAll(userRecipes);
         } catch (_) {
+          // Ignorar errores individuales
           continue;
         }
       }
 
-      for (final recipe in allRecipes) {
-        final authorId = recipe.keycloakUserId;
-        if (!_authorProfiles.containsKey(authorId)) {
-          final profile = await _profileController.getProfile(authorId);
-          _authorProfiles[authorId] = profile;
-        }
-      }
-
-      setState(() {
-        _publishedRecipes = allRecipes;
-      });
+      return allRecipes; // ✅ retornar resultado
     } catch (e) {
-      print('❌ Error al cargar publicaciones de seguidos: $e');
+      print('❌ Error al cargar recetas publicadas: $e');
+      return []; // Si falla → regresar lista vacía
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(''),
@@ -192,147 +229,187 @@ class _DashboardScreenState extends State<DashboardScreen> {
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(
-                  left: 16, right: 16, top: 16, bottom: 10),
-              child: FutureBuilder<ProfileResponse>(
-                future: _profileFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return CircularProgressIndicator();
-                  } else if (snapshot.hasError) {
-                    return Text('Error: ${snapshot.error}');
-                  } else if (!snapshot.hasData) {
-                    return Text('No data found');
-                  }
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(
+                    left: 16, right: 16, top: 16, bottom: 10),
+                child: FutureBuilder<ProfileResponse>(
+                  future: _profileFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting ||
+                        snapshot.connectionState == ConnectionState.none) {
+                      return const SizedBox(
+                        height: 100,
+                        child: Center(
+                          child: CircularProgressIndicator.adaptive(),
+                        ),
+                      );
+                    } else if (snapshot.hasError) {
+                      return Text('Error: ${snapshot.error}');
+                    } else if (!snapshot.hasData || snapshot.data == null) {
+                      // TERMINO DE CARGAR PERO NO HAY DATOS -> no data found
+                      return const SizedBox(
+                        height: 100,
+                        child: Center(
+                          child: Text(
+                            'No data found',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ),
+                      );
+                    }
 
-                  final profile = snapshot.data!;
-                  return UserHeader(
-                      user: profile); // AQUÍ SE MUESTRA BIENVENIDO
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: TextField(
-                onChanged: (value) {
-                  setState(() {
-                    query = value;
-                  });
-                },
-                decoration: InputDecoration(
-                  hintText: 'Buscar receta',
-                  fillColor: Colors.white,
-                  prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF129575)),
-                  ),
-                  filled: true,
+                    final profile = snapshot.data!;
+                    return UserHeader(
+                        user: profile,
+                        profileImage: _profileImage,
+                        profileImageLoaded: _profileImageLoaded);
+                  },
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            ProfileTabs(
-              selectedIndex: selectedIndex,
-              onTabSelected: (index) {
-                setState(() {
-                  selectedIndex = index;
-                  _recipesToShow = 4;
-                });
-              },
-            ),
-            const SizedBox(height: 10),
-            Expanded(
-              child: selectedIndex == 0
-                  ? _recommendations.isEmpty
-                      ? Center(
-                          child: Text('No hay recomendaciones por el momento.',
-                              style: TextStyle(
-                                  color: Colors.grey,
-                                  fontStyle: FontStyle.italic)))
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: _recommendations.length,
-                          itemBuilder: (context, index) {
-                            final rec = _recommendations[index];
-                            final recipe = _recommendations[index];
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: TextField(
+                  onChanged: (value) {
+                    setState(() {
+                      query = value;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Buscar receta',
+                    fillColor: Colors.white,
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF129575)),
+                    ),
+                    filled: true,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              ProfileTabs(
+                selectedIndex: selectedIndex,
+                onTabSelected: (index) {
+                  setState(() {
+                    selectedIndex = index;
+                    _recipesToShow = 4;
+                  });
+                },
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.6,
+                child: AnimatedSwitcher(
+                  duration: Duration(milliseconds: 300),
+                  child: selectedIndex == 0
+                      ? !_recommendationsLoaded
+                          ? Center(child: CircularProgressIndicator())
+                          : _recommendations.isEmpty
+                              ? Center(
+                                  child: Text(
+                                      'No hay recomendaciones por el momento.',
+                                      style: TextStyle(
+                                          color: Colors.grey,
+                                          fontStyle: FontStyle.italic)))
+                              : ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: NeverScrollableScrollPhysics(),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16),
+                                  itemCount: _recommendations.length,
+                                  itemBuilder: (context, index) {
+                                    final rec = _recommendations[index];
+                                    final recipe = _recommendations[index];
 
-                            final profile =
-                                _authorProfiles[recipe.keycloakUserId];
-                            final chefName = profile != null
-                                ? '${profile.firstName} ${profile.lastName}'
-                                : 'Chef';
-                            final img = getFullImageUrl(
-                              rec.imageUrl,
-                              placeholder:
-                                  'assets/styles/recipe_placeholder.jpg',
-                            );
+                                    final profile =
+                                        _authorProfiles[recipe.keycloakUserId];
+                                    final chefName = profile != null
+                                        ? '${profile.firstName} ${profile.lastName}'
+                                        : 'Chef';
+                                    final img = getFullImageUrl(
+                                      rec.imageUrl,
+                                      placeholder:
+                                          'assets/recipes/platovacio.png',
+                                    );
 
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              child: GestureDetector(
-                                onTap: () {
-                                  Navigator.pushNamed(context, '/recipe',
-                                      arguments: {'recipeId': rec.recipeId});
-                                },
-                                child: RecipeCard(
-                                  title: recipe.title,
-                                  chef: chefName,
-                                  duration: '${recipe.cookingTime}',
-                                  imageUrl: img,
-                                  rating: recipe.ratingAvg.round(),
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 8),
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          Navigator.pushNamed(
+                                              context, '/recipe', arguments: {
+                                            'recipeId': rec.recipeId
+                                          });
+                                        },
+                                        child: RecipeCard(
+                                          title: recipe.title,
+                                          chef: chefName,
+                                          duration: '${recipe.cookingTime}',
+                                          imageUrl: img,
+                                          rating: recipe.ratingAvg.round(),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                )
+                      : !_publishedRecipesLoaded
+                          ? Center(child: CircularProgressIndicator())
+                          : _publishedRecipes.isEmpty
+                              ? Center(
+                                  child: Text('Aún no sigues a nadie.',
+                                      style: TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 16,
+                                          fontStyle: FontStyle.italic)))
+                              : ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: NeverScrollableScrollPhysics(),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16),
+                                  itemCount: _publishedRecipes.length,
+                                  itemBuilder: (context, index) {
+                                    final recipe = _publishedRecipes[index];
+                                    final profile =
+                                        _authorProfiles[recipe.keycloakUserId];
+                                    final chefName = profile != null
+                                        ? '${profile.firstName} ${profile.lastName}'
+                                        : 'Chef';
+                                    final img = getFullImageUrl(
+                                      recipe.imageUrl,
+                                      placeholder:
+                                          'assets/recipes/platovacio.png',
+                                    );
+
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 8),
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          Navigator.pushNamed(
+                                              context, '/recipe', arguments: {
+                                            'recipeId': recipe.recipeId
+                                          });
+                                        },
+                                        child: RecipeCard(
+                                          title: recipe.title,
+                                          chef: chefName,
+                                          duration: '${recipe.cookingTime}',
+                                          imageUrl: img,
+                                          rating: recipe.ratingAvg.round(),
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 ),
-                              ),
-                            );
-                          },
-                        )
-                  : _publishedRecipes.isEmpty
-                      ? Center(
-                          child: Text('Aún no sigues a nadie.',
-                              style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 16,
-                                  fontStyle: FontStyle.italic)))
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: _publishedRecipes.length,
-                          itemBuilder: (context, index) {
-                            final recipe = _publishedRecipes[index];
-                            final profile =
-                                _authorProfiles[recipe.keycloakUserId];
-                            final chefName = profile != null
-                                ? '${profile.firstName} ${profile.lastName}'
-                                : 'Chef';
-                            final img = getFullImageUrl(
-                              recipe.imageUrl,
-                              placeholder:
-                                  'assets/styles/recipe_placeholder.jpg',
-                            );
-
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              child: GestureDetector(
-                                onTap: () {
-                                  Navigator.pushNamed(context, '/recipe',
-                                      arguments: {'recipeId': recipe.recipeId});
-                                },
-                                child: RecipeCard(
-                                  title: recipe.title,
-                                  chef: chefName,
-                                  duration: '${recipe.cookingTime}',
-                                  imageUrl: img,
-                                  rating: recipe.ratingAvg.round(),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-            ),
-          ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -411,13 +488,13 @@ class RecipeCard extends StatelessWidget {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             child: Image.network(
               getFullImageUrl(imageUrl,
-                  placeholder: 'assets/styles/recipe_placeholder.jpg'),
+                  placeholder: 'assets/recipes/platovacio.png'),
               height: 120,
               width: double.infinity,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return Image.asset(
-                  'assets/styles/recipe_placeholder.jpg',
+                  'assets/recipes/platovacio.png',
                   height: 120,
                   width: double.infinity,
                   fit: BoxFit.cover,
@@ -440,7 +517,8 @@ class RecipeCard extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 12,
-                      backgroundImage: AssetImage('assets/chefs/$chef.jpg'),
+                      backgroundImage:
+                          AssetImage('assets/chefs/default_user.png'),
                     ),
                     const SizedBox(width: 8),
                     Text(chef, style: const TextStyle(fontSize: 14)),
@@ -476,8 +554,15 @@ class RecipeCard extends StatelessWidget {
 
 class UserHeader extends StatelessWidget {
   final ProfileResponse user;
+  final ImageProvider? profileImage;
+  final bool profileImageLoaded;
 
-  const UserHeader({Key? key, required this.user}) : super(key: key);
+  const UserHeader({
+    Key? key,
+    required this.user,
+    this.profileImage,
+    required this.profileImageLoaded,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -511,16 +596,15 @@ class UserHeader extends StatelessWidget {
           child: Container(
             width: 48,
             height: 48,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              image: DecorationImage(
-                image: NetworkImage(
-                  getFullImageUrl(user.profilePhoto,
-                      placeholder: 'assets/styles/recipe_placeholder.jpg'),
-                ),
-                fit: BoxFit.cover,
-              ),
-            ),
+            child: profileImageLoaded
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image(
+                      image: profileImage!,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                : const Center(child: CircularProgressIndicator.adaptive()),
           ),
         ),
       ],

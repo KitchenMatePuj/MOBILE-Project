@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../models/Recipes/ingredients_request.dart';
@@ -116,5 +117,29 @@ class IngredientController {
     if (response.statusCode != 204) {
       throw Exception('Failed to delete ingredient');
     }
+  }
+
+  /// ← NUEVO: devuelve **solo** los ingredientes de una receta
+  Future<List<IngredientResponse>> getIngredientsByRecipe(int recipeId) async {
+    final url = Uri.parse('$baseUrl/ingredients/by-recipe/$recipeId');
+    final res = await http
+        .get(url)
+        .timeout(const Duration(seconds: 6)); // -- timeout breve
+
+    if (res.statusCode != 200) {
+      throw Exception(
+          'Error ${res.statusCode} al obtener ingredientes de la receta');
+    }
+
+    // 👉 parse en hilo aislado (compute)
+    return compute(_parseIngredients, res.body);
+  }
+
+  // ---------- helpers ----------
+  static List<IngredientResponse> _parseIngredients(String body) {
+    final list = jsonDecode(body) as List;
+    return list
+        .map((j) => IngredientResponse.fromJson(j as Map<String, dynamic>))
+        .toList();
   }
 }

@@ -4,52 +4,37 @@ import 'package:mobile_kitchenmate/controllers/Profiles/follow_controller.dart';
 
 import 'package:mobile_kitchenmate/controllers/Recipes/comments.dart';
 import 'package:mobile_kitchenmate/controllers/Recipes/recipes.dart';
-import 'package:mobile_kitchenmate/controllers/Recipes/ingredients.dart';
 import 'package:mobile_kitchenmate/controllers/Recipes/recipe_steps.dart';
 
 import 'package:mobile_kitchenmate/controllers/Profiles/profile_controller.dart';
 import 'package:mobile_kitchenmate/controllers/Profiles/saved_recipe_controller.dart';
 import 'package:mobile_kitchenmate/models/Profiles/follow_request.dart';
+import 'package:mobile_kitchenmate/models/Profiles/profile_response.dart';
 
 import 'package:mobile_kitchenmate/models/Recipes/ingredients_response.dart'
     as recipes;
-import 'package:mobile_kitchenmate/models/Profiles/ingredient_response.dart'
-    as profiles;
-
 import 'package:mobile_kitchenmate/models/Recipes/comments_response.dart';
 import 'package:mobile_kitchenmate/models/Recipes/recipe_steps_response.dart';
-import 'package:mobile_kitchenmate/views/ClientScreens/RecipeScreens/CreateRecipeScreen.dart';
+import 'package:mobile_kitchenmate/models/Recipes/recipes_response.dart';
+import 'package:mobile_kitchenmate/utils/image_utils.dart';
 
 import '/controllers/authentication/auth_controller.dart';
-import '/models/authentication/login_request_advanced.dart' as advanced;
-import '/models/authentication/login_response.dart';
+
 import '/models/Profiles/saved_recipe_request.dart';
 import '/models/Profiles/saved_recipe_response.dart';
-import '/models/Profiles/follow_request.dart';
-import '/controllers/Profiles/follow_controller.dart';
 import '/models/Reports/report_request.dart';
-import '/models/Reports/report_response.dart';
+
 import 'package:mobile_kitchenmate/controllers/Reports/reports_controller.dart';
 import '/controllers/Profiles/shopping_list_controller.dart';
 import '/models/Profiles/shopping_list_request.dart';
-import '/models/Profiles/shopping_list_response.dart';
-import '/controllers/Profiles/shopping_list_controller.dart';
-import '/models/Profiles/shopping_list_response.dart';
 
 import 'package:mobile_kitchenmate/controllers/Profiles/ingredient_controller.dart'
     as profile_ingredient;
 import 'package:mobile_kitchenmate/controllers/Recipes/ingredients.dart'
     as recipe_ingredient;
-import 'package:mobile_kitchenmate/models/Profiles/ingredient_request.dart';
-import 'package:mobile_kitchenmate/models/Profiles/ingredient_response.dart';
+
 import 'package:mobile_kitchenmate/models/Profiles/ingredient_request.dart'
     as profile_ingredient;
-import 'package:mobile_kitchenmate/models/Recipes/ingredients_request.dart';
-import 'package:mobile_kitchenmate/models/Profiles/ingredient_response.dart';
-
-import 'package:mobile_kitchenmate/models/Reports/report_request.dart';
-import 'package:mobile_kitchenmate/models/Reports/report_response.dart';
-import 'package:mobile_kitchenmate/controllers/Reports/reports_controller.dart';
 
 class RecipeScreen extends StatefulWidget {
   final int recipeId;
@@ -96,51 +81,80 @@ class _RecipeScreenState extends State<RecipeScreen> {
   late ReportsController _reportController;
 
   late String _authUserId = '';
-  late int recipeUserId = 1;
+  late String recipeUserId = '';
   late String recipeUserId1 = '';
 
+  Stopwatch _initStopwatch = Stopwatch();
+  Stopwatch _loadRecipeDatapwatch = Stopwatch();
+
   Future<void> _loadRecipeData(int recipeId) async {
+    _loadRecipeDatapwatch.start();
     try {
-      // Carga la receta principal
-      final recipe = await _recipeController.getRecipeById(recipeId);
+      print('⏳ [Inicio] Cargando datos de la receta...');
 
-      // Carga el perfil del chef relacionado con la receta
-      final chef = await _profileController.getProfile(recipe.keycloakUserId);
-      recipeUserId =
-          chef.profileId; // Asigna el profileId del chef correctamente
-      recipeUserId1 = chef.profileId
-          .toString(); // Asigna el profileId del chef correctamente
+      // → PRIMER BLOQUE: Receta y Perfil en paralelo (deben estar antes que todo)
+      final stopwatchFirstBlock = Stopwatch()..start();
+      final recipeFuture = _recipeController.getRecipeById(recipeId);
+      final profileFuture = _profileController.getProfile(keycloakUserId);
 
-      // Verifica si el usuario ya sigue al chef
-      final profile = await _profileController.getProfile(keycloakUserId);
-      final followedKeycloakIds =
-          await _followController.getFollowedKeycloakUserIds(profile.profileId);
+      final firstResults = await Future.wait([recipeFuture, profileFuture]);
+      stopwatchFirstBlock.stop();
+      print(
+          '✅ [Receta + Perfil usuario] -> ${stopwatchFirstBlock.elapsedMilliseconds} ms');
+
+      final recipe = firstResults[0] as RecipeResponse;
+      final profile = firstResults[1] as ProfileResponse;
+
+      recipeUserId = recipe.keycloakUserId;
+      recipeUserId1 = recipe.keycloakUserId.toString();
+
+      // → SEGUNDO BLOQUE: Una vez tengo la receta → lanzar todo lo demás
+      final stopwatchSecondBlock = Stopwatch()..start();
+
+      final chefFuture = _profileController.getProfile(recipe.keycloakUserId);
+      final followedFuture =
+          _followController.getFollowedKeycloakUserIds(profile.profileId);
+      final savedRecipesFuture =
+          _savedController.getSavedRecipesByKeycloak(keycloakUserId);
+      final stepsFuture = _stepController.fetchSteps(recipeId);
+      final ingredientsFuture =
+          _ingredientController.getIngredientsByRecipe(recipeId);
+      final commentsFuture = _commentController.fetchComments(recipeId);
+
+      final results = await Future.wait([
+        chefFuture,
+        followedFuture,
+        savedRecipesFuture,
+        stepsFuture,
+        ingredientsFuture,
+        commentsFuture,
+      ]).timeout(const Duration(seconds: 10));
+
+      stopwatchSecondBlock.stop();
+      print(
+          '✅ [Restantes en paralelo] -> ${stopwatchSecondBlock.elapsedMilliseconds} ms');
+
+      // Extraer resultados
+      final chef = results[0] as ProfileResponse;
+      final followedKeycloakIds = results[1] as List<String>;
+      final savedRecipes = results[2] as List<SavedRecipeResponse>;
+      final stepRes = results[3] as List<RecipeStepResponse>;
+      final ingRes = results[4] as List<recipes.IngredientResponse>;
+      final comments = results[5] as List<CommentResponse>;
+
       final isUserFollowing =
           followedKeycloakIds.contains(recipe.keycloakUserId);
-
-      // Verifica si la receta ya está guardada
-      final savedRecipes =
-          await _savedController.getSavedRecipesByKeycloak(keycloakUserId);
       final isRecipeSaved =
           savedRecipes.any((saved) => saved.recipeId == recipeId);
-
-      // Carga pasos e ingredientes
-      final stepRes = await _stepController.fetchSteps(recipeId);
-      final ingRes = await _ingredientController.fetchIngredients();
       final ingOfRecipe = ingRes.where((i) => i.recipeId == recipeId).toList();
 
-      // Carga comentarios
-      final comments = await _commentController.fetchComments(recipeId);
+      imageUrl = getFullImageUrl(
+        recipe.imageUrl,
+        placeholder: 'assets/recipes/recipe_placeholder.jpg',
+      );
 
-      imageUrl = (recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty)
-          ? (recipe.imageUrl!.startsWith('http')
-              ? recipe.imageUrl! // URL absoluta
-              : '$strapiBase${recipe.imageUrl!}') // URL relativa → completar
-          : 'assets/recipes/recipe_placeholder.jpg';
+      if (!mounted) return;
 
-      if (!mounted) return; // Si la pantalla fue cerrada, salir
-
-      // Actualiza el estado con los datos correctos
       setState(() {
         recipeTitle = recipe.title ?? '';
         duration = recipe.cookingTime ?? 0;
@@ -162,8 +176,8 @@ class _RecipeScreenState extends State<RecipeScreen> {
             .toList();
 
         totalComments = comments.length;
-        isSaved = isRecipeSaved; // Actualiza el estado del icono de guardar
-        isFollowing = isUserFollowing; // Actualiza el estado del seguimiento
+        isSaved = isRecipeSaved;
+        isFollowing = isUserFollowing;
       });
     } catch (e) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -174,6 +188,10 @@ class _RecipeScreenState extends State<RecipeScreen> {
         }
       });
     }
+
+    _loadRecipeDatapwatch.stop();
+    print(
+        '🏁 [Final] Tiempo total de _loadRecipeData -> ${_loadRecipeDatapwatch.elapsedMilliseconds} ms');
   }
 
   Future<void> _showReportDialog(BuildContext context) async {
@@ -392,9 +410,12 @@ class _RecipeScreenState extends State<RecipeScreen> {
   }
 
   // ────────────────── 2) InitState → solo instanciar controladores ─────
+
   @override
   void initState() {
     super.initState();
+
+    _initStopwatch.start();
     _recipeController = RecipeController(baseUrl: recipeBaseUrl);
     _ingredientController = recipe_ingredient.IngredientController(
         baseUrl: recipeBaseUrl); // Controlador de recetas
@@ -407,7 +428,9 @@ class _RecipeScreenState extends State<RecipeScreen> {
     _authController = AuthController(baseUrl: _authBase);
     _followController = FollowController(baseUrl: profileBaseUrl);
     _reportController = ReportsController(baseUrl: _reportBase);
-
+    _initStopwatch.stop();
+    print(
+        'Tiempo de carga en el initstate: ${_initStopwatch.elapsedMilliseconds} ms');
     _initializeAuthUser();
   }
 
@@ -423,14 +446,13 @@ class _RecipeScreenState extends State<RecipeScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_loaded) return;
+    if (_loaded) return; // Evita recargas múltiples.
 
-    final args = ModalRoute.of(context)!.settings.arguments as Map;
-    if (args is Map<String, dynamic> && args['recipeId'] != null) {
-      recipeId = args['recipeId'] as int;
-      _loadRecipeData(recipeId!); // ← pasamos el id
-      _loaded = true;
-    } else {
+    final args = ModalRoute.of(context)!.settings.arguments as Map?;
+    final int? idArg = args?['recipeId'] as int?;
+
+    if (idArg == null) {
+      // No llegó el parámetro → mensaje de error.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -438,7 +460,32 @@ class _RecipeScreenState extends State<RecipeScreen> {
           );
         }
       });
+      return;
     }
+
+    recipeId = idArg; // Guarda el id de receta.
+    _loaded = true; // Marca como cargado una sola vez.
+
+    _ensureAuthAndLoad(); // ← Nuevo helper.
+  }
+
+  /// Asegura que keycloakUserId esté cargado y luego llama a _loadRecipeData.
+  Future<void> _ensureAuthAndLoad() async {
+    if (keycloakUserId.isEmpty) {
+      try {
+        keycloakUserId = await _authController.getKeycloakUserId();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error obteniendo usuario: $e')),
+          );
+        }
+        return;
+      }
+    }
+
+    // Ahora que ya tenemos el userId, hacemos la carga de la receta.
+    await _loadRecipeData(recipeId!);
   }
 
   @override
