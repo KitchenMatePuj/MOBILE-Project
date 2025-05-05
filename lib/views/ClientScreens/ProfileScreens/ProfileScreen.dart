@@ -377,9 +377,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               future: _profileCtl.getProfile(recipe.keycloakUserId),
               builder: (context, chefSnap) {
                 final chef = chefSnap.data;
-                final chefName = chef?.firstName?.isNotEmpty == true
-                    ? chef!.firstName!
-                    : recipe.keycloakUserId ?? 'Chef desconocido';
+                final chefName = chef == null
+                    ? 'Cargando chef...'
+                    : (chef.firstName?.isNotEmpty == true
+                        ? chef.firstName!
+                        : 'Chef desconocido');
 
                 final avatar = _fullImageUrl(
                   chef?.profilePhoto,
@@ -545,6 +547,20 @@ class RecipeCard extends StatelessWidget {
                     height: 120,
                     width: double.infinity,
                     fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return SizedBox(
+                        height: 120,
+                        width: double.infinity,
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) => Image.asset(
+                      'assets/styles/recipe_placeholder.jpg',
+                      height: 120,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
                   )
                 : Image.asset(
                     imageUrl,

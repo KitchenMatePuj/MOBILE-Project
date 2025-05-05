@@ -8,11 +8,11 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '/controllers/authentication/auth_controller.dart';
 import '/models/authentication/login_request_advanced.dart' as advanced;
 import '/models/authentication/login_response.dart';
+import '/utils/image_utils.dart';
 
 class FollowersAndFollowingScreen extends StatefulWidget {
   final int profileId;
   final String type;
-  
 
   const FollowersAndFollowingScreen(
       {super.key, required this.profileId, required this.type});
@@ -26,22 +26,20 @@ class _FollowersAndFollowingScreenState
     extends State<FollowersAndFollowingScreen> {
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
   final String authbaseUrl = dotenv.env['AUTH_URL'] ?? '';
-  final _authBase = dotenv.env['AUTH_URL'] ?? '';
   late int selectedIndex;
   late FollowController _followController;
   late ProfileController _profileController;
   late AuthController _authController;
   List<ProfileResponse> users = [];
 
-    String keycloakUserId = '';
+  String keycloakUserId = '';
   @override
-
   void initState() {
     super.initState();
     selectedIndex = widget.type == 'following' ? 1 : 0;
     _followController = FollowController(baseUrl: profileBaseUrl);
     _profileController = ProfileController(baseUrl: profileBaseUrl);
-    _authController = AuthController(baseUrl: _authBase);
+    _authController = AuthController(baseUrl: authbaseUrl);
 
     _authController.getKeycloakUserId().then((id) {
       keycloakUserId = id;
@@ -102,6 +100,7 @@ class _FollowersAndFollowingScreenState
                   onTabSelected: (index) {
                     setState(() {
                       selectedIndex = index;
+                      users = [];
                       _fetchUsers();
                     });
                   },
@@ -110,10 +109,12 @@ class _FollowersAndFollowingScreenState
             ),
           ),
           Expanded(
-            child: FollowersFollowingContent(
-              users: users,
-            ),
-          ),
+            child: users.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : FollowersFollowingContent(
+                    users: users,
+                  ),
+          )
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -124,7 +125,8 @@ class _FollowersAndFollowingScreenState
         onTap: (int index) {
           switch (index) {
             case 0:
-              Navigator.pushNamed(context, '/dashboard');
+              Navigator.pushNamedAndRemoveUntil(
+                  context, '/dashboard', (route) => false);
               break;
             case 1:
               Navigator.pushNamed(context, '/recipe_search');
@@ -214,20 +216,29 @@ class FollowersFollowingContent extends StatelessWidget {
       itemCount: users.length,
       itemBuilder: (context, index) {
         final user = users[index];
+
+        final profilePhotoUrl = getFullImageUrl(
+          user.profilePhoto,
+          placeholder: 'assets/chefs/default_user.png',
+        );
         return ListTile(
           leading: CircleAvatar(
-            backgroundImage: user.profilePhoto != null
-                ? NetworkImage(user.profilePhoto!)
-                : AssetImage('assets/default_profile.png') as ImageProvider,
+            radius: 24,
+            backgroundImage: profilePhotoUrl.startsWith('http')
+                ? NetworkImage(profilePhotoUrl)
+                : AssetImage(profilePhotoUrl) as ImageProvider,
+            onBackgroundImageError: (_, __) {},
+            child: !profilePhotoUrl.startsWith('http')
+                ? const Icon(Icons.person, color: Colors.white)
+                : null,
           ),
           title: Text('${user.firstName} ${user.lastName}'),
           trailing: ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF129575), // Background color
-              foregroundColor: Colors.white, // Text color
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 20, vertical: 1), // Smaller padding
-              textStyle: const TextStyle(fontSize: 13), // Smaller font size
+              backgroundColor: const Color(0xFF129575),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 1),
+              textStyle: const TextStyle(fontSize: 13),
             ),
             onPressed: () {
               Navigator.pushNamed(

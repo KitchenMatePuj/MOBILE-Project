@@ -150,7 +150,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
 
       imageUrl = getFullImageUrl(
         recipe.imageUrl,
-        placeholder: 'assets/recipes/recipe_placeholder.jpg',
+        placeholder: 'assets/recipes/platovacio.png',
       );
 
       if (!mounted) return;
@@ -535,19 +535,56 @@ class _RecipeScreenState extends State<RecipeScreen> {
   }
 
   Widget _buildImageHeader() {
-    Widget displayedImage = imageUrl.startsWith('http')
-        ? Image.network(
-            imageUrl,
+    Widget displayedImage;
+
+    if (imageUrl.isEmpty) {
+      // ← Si aún no se ha cargado la imagen
+      displayedImage = SizedBox(
+        width: double.infinity,
+        height: 150,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    } else if (imageUrl.startsWith('http')) {
+      // Imagen de red con indicador de carga
+      displayedImage = Image.network(
+        imageUrl,
+        width: double.infinity,
+        height: 150,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+
+          return SizedBox(
             width: double.infinity,
             height: 150,
-            fit: BoxFit.cover,
-          )
-        : Image.asset(
-            imageUrl,
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                    : null,
+              ),
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return Image.asset(
+            'assets/recipes/recipe_placeholder.jpg',
             width: double.infinity,
             height: 150,
             fit: BoxFit.cover,
           );
+        },
+      );
+    } else {
+      // Imagen local
+      displayedImage = Image.asset(
+        imageUrl,
+        width: double.infinity,
+        height: 150,
+        fit: BoxFit.cover,
+      );
+    }
 
     return Stack(
       children: [
@@ -558,8 +595,8 @@ class _RecipeScreenState extends State<RecipeScreen> {
                 Colors.black.withOpacity(0.3), BlendMode.darken),
             child: Transform(
               alignment: Alignment.center,
-              transform: Matrix4.rotationX(3.14159), // ← rotar 180°
-              child: displayedImage, // ← aquí ya usas el widget
+              transform: Matrix4.rotationX(3.14159), // rotar 180°
+              child: displayedImage,
             ),
           ),
         ),
