@@ -439,9 +439,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               future: _profileCtl.getProfile(recipe.keycloakUserId),
               builder: (context, chefSnap) {
                 final chef = chefSnap.data;
-                final chefName = chef?.firstName?.isNotEmpty == true
-                    ? chef!.firstName!
-                    : recipe.keycloakUserId ?? 'Chef desconocido';
+                final chefName = chef == null
+                    ? 'Cargando chef...'
+                    : (chef.firstName?.isNotEmpty == true
+                        ? chef.firstName!
+                        : 'Chef desconocido');
 
                 final avatar = _fullImageUrl(
                   chef?.profilePhoto,
@@ -603,18 +605,50 @@ class RecipeCard extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Imagen de la receta
-              ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(12)),
-                child: Image.network(
-                  imageUrl,
-                  height: 120,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
+          // Imagen de la receta
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: imageUrl.startsWith('http')
+                ? Image.network(
+                    imageUrl,
+                    height: 120,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return SizedBox(
+                        height: 120,
+                        width: double.infinity,
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) => Image.asset(
+                      'assets/styles/recipe_placeholder.jpg',
+                      height: 120,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                : Image.asset(
+                    imageUrl,
+                    height: 120,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+          ),
+          // Detalles de la receta
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Título de la receta
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               // Detalles de la receta
