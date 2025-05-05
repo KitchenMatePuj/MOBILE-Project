@@ -4,6 +4,8 @@ String getFullImageUrl(String? path, {required String placeholder}) {
   try {
     if (path == null || path.isEmpty || path == 'example') return placeholder;
 
+    path = path.replaceAll('"', '').trim();
+
     // ← Caso especial: strapi plato vacío → forzar asset local
     if (path.contains('/assets/recipes/platovacio')) {
       return placeholder;

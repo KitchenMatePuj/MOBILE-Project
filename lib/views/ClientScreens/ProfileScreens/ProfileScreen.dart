@@ -28,6 +28,7 @@ import 'package:mobile_kitchenmate/models/Profiles/follow_response.dart';
 import 'package:mobile_kitchenmate/models/Recipes/recipes_response.dart';
 import 'package:mobile_kitchenmate/models/Profiles/saved_recipe_request.dart';
 import 'package:mobile_kitchenmate/models/Profiles/saved_recipe_response.dart';
+import 'package:mobile_kitchenmate/utils/image_utils.dart';
 
 import '/controllers/authentication/auth_controller.dart';
 import '/models/authentication/login_request_advanced.dart' as advanced;
@@ -183,19 +184,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ---------------------------------------------------------------------------
   // Helper: construye una URL absoluta para imágenes que vienen relativas
   // ---------------------------------------------------------------------------
-  String _fullImageUrl(String? path, {required String placeholder}) {
-    try {
-      if (path == null || path.isEmpty || path == 'example') return placeholder;
-      if (path.startsWith('http')) return path;
-      final base = _strapiBase.endsWith('/')
-          ? _strapiBase.substring(0, _strapiBase.length - 1)
-          : _strapiBase;
-      final fixedPath = path.startsWith('/') ? path : '/$path';
-      return '$base$fixedPath';
-    } catch (_) {
-      return placeholder;
-    }
-  }
 
   // ---------------------------------------------------------------------------
   // UI principal --------------------------------------------------------------
@@ -333,7 +321,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final following = followingList.length;
         final published = publishedList.length;
 
-        final avatar = _fullImageUrl(
+        final avatar = getFullImageUrl(
           profile.profilePhoto,
           placeholder: 'assets/chefs/default_user.png',
         );
@@ -429,7 +417,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           itemBuilder: (context, index) {
             final recipe = recipes[index];
 
-            final imageUrl = _fullImageUrl(
+            final imageUrl = getFullImageUrl(
               recipe.imageUrl,
               placeholder: 'assets/styles/recipe_placeholder.jpg',
             );
@@ -445,7 +433,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ? chef.firstName!
                         : 'Chef desconocido');
 
-                final avatar = _fullImageUrl(
+                final avatar = getFullImageUrl(
                   chef?.profilePhoto,
                   placeholder: 'assets/chefs/default_user.png',
                 );
@@ -605,50 +593,18 @@ class RecipeCard extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // Imagen de la receta
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: imageUrl.startsWith('http')
-                ? Image.network(
-                    imageUrl,
-                    height: 120,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return SizedBox(
-                        height: 120,
-                        width: double.infinity,
-                        child: Center(child: CircularProgressIndicator()),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) => Image.asset(
-                      'assets/styles/recipe_placeholder.jpg',
-                      height: 120,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                  )
-                : Image.asset(
-                    imageUrl,
-                    height: 120,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
-          ),
-          // Detalles de la receta
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Título de la receta
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Imagen de la receta
+              ClipRRect(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(12)),
+                child: Image.network(
+                  imageUrl,
+                  height: 120,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
                 ),
               ),
               // Detalles de la receta
@@ -671,7 +627,9 @@ class RecipeCard extends StatelessWidget {
                       children: [
                         CircleAvatar(
                           radius: 12,
-                          backgroundImage: AssetImage(avatarUrl),
+                          backgroundImage: avatarUrl.startsWith('http')
+                              ? NetworkImage(avatarUrl)
+                              : AssetImage(avatarUrl) as ImageProvider,
                         ),
                         const SizedBox(width: 8),
                         Text(

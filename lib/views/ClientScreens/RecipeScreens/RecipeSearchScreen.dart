@@ -257,49 +257,28 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
                         runSpacing: 16,
                         children: filteredRecipes
                             .take(_recipesToShow)
-                            .map((recipe) => RecipeCard(
-                                  title: recipe.title,
-                                  chef: 'Chef: Cargando...',
-                                  duration: recipe.cookingTime.toString(),
-                                  imageUrl: recipe.imageUrl ?? '',
-                                  width: cardWidth,
-                                  rating: recipe.ratingAvg.toInt(),
-                                  recipeId: recipe.recipeId,
-                                  fullImageUrlBuilder: _fullImageUrl,
+                            .map((recipe) => FutureBuilder<ProfileResponse>(
+                                  future: _profileController
+                                      .getProfile(recipe.keycloakUserId),
+                                  builder: (context, snap) {
+                                    final chefName = snap.hasData
+                                        ? 'Chef: ${_fixEncoding(snap.data!.firstName ?? '')}'
+                                        : 'Chef: Cargando…';
+
+                                    return RecipeCard(
+                                      title: _fixEncoding(recipe.title),
+                                      chef: chefName,
+                                      duration: recipe.cookingTime.toString(),
+                                      imageUrl: recipe.imageUrl ?? '',
+                                      width: cardWidth,
+                                      rating: recipe.ratingAvg.toInt(),
+                                      recipeId: recipe.recipeId,
+                                      fullImageUrlBuilder: _fullImageUrl,
+                                    );
+                                  },
                                 ))
                             .toList(),
                       ),
-                    Wrap(
-                      spacing: 16,
-                      runSpacing: 16,
-                      children:
-                          filteredRecipes.take(_recipesToShow).map((recipe) {
-                        return FutureBuilder<ProfileResponse>(
-                          future: _profileController
-                              .getProfile(recipe.keycloakUserId),
-                          builder: (context, snapshot) {
-                            String chefName = 'Chef: Cargando...';
-                            if (snapshot.connectionState ==
-                                    ConnectionState.done &&
-                                snapshot.hasData) {
-                              ProfileResponse profile = snapshot.data!;
-                              chefName =
-                                  'Chef: ${profile.firstName} ${profile.lastName}';
-                            }
-                            return RecipeCard(
-                              title: _fixEncoding(recipe.title),
-                              chef: _fixEncoding(chefName),
-                              duration: recipe.cookingTime.toString(),
-                              imageUrl: recipe.imageUrl ?? '',
-                              width: cardWidth,
-                              rating: recipe.ratingAvg.toInt(),
-                              recipeId: recipe.recipeId,
-                              fullImageUrlBuilder: _fullImageUrl,
-                            );
-                          },
-                        );
-                      }).toList(),
-                    ),
                     const SizedBox(height: 4),
                     if (_recipesToShow < filteredRecipes.length)
                       Center(
