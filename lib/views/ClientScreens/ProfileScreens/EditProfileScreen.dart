@@ -19,6 +19,10 @@ import '../../../models/strapi/strapi_request.dart';
 import '../../../controllers/strapi/strapi_controller.dart';
 import '../../../models/strapi/strapi_response.dart';
 
+import '../../../controllers/Profiles/ingredient_allergy_controller.dart';
+import '../../../models/Profiles/ingredientAllery_request.dart';
+import '../../../models/Profiles/ingredientAllery_response.dart';
+
 class EditprofileScreen extends StatefulWidget {
   const EditprofileScreen({super.key});
 

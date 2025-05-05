@@ -262,6 +262,7 @@ class SignUpScreenState extends State<SignUpScreen> {
                   },
                   selectedColor: const Color(0xFF129575),
                   checkmarkColor: Colors.white,
+                  backgroundColor: Colors.white,
                 );
               }).toList(),
             ),

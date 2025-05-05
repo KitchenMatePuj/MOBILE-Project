@@ -90,7 +90,7 @@
     Future<void> deleteShoppingList(int listId) async {
       final headers = await _getHeaders();
       final response = await http.delete(
-        Uri.parse('$baseUrl/$listId'),
+        Uri.parse('$baseUrl/shopping_lists/$listId'),
         headers: headers,
       );
 
