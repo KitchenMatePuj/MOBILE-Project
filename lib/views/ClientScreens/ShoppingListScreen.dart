@@ -175,8 +175,19 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                                 return const Center(
                                     child: CircularProgressIndicator());
                               } else if (snapshot.hasError) {
-                                return Center(
-                                    child: Text('Error: ${snapshot.error}'));
+                                WidgetsBinding.instance
+                                    .addPostFrameCallback((_) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                          'Error al obtener los ingredientes: ${snapshot.error}'),
+                                    ),
+                                  );
+                                });
+
+                                return const Center(
+                                    child: Text(
+                                        'Ocurrió un error al cargar los ingredientes.'));
                               } else if (!snapshot.hasData ||
                                   snapshot.data!.isEmpty) {
                                 return const Center(
@@ -273,18 +284,63 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               }
 
               final shoppingLists = snapshot.data!;
-              return RecipesPendingList(
-                shoppingLists: shoppingLists,
-                onShoppingListSelected: (shoppingList) {
-                  setState(() => selectedShoppingList = shoppingList);
+              return ListView.builder(
+                itemCount: shoppingLists.length,
+                itemBuilder: (context, index) {
+                  final shoppingList = shoppingLists[index];
+                  return RecipeShoppingListCard(
+                    shoppingList: shoppingList,
+                    onTap: () {
+                      // Cuando se toque la tarjeta
+                      setState(() {
+                        selectedShoppingList = shoppingList;
+                      });
+                    },
+                    onDelete: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Eliminar lista'),
+                          content: const Text(
+                              '¿Estás seguro de que deseas eliminar esta lista de compras?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancelar'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('Eliminar',
+                                  style: TextStyle(color: Colors.red)),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirm == true) {
+                        try {
+                          await shoppingListController
+                              .deleteShoppingList(shoppingList.shoppingListId);
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Lista eliminada exitosamente')),
+                          );
+
+                          // Limpiar la caché y recargar
+                          setState(() => shoppingListsCache = null);
+                          await _fetchShoppingLists();
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content:
+                                    Text('Error al eliminar la lista: $e')),
+                          );
+                        }
+                      }
+                    },
+                  );
                 },
-                onShoppingListDeleted: () async {
-                  // cuando el hijo avise ⇒ vaciamos la caché y recargamos
-                  setState(() => shoppingListsCache = null);
-                  await _fetchShoppingLists();
-                },
-                shoppingListController: shoppingListController,
-                searchTerm: searchTerm,
               );
             },
           )
@@ -442,95 +498,104 @@ class IngredientsPendingList extends StatelessWidget {
   }
 }
 
-class RecipesPendingList extends StatelessWidget {
-  final List<ShoppingListResponse> shoppingLists;
-  final Function(ShoppingListResponse) onShoppingListSelected;
-  final Function() onShoppingListDeleted;
-  final ShoppingListController shoppingListController;
-  final String searchTerm;
+class RecipeShoppingListCard extends StatefulWidget {
+  final ShoppingListResponse shoppingList;
+  final Future<void> Function() onDelete;
+  final VoidCallback onTap;
 
-  const RecipesPendingList({
-    required this.shoppingLists,
-    required this.onShoppingListSelected,
-    required this.onShoppingListDeleted,
-    required this.shoppingListController,
-    required this.searchTerm,
+  const RecipeShoppingListCard({
+    required this.shoppingList,
+    required this.onDelete,
+    required this.onTap,
+    super.key,
   });
 
   @override
+  State<RecipeShoppingListCard> createState() => _RecipeShoppingListCardState();
+}
+
+class _RecipeShoppingListCardState extends State<RecipeShoppingListCard> {
+  bool isDeleting = false;
+
+  Future<void> _handleDelete() async {
+    setState(() {
+      isDeleting = true;
+    });
+
+    try {
+      await widget.onDelete();
+    } finally {
+      if (mounted) {
+        setState(() {
+          isDeleting = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final filteredShoppingLists = shoppingLists.where((shoppingList) {
-      return shoppingList.recipeName
-          .toLowerCase()
-          .contains(searchTerm.toLowerCase());
-    }).toList();
-
-    return ListView.builder(
-      itemCount: filteredShoppingLists.length,
-      itemBuilder: (context, index) {
-        final shoppingList = filteredShoppingLists[index];
-        return Card(
-          child: ListTile(
-            title: Text(shoppingList.recipeName),
-            subtitle: Text('Receta de la lista de compras'),
-            leading: shoppingList.recipePhoto != null &&
-                    shoppingList.recipePhoto!.isNotEmpty
-                ? Image.network(
-                    shoppingList.recipePhoto!,
-                    width: 56,
-                    height: 56,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Image.asset(
-                        'assets/recipes/recipe_placeholder.jpg',
-                        width: 56,
-                        height: 56),
-                  )
-                : Image.asset('assets/recipes/recipe_placeholder.jpg',
-                    width: 56, height: 56),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () async {
-                final confirm = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Eliminar lista'),
-                    content: const Text(
-                        '¿Estás seguro de que deseas eliminar esta lista de compras?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancelar'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Eliminar',
-                            style: TextStyle(color: Colors.red)),
-                      ),
-                    ],
-                  ),
-                );
-
-                if (confirm == true) {
-                  try {
-                    await shoppingListController
-                        .deleteShoppingList(shoppingList.shoppingListId);
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Lista eliminada exitosamente')),
-                    );
-                    onShoppingListDeleted(); // <--- Refrescar listas
-                  } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error al eliminar la lista: $e')),
-                    );
-                  }
-                }
-              },
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: Card(
+        color: Colors.white,
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                bottomLeft: Radius.circular(12),
+              ),
+              child: widget.shoppingList.recipePhoto != null &&
+                      widget.shoppingList.recipePhoto!.isNotEmpty
+                  ? Image.network(
+                      widget.shoppingList.recipePhoto!,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                    )
+                  : Image.asset(
+                      'assets/recipes/recipe_placeholder.jpg',
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                    ),
             ),
-          ),
-        );
-      },
+            Expanded(
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                child: Text(
+                  widget.shoppingList.recipeName,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: isDeleting
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: _handleDelete,
+                    ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -606,35 +671,6 @@ class IngredientCard extends StatelessWidget {
               "${ingredient.measurementUnit}",
               style: const TextStyle(
                   fontSize: 16, color: Color.fromARGB(255, 51, 50, 50)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class ShoppingListCard extends StatelessWidget {
-  final ShoppingListResponse shoppingList;
-
-  const ShoppingListCard({required this.shoppingList});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: Colors.white,
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              shoppingList.recipeName,
-              style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black),
             ),
           ],
         ),

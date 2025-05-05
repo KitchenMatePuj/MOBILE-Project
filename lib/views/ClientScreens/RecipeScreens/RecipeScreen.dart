@@ -60,6 +60,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
   List<String> steps = [];
   List<Map<String, String>> ingredients = [];
   bool isFollowing = false;
+  bool _isAddingToShoppingList = false;
 
   final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
@@ -261,6 +262,9 @@ class _RecipeScreenState extends State<RecipeScreen> {
   }
 
   Future<void> _addToShoppingList() async {
+    setState(() {
+      _isAddingToShoppingList = true;
+    });
     try {
       // Obtén el perfil del usuario logueado
       final profile = await _profileController.getProfile(keycloakUserId);
@@ -306,6 +310,10 @@ class _RecipeScreenState extends State<RecipeScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al añadir a la lista de compras: $e')),
       );
+    } finally {
+      setState(() {
+        _isAddingToShoppingList = false;
+      });
     }
   }
 
@@ -698,16 +706,24 @@ class _RecipeScreenState extends State<RecipeScreen> {
         Row(
           children: [
             ElevatedButton(
-              onPressed:
-                  _addToShoppingList, // Llama al método para agregar a la lista
+              onPressed: _isAddingToShoppingList ? null : _addToShoppingList,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF129575),
               ),
-              child: const Text(
-                "+ Lista\nCompras",
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white),
-              ),
+              child: _isAddingToShoppingList
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text(
+                      "+ Lista\nCompras",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white),
+                    ),
             ),
           ],
         ),
