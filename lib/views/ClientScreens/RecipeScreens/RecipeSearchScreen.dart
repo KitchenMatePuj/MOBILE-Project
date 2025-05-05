@@ -5,6 +5,7 @@ import '/controllers/Profiles/profile_controller.dart';
 import '/models/Recipes/recipes_response.dart';
 import '/models/Profiles/profile_response.dart';
 import 'package:intl/intl.dart';
+import 'dart:convert';
 
 import '/controllers/authentication/auth_controller.dart';
 import '/models/authentication/login_request_advanced.dart' as advanced;
@@ -53,6 +54,17 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
     _searchController.addListener(_applyFilters);
   }
 
+  /// Corrige textos mal decodificados (ej. “LasaÃ±a” → “Lasaña”)
+  String _fixEncoding(String text) {
+    try {
+      final decoded = utf8.decode(latin1.encode(text));
+      return decoded;
+    } catch (_) {
+      // Si algo falla, devuelve el original para no romper nada
+      return text;
+    }
+  }
+
   Future<void> _fetchRecipes() async {
     try {
       List<RecipeResponse> recipes = await _recipeController.fetchRecipes();
@@ -78,8 +90,9 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
 
       filteredRecipes = _recipeController.allRecipes.where((recipe) {
         // Búsqueda por título o ID de usuario
-        final matchesQuery = recipe.title.toLowerCase().contains(query) ||
-            recipe.keycloakUserId.toLowerCase().contains(query);
+        final matchesQuery =
+            _fixEncoding(recipe.title).toLowerCase().contains(query) ||
+                recipe.keycloakUserId.toLowerCase().contains(query);
 
         // Filtro por tiempo de cocción
         final matchesDuration =
@@ -241,8 +254,8 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
                                   'Chef: ${profile.firstName} ${profile.lastName}';
                             }
                             return RecipeCard(
-                              title: recipe.title,
-                              chef: chefName,
+                              title: _fixEncoding(recipe.title),
+                              chef: _fixEncoding(chefName),
                               duration: recipe.cookingTime.toString(),
                               imageUrl: recipe.imageUrl ?? '',
                               width: cardWidth,
