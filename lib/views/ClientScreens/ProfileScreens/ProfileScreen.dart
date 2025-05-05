@@ -1,6 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 // ---------------------------------------------------------------
-// ProfileScreen
+// ProfileScreen.
 // ---------------------------------------------------------------
 // Pantalla que muestra el perfil del usuario junto con sus recetas
 // publicadas y guardadas.  Incluye:
@@ -128,6 +128,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {});
   }
 
+  Future<void> _deleteRecipe(int recipeId) async {
+    try {
+      await _recipeCtl.deleteRecipe(recipeId);
+      setState(() {
+        _publishedF = _recipeCtl.getRecipesByUser(_keycloakId);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Receta eliminada exitosamente')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al eliminar la receta: $e')),
+      );
+    }
+  }
+
+  void _showDeleteConfirmation(int recipeId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar receta'),
+        backgroundColor: Colors.white,
+        content: const Text('¿Está seguro que desea eliminar esta receta?'),
+        actionsAlignment: MainAxisAlignment.center, // Centra los botones
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color.fromARGB(255, 238, 99, 89),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Cancelar'),
+          ),
+          const SizedBox(width: 8), // Espaciado entre los botones
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteRecipe(recipeId);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF129575),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Aceptar'),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ---------------------------------------------------------------------------
   // Helper: construye una URL absoluta para imágenes que vienen relativas
   // ---------------------------------------------------------------------------
@@ -228,7 +280,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Navigator.pushNamed(context, '/reports');
                   break;
                 case 'Cerrar sesión':
-                  Navigator.pushNamed(context, '/');
+                  _logout();
                   break;
               }
             },
@@ -245,6 +297,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       );
+
+  void _logout() {
+    // Realiza cualquier lógica necesaria para limpiar los datos de sesión, como
+    // eliminar tokens almacenados o datos del usuario.
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/login', // Redirige a la ruta '/login'.
+      (Route<dynamic> route) => false, // Remueve todas las rutas anteriores.
+    );
+  }
 
   // ---------------------------------------------------------------------------
   // Widget cabecera con avatar + recuento followers / following ---------------
@@ -401,6 +463,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     imageUrl: imageUrl,
                     avatarUrl: avatar,
                     rating: recipe.ratingAvg.round(),
+                    onDelete: () => _showDeleteConfirmation(recipe.recipeId),
                   ),
                 );
               },
@@ -502,6 +565,9 @@ class ProfileTabs extends StatelessWidget {
       );
 }
 
+// ---------------------------------------------------------------------------
+// RecipeCard actualizado para incluir el icono de eliminar
+// ---------------------------------------------------------------------------
 class RecipeCard extends StatelessWidget {
   final String title;
   final String chef;
@@ -509,6 +575,7 @@ class RecipeCard extends StatelessWidget {
   final String imageUrl;
   final int? rating;
   final String avatarUrl;
+  final VoidCallback onDelete;
 
   const RecipeCard({
     super.key,
@@ -518,6 +585,7 @@ class RecipeCard extends StatelessWidget {
     required this.imageUrl,
     required this.avatarUrl,
     this.rating,
+    required this.onDelete,
   });
 
   @override
@@ -535,8 +603,7 @@ class RecipeCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
           // Imagen de la receta
           ClipRRect(
@@ -583,46 +650,73 @@ class RecipeCard extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 8),
-                // Nombre del chef con avatar
-                Row(
+              ),
+              // Detalles de la receta
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    CircleAvatar(
-                      radius: 12,
-                      backgroundImage: avatarUrl.startsWith('http')
-                          ? NetworkImage(avatarUrl)
-                          : AssetImage(avatarUrl) as ImageProvider,
-                    ),
-                    const SizedBox(width: 8),
+                    // Título de la receta
                     Text(
-                      chef,
-                      style: const TextStyle(fontSize: 14),
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                // Duración y rating
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '$duration mins',
-                      style: const TextStyle(color: Colors.grey),
-                    ),
+                    const SizedBox(height: 8),
+                    // Nombre del chef con avatar
                     Row(
-                      children: List.generate(5, (index) {
-                        return Icon(
-                          index < (rating ?? 0)
-                              ? Icons.star
-                              : Icons.star_border,
-                          color: Colors.amber,
-                          size: 12,
-                        );
-                      }),
+                      children: [
+                        CircleAvatar(
+                          radius: 12,
+                          backgroundImage: AssetImage(avatarUrl),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          chef,
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // Duración y rating
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '$duration mins',
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                        Row(
+                          children: List.generate(5, (index) {
+                            return Icon(
+                              index < (rating ?? 0)
+                                  ? Icons.star
+                                  : Icons.star_border,
+                              color: Colors.amber,
+                              size: 12,
+                            );
+                          }),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
+            ],
+          ),
+          Positioned(
+            top: 8,
+            right: 8,
+            child: GestureDetector(
+              onTap: onDelete,
+              child: const CircleAvatar(
+                backgroundColor: Colors.white,
+                radius: 16,
+                child: Icon(Icons.delete, size: 18, color: Colors.red),
+              ),
             ),
           ),
         ],

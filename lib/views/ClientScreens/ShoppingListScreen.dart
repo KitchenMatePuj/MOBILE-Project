@@ -6,6 +6,13 @@ import '/models/Profiles/ingredient_response.dart';
 import '/models/Profiles/shopping_list_response.dart';
 import '/controllers/Profiles/profile_controller.dart';
 import '/controllers/authentication/auth_controller.dart';
+import '/models/Profiles/profile_response.dart';
+import 'package:mobile_kitchenmate/controllers/Profiles/shopping_list_controller.dart';
+import 'package:mobile_kitchenmate/controllers/Profiles/ingredient_controller.dart';
+import '/models/Profiles/ingredient_response.dart';
+import '/models/Profiles/ingredient_request.dart';
+import '/models/Profiles/shopping_list_request.dart';
+import '/models/Profiles/shopping_list_response.dart';
 
 class ShoppingListScreen extends StatefulWidget {
   const ShoppingListScreen({super.key});
@@ -222,6 +229,55 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     );
   }
 
+  Future<void> _deleteShoppingList(int shoppingListId) async {
+    try {
+      await shoppingListController.deleteShoppingList(shoppingListId);
+      setState(() {}); // Fuerza la recarga de las listas
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lista de compras eliminada exitosamente')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al eliminar la lista de compras: $e')),
+      );
+    }
+  }
+
+  void _showDeleteConfirmation(int shoppingListId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar receta de lista de compras'),
+        content: const Text('¿Está seguro que desea eliminar esta receta de la lista de compras?'),
+        actionsAlignment: MainAxisAlignment.center, // Centra los botones
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color.fromARGB(255, 238, 99, 89),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Cancelar'),
+          ),
+          const SizedBox(width: 8), // Espaciado entre los botones
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteShoppingList(shoppingListId);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF129575),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Aceptar'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<List<IngredientResponse>> _fetchAllIngredients() async {
     try {
       final shoppingLists =
@@ -360,7 +416,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       // Extrae los recipe_id de las listas de compras
       final recipeIds =
           shoppingLists.map((list) => list.shoppingListId).toSet();
-
       // Acumula ingredientes de todas las listas de compras
       List<IngredientResponse> allIngredients = [];
       for (var shoppingList in shoppingLists) {
@@ -368,7 +423,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             .listIngredientsByShoppingList(shoppingList.shoppingListId);
         allIngredients.addAll(listIngredients);
       }
-
       // Filtra ingredientes únicos y por recipe_id
       return allIngredients
           .where((ingredient) => recipeIds.contains(ingredient.shoppingListId))
@@ -674,6 +728,82 @@ class IngredientCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+class ShoppingListCard extends StatelessWidget {
+  final ShoppingListResponse shoppingList;
+  final VoidCallback onDelete;
+
+  const ShoppingListCard({
+    required this.shoppingList,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final String recipePhotoUrl = shoppingList.recipePhoto;
+
+    return Card(
+      color: Colors.white,
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Stack(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Imagen de la receta
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                child: Image.network(
+                  recipePhotoUrl,
+                  height: 150,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 150,
+                      color: Colors.grey[300],
+                      child: const Center(
+                        child: Icon(Icons.broken_image, color: Colors.grey),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              // Título de la receta
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Text(
+                  shoppingList.recipeName,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
+          // Ícono de eliminar
+          Positioned(
+            top: 8,
+            right: 8,
+            child: GestureDetector(
+              onTap: onDelete,
+              child: const CircleAvatar(
+                backgroundColor: Colors.white,
+                radius: 16,
+                child: Icon(Icons.delete, size: 18, color: Colors.red),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -33,6 +33,7 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
   int _recipesToShow = 8;
   DateTime? selectedStartDate;
   DateTime? selectedEndDate;
+  bool _isLoading = true;
 
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
   final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
@@ -66,15 +67,22 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
   }
 
   Future<void> _fetchRecipes() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
       List<RecipeResponse> recipes = await _recipeController.fetchRecipes();
       setState(() {
         filteredRecipes = recipes;
         _recipeController.allRecipes = recipes;
+        _isLoading = false;
       });
     } catch (e) {
-      // Manejar errores
       print('Failed to load recipes: $e');
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -236,6 +244,31 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
+                    if (_isLoading)
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 80.0),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    else
+                      Wrap(
+                        spacing: 16,
+                        runSpacing: 16,
+                        children: filteredRecipes
+                            .take(_recipesToShow)
+                            .map((recipe) => RecipeCard(
+                                  title: recipe.title,
+                                  chef: 'Chef: Cargando...',
+                                  duration: recipe.cookingTime.toString(),
+                                  imageUrl: recipe.imageUrl ?? '',
+                                  width: cardWidth,
+                                  rating: recipe.ratingAvg.toInt(),
+                                  recipeId: recipe.recipeId,
+                                  fullImageUrlBuilder: _fullImageUrl,
+                                ))
+                            .toList(),
+                      ),
                     Wrap(
                       spacing: 16,
                       runSpacing: 16,
@@ -276,7 +309,7 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
                           ),
                           onPressed: () {
                             setState(() {
-                              _recipesToShow += 4;
+                              _recipesToShow += 8;
                             });
                           },
                           child: const Text(
