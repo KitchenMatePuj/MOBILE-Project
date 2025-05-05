@@ -217,19 +217,32 @@ class _LoginScreenState extends State<LoginScreen> {
                 print('LoginResponse: ${loginResponse.accessToken}');
 
                 if (loginResponse.accessToken.isNotEmpty) {
-                  Navigator.pushNamed(context, '/dashboard');
-                  authController.saveToken(loginResponse.accessToken);
+                  await authController.saveToken(loginResponse.accessToken);
+
+                  // Restablecer el estado antes de navegar
+                  if (mounted) {
+                    setState(() {
+                      _isLoading = false;
+                    });
+                  }
+
+                  // Reemplaza la pantalla de login para que no se pueda volver atrás
+                  Navigator.pushReplacementNamed(context, '/dashboard');
                 } else {
+                  if (mounted) {
+                    setState(() {
+                      _isLoading = false;
+                      _errorMessage = 'Correo o contraseña incorrectos';
+                    });
+                  }
+                }
+              } catch (e) {
+                if (mounted) {
                   setState(() {
                     _isLoading = false;
                     _errorMessage = 'Correo o contraseña incorrectos';
                   });
                 }
-              } catch (e) {
-                setState(() {
-                  _isLoading = false;
-                  _errorMessage = 'Correo o contraseña incorrectos';
-                });
               }
             },
             child: FittedBox(

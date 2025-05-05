@@ -85,7 +85,6 @@ class ShoppingListController {
       throw Exception('Failed to update shopping list');
     }
   }
-
   /// DELETE: Eliminar una lista de compras
   Future<void> deleteShoppingList(int listId) async {
     final headers = await _getHeaders();
