@@ -54,6 +54,9 @@ class CreateRecipeScreen extends StatefulWidget {
 
 class _CreateRecipeState extends State<CreateRecipeScreen>
     with SingleTickerProviderStateMixin {
+  final TextEditingController preparationTimeController =
+      TextEditingController();
+  final TextEditingController portionsController = TextEditingController();
   int selectedIndex = 0; // 0 = Detalles, 1 = Ingredientes, 2 = Procedimiento
   List<Ingredient> ingredients = [
     Ingredient(name: "", quantity: "", unit: ""),
@@ -73,6 +76,13 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
       CategoryController(baseUrl: recipeBaseUrl);
 
   late StrapiController _strapiCtl;
+
+  late TextEditingController _timeController;
+  late TextEditingController _portionController;
+
+  late TextEditingController servingsController;
+  late TextEditingController cookingTimeController;
+
   final AuthController _authController = AuthController(baseUrl: authbaseUrl);
   Uint8List? _imageBytes;
 
@@ -293,6 +303,14 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
 
     fetchIngredientsFromBackend();
     fetchCategoriesFromBackend();
+
+    _timeController =
+        TextEditingController(text: estimatedTime.replaceAll(' min', ''));
+    _portionController = TextEditingController(
+        text: estimatedPortions.replaceAll(' porciones', ''));
+
+    servingsController = TextEditingController();
+    cookingTimeController = TextEditingController();
   }
 
   Future<void> fetchIngredientsFromBackend() async {
@@ -430,6 +448,8 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
                                             },
                                             availableIngredients:
                                                 fetchedIngredients,
+                                            fetchedIngredients:
+                                                fetchedIngredients, // Pasar fetchedIngredients aquí
                                           );
                                         },
                                         childCount: ingredients.length + 1,
@@ -536,9 +556,17 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
           label: "Tiempo Estimado",
           value: estimatedTime,
           onTap: () async {
-            final controller = TextEditingController();
+            // Asegúrate de que el controlador tenga el valor actual
+            if (_timeController.text.isEmpty) {
+              _timeController.text = estimatedTime.replaceAll(' min', '');
+            }
+
             final result = await _showNumberInputDialog(
-                "Tiempo Estimado", controller, "Ingrese el tiempo en minutos");
+              "Tiempo Estimado",
+              _timeController,
+              "Ingrese el tiempo en minutos",
+            );
+
             if (result != null && result.isNotEmpty) {
               setState(() {
                 estimatedTime = "$result min";
@@ -550,9 +578,18 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
           label: "Porciones Estimadas",
           value: estimatedPortions,
           onTap: () async {
-            final controller = TextEditingController();
-            final result = await _showNumberInputDialog("Porciones Estimadas",
-                controller, "Ingrese el número de porciones");
+            // Asegúrate de que el controlador tenga el valor actual
+            if (_portionController.text.isEmpty) {
+              _portionController.text =
+                  estimatedPortions.replaceAll(' porciones', '');
+            }
+
+            final result = await _showNumberInputDialog(
+              "Porciones Estimadas",
+              _portionController,
+              "Ingrese el número de porciones",
+            );
+
             if (result != null && result.isNotEmpty) {
               setState(() {
                 estimatedPortions = "$result porciones";
@@ -621,7 +658,10 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
                   hintText: "Ingrese el texto",
                 ),
                 onTap: () {
-                  controller.clear();
+                  if (controller.text.isEmpty) {
+                    controller
+                        .clear(); // Mantiene el texto si ya se ha ingresado algo
+                  }
                 },
                 onChanged: (value) {
                   setState(() {});
@@ -665,7 +705,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
 
   Future<String?> _showNumberInputDialog(
       String title, TextEditingController controller, String hint) {
-    return showAnimatedDialog<String>(
+    return showDialog<String>(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
@@ -688,11 +728,8 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: InputDecoration(hintText: hint),
-                onTap: () {
-                  controller.clear();
-                },
                 onChanged: (value) {
-                  setState(() {});
+                  setState(() {}); // Refresca la UI interna
                 },
               ),
               actions: [
@@ -704,7 +741,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 238, 99, 89),
+                        backgroundColor: Colors.red,
                         foregroundColor: Colors.white,
                       ),
                       child: const Text('Cancelar'),
@@ -716,7 +753,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
                             }
                           : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF129575),
+                        backgroundColor: const Color(0xFF129575),
                         foregroundColor: Colors.white,
                       ),
                       child: const Text('Aceptar'),
@@ -756,6 +793,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
       barrierDismissible: false,
       builder: (BuildContext context) {
         return SimpleDialog(
+          backgroundColor: Colors.white,
           title: const Center(
             child: Text(
               "Selecciona una Categoría",
@@ -837,6 +875,13 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
       ),
     );
   }
+
+  @override
+  void dispose() {
+    preparationTimeController.dispose();
+    portionsController.dispose();
+    super.dispose();
+  }
 }
 
 class IngredientCard extends StatefulWidget {
@@ -844,12 +889,14 @@ class IngredientCard extends StatefulWidget {
   final int index;
   final VoidCallback onDelete;
   final List<IngredientResponse> availableIngredients;
+  final List<IngredientResponse> fetchedIngredients;
 
   const IngredientCard({
     required this.ingredient,
     required this.index,
     required this.onDelete,
     required this.availableIngredients,
+    required this.fetchedIngredients,
   });
 
   @override
@@ -898,6 +945,8 @@ class _IngredientCardState extends State<IngredientCard> {
                       } else if (value != null) {
                         setState(() {
                           widget.ingredient.name = value;
+
+                          // Opcional: Actualiza la unidad de medida si es necesario
                           final selected =
                               widget.availableIngredients.firstWhere(
                             (i) => i.name == value,
@@ -1000,26 +1049,44 @@ class _IngredientCardState extends State<IngredientCard> {
           actions: [
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
               child: const Text('Cancelar'),
             ),
             ElevatedButton(
-              onPressed: () =>
-                  Navigator.pop(context, customIngredientController.text),
-              style:
-                  ElevatedButton.styleFrom(backgroundColor: Color(0xFF129575)),
+              onPressed: () {
+                final customIngredient = customIngredientController.text.trim();
+                if (customIngredient.isNotEmpty) {
+                  setState(() {
+                    // Añadir el nuevo ingrediente a la lista de ingredientes disponibles
+                    widget.fetchedIngredients.add(
+                      IngredientResponse(
+                        ingredientId:
+                            -1, // Usa un ID temporal o único si es necesario
+                        recipeId: -1,
+                        name: customIngredient,
+                        measurementUnit: '',
+                      ),
+                    );
+
+                    // Actualizar el ingrediente seleccionado
+                    widget.ingredient.name = customIngredient;
+                  });
+                }
+                Navigator.pop(context, customIngredient);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF129575),
+                foregroundColor: Colors.white,
+              ),
               child: const Text('Aceptar'),
             ),
           ],
         );
       },
-    ).then((result) {
-      if (result != null && result.isNotEmpty) {
-        setState(() {
-          widget.ingredient.name = result;
-        });
-      }
-    });
+    );
   }
 
   void _showQuantityDialog(BuildContext context) {
@@ -1031,7 +1098,17 @@ class _IngredientCardState extends State<IngredientCard> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Cantidad"),
+          backgroundColor: Colors.white,
+            title: const Center(
+            child: Text(
+              "Cantidad",
+              style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF129575),
+              ),
+            ),
+            ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1065,15 +1142,20 @@ class _IngredientCardState extends State<IngredientCard> {
           actions: [
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
               child: const Text('Cancelar'),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context, quantityController.text);
               },
-              style:
-                  ElevatedButton.styleFrom(backgroundColor: Color(0xFF129575)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF129575),
+                foregroundColor: Colors.white,
+              ),
               child: const Text('Aceptar'),
             ),
           ],
