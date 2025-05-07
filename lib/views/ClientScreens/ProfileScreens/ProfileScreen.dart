@@ -13,6 +13,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:convert';
 
 // Controladores de negocio ----------------------------------------------------
 import 'package:mobile_kitchenmate/controllers/Profiles/sumary_controller.dart';
@@ -94,6 +95,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       _loadAll();
     });
+  }
+
+  String _fixEncoding(String text) {
+    try {
+      final decoded = utf8.decode(latin1.encode(text));
+      return decoded;
+    } catch (_) {
+      // Si algo falla, devuelve el original para no romper nada
+      return text;
+    }
   }
 
   /// Carga los distintos bloques de información en paralelo y refresca la UI
@@ -445,8 +456,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     arguments: {'recipeId': recipe.recipeId},
                   ),
                   child: RecipeCard(
-                    title: recipe.title,
-                    chef: chefName,
+                    title: _fixEncoding(recipe.title),
+                    chef: _fixEncoding(chefName),
                     duration: '${recipe.cookingTime}',
                     imageUrl: imageUrl,
                     avatarUrl: avatar,

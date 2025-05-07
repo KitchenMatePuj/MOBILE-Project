@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mobile_kitchenmate/controllers/Profiles/follow_controller.dart';
+import 'dart:math' as math;
 
 import 'package:mobile_kitchenmate/controllers/Recipes/comments.dart';
 import 'package:mobile_kitchenmate/controllers/Recipes/recipes.dart';
@@ -17,6 +18,7 @@ import 'package:mobile_kitchenmate/models/Recipes/comments_response.dart';
 import 'package:mobile_kitchenmate/models/Recipes/recipe_steps_response.dart';
 import 'package:mobile_kitchenmate/models/Recipes/recipes_response.dart';
 import 'package:mobile_kitchenmate/utils/image_utils.dart';
+import 'package:video_player/video_player.dart';
 
 import '/controllers/authentication/auth_controller.dart';
 
@@ -61,6 +63,10 @@ class _RecipeScreenState extends State<RecipeScreen> {
   List<Map<String, String>> ingredients = [];
   bool isFollowing = false;
   bool _isAddingToShoppingList = false;
+
+  String? _videoUrl; // url que llega del backend
+  VideoPlayerController? _vpController; // controller del plugin
+  bool _vpReady = false;
 
   final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
@@ -154,6 +160,13 @@ class _RecipeScreenState extends State<RecipeScreen> {
         placeholder: 'assets/recipes/platovacio.png',
       );
 
+      _videoUrl = recipe.videoUrl;
+
+      if (_videoUrl != null && _videoUrl!.isNotEmpty) {
+        // prepara el reproductor en segundo plano
+        _initializeVideo(_videoUrl!);
+      }
+
       if (!mounted) return;
 
       setState(() {
@@ -193,6 +206,19 @@ class _RecipeScreenState extends State<RecipeScreen> {
     _loadRecipeDatapwatch.stop();
     print(
         '🏁 [Final] Tiempo total de _loadRecipeData -> ${_loadRecipeDatapwatch.elapsedMilliseconds} ms');
+  }
+
+  Future<void> _initializeVideo(String url) async {
+    // cierra el controller anterior si existe
+    await _vpController?.dispose();
+
+    _vpController = VideoPlayerController.networkUrl(Uri.parse(url));
+    await _vpController!.initialize(); // espera a que cargue
+    _vpController!
+      ..setLooping(true) // se repite en bucle
+      ..setVolume(1.0) // volumen normal
+      ..play();
+    if (mounted) setState(() => _vpReady = true);
   }
 
   Future<void> _showReportDialog(BuildContext context) async {
@@ -442,6 +468,13 @@ class _RecipeScreenState extends State<RecipeScreen> {
     _initializeAuthUser();
   }
 
+  @override
+  void dispose() {
+    _vpController?..pause(); // ← por si seguía reproduciendo
+    _vpController?..dispose(); // ← libera el decoder y la textura
+    super.dispose();
+  }
+
   Future<void> _initializeAuthUser() async {
     keycloakUserId = await _authController.getKeycloakUserId();
     _authUserId = keycloakUserId;
@@ -543,71 +576,68 @@ class _RecipeScreenState extends State<RecipeScreen> {
   }
 
   Widget _buildImageHeader() {
-    Widget displayedImage;
+    const double kHeaderHeight = 200; // ⬅️ Ajusta a tu gusto
 
-    if (imageUrl.isEmpty) {
-      // ← Si aún no se ha cargado la imagen
-      displayedImage = SizedBox(
-        width: double.infinity,
-        height: 150,
-        child: Center(child: CircularProgressIndicator()),
-      );
-    } else if (imageUrl.startsWith('http')) {
-      // Imagen de red con indicador de carga
-      displayedImage = Image.network(
-        imageUrl,
-        width: double.infinity,
-        height: 150,
-        fit: BoxFit.cover,
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
+    Widget media;
 
-          return SizedBox(
-            width: double.infinity,
-            height: 150,
-            child: Center(
-              child: CircularProgressIndicator(
-                value: loadingProgress.expectedTotalBytes != null
-                    ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
-                    : null,
-              ),
-            ),
-          );
-        },
-        errorBuilder: (context, error, stackTrace) {
-          return Image.asset(
-            'assets/recipes/recipe_placeholder.jpg',
-            width: double.infinity,
-            height: 150,
-            fit: BoxFit.cover,
-          );
-        },
-      );
-    } else {
-      // Imagen local
-      displayedImage = Image.asset(
-        imageUrl,
-        width: double.infinity,
-        height: 150,
-        fit: BoxFit.cover,
+    // 1️⃣  Vídeo listo ➜ lo mostramos (sin invertir; si te sigue saliendo
+    //     boca-abajo, prueba a descomentar el Transform.rotate):
+    if (_vpController != null && _vpReady) {
+      media = Transform.rotate(
+        angle: math.pi, // prueba: ½ vuelta
+        child: VideoPlayer(_vpController!),
       );
     }
 
+    // 2️⃣  Imagen normal
+    else if (imageUrl.isNotEmpty) {
+      media = Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        loadingBuilder: (_, child, loading) => loading == null
+            ? child
+            : const Center(child: CircularProgressIndicator()),
+        errorBuilder: (_, __, ___) => Image.asset(
+            'assets/recipes/recipe_placeholder.jpg',
+            fit: BoxFit.cover),
+      );
+    }
+
+    // 3️⃣  Loader genérico
+    else {
+      media = const Center(child: CircularProgressIndicator());
+    }
+
+    // ── ENVOLTORIO QUE EVITA EL OVERFLOW ────────────────────────────────
     return Stack(
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: ColorFiltered(
-            colorFilter: ColorFilter.mode(
-                Colors.black.withOpacity(0.3), BlendMode.darken),
-            child: Transform(
-              alignment: Alignment.center,
-              transform: Matrix4.rotationX(3.14159), // rotar 180°
-              child: displayedImage,
+        SizedBox(
+          height: kHeaderHeight,
+          width: double.infinity,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: ColorFiltered(
+              colorFilter: ColorFilter.mode(
+                  Colors.black.withOpacity(0.25), BlendMode.darken),
+              child: FittedBox(
+                // ← recorta / ajusta
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  // mantiene el tamaño real del vídeo
+                  width: _vpController != null && _vpReady
+                      ? _vpController!.value.size.width
+                      : kHeaderHeight,
+                  height: _vpController != null && _vpReady
+                      ? _vpController!.value.size.height
+                      : kHeaderHeight,
+                  child: media,
+                ),
+              ),
             ),
           ),
         ),
+
+        // ── Tus overlays (duración, bookmark, etc.) SIN CAMBIOS───────────
         Positioned(
           bottom: 8,
           left: 8,

@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:mobile_kitchenmate/controllers/Recipes/recipe_steps.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mobile_kitchenmate/controllers/Recipes/recipes.dart';
 import 'package:mobile_kitchenmate/models/Recipes/recipe_steps_request.dart';
 import 'package:mobile_kitchenmate/models/Recipes/recipes_request.dart';
+import 'package:mobile_kitchenmate/models/Recipes/recipes_response.dart';
 import 'package:mobile_kitchenmate/utils/animations_utils.dart';
 import '../../../models/Recipes/ingredients_request.dart';
 import '../../../models/Recipes/ingredients_response.dart';
@@ -46,7 +49,11 @@ final String authbaseUrl = dotenv.env['AUTH_URL'] ?? '';
 final String reportBaseUrl = dotenv.env['REPORT_URL'] ?? '';
 
 class CreateRecipeScreen extends StatefulWidget {
-  const CreateRecipeScreen({super.key});
+  final RecipeResponse? initialRecipe;
+  const CreateRecipeScreen({
+    Key? key,
+    this.initialRecipe, // ← puede llegar null
+  }) : super(key: key);
 
   @override
   _CreateRecipeState createState() => _CreateRecipeState();
@@ -75,7 +82,9 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
   late StrapiController _strapiCtl;
   final AuthController _authController = AuthController(baseUrl: authbaseUrl);
   Uint8List? _imageBytes;
-
+  Uint8List? _videoBytes;
+  File? _image;
+  File? _video;
   List<String> steps = [
     "Describa este paso por favor.",
     "Describa este paso por favor.",
@@ -89,9 +98,61 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
   String estimatedPortions = "";
   String category = '';
   String recipeTitle = "";
-  File? _image;
+
   String keycloakUserId = '';
   bool _isSubmitting = false;
+
+  String? _imageUrl;
+
+  Future<void> _pickVideo() async {
+    // NEW
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickVideo(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      final bytes = await pickedFile.readAsBytes();
+      setState(() {
+        _video = File(pickedFile.path);
+        _videoBytes = bytes;
+      });
+    }
+  }
+
+  Future<String?> _uploadRecipeVideo(int recipeId) async {
+    // ✔️ Validación rápida
+    if ((!kIsWeb && _video == null) || (kIsWeb && _videoBytes == null)) {
+      return null;
+    }
+
+    /* ─── 1. Datos básicos ───────────────────────────────────────────── */
+    final ext = kIsWeb ? '.mp4' : p.extension(_video!.path).toLowerCase();
+    final mime = _mimeFromExt(ext);
+    final fileName = 'rv$recipeId$ext';
+
+    /* ─── 2. Generar StrapiUploadRequest ─────────────────────────────── */
+    StrapiUploadRequest req;
+
+    if (kIsWeb) {
+      // Web → ya tenemos los bytes
+      req = StrapiUploadRequest.fromBytes(
+        bytes: _videoBytes!,
+        filename: fileName,
+        mimeType: mime,
+      );
+    } else {
+      // Mobile → leemos los bytes para poder asignar nuestro filename
+      final bytes = await _video!.readAsBytes();
+      req = StrapiUploadRequest.fromBytes(
+        bytes: bytes,
+        filename: fileName,
+        mimeType: mime,
+      );
+    }
+
+    /* ─── 3. Subir a Strapi ──────────────────────────────────────────── */
+    final resp = await _strapiCtl.uploadImage(req); // POST /api/upload
+    return '${dotenv.env['STRAPI_URL']}${resp.url}';
+  }
 
   // ⓵ ───── Barra de navegación inferior ────────────────────────────────
   Widget _buildBottomNavBar() {
@@ -189,20 +250,19 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
       }
 
       // 1️⃣  Crear receta (sin imagen todavía)
-      final newRecipe = await recipeController.createRecipe(
-        RecipeRequest(
-          title: recipeTitle,
-          categoryId: selectedCategory?.categoryId ?? 1,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-          cookingTime: int.parse(estimatedTime.replaceAll(' min', '')),
-          foodType: 'General',
-          totalPortions:
-              int.parse(estimatedPortions.replaceAll(' porciones', '')),
-          keycloakUserId: keycloakUserId,
-          imageUrl: null,
-        ),
-      );
+      final newRecipe = await recipeController.createRecipe(RecipeRequest(
+        title: recipeTitle, // << AQUI
+        categoryId: selectedCategory?.categoryId ?? 1,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        cookingTime: int.parse(estimatedTime.replaceAll(' min', '')),
+        foodType: 'General',
+        totalPortions:
+            int.parse(estimatedPortions.replaceAll(' porciones', '')),
+        keycloakUserId: keycloakUserId,
+        imageUrl: null,
+        videoUrl: null,
+      ));
       final recipeId = newRecipe.recipeId;
 
       // 2️⃣  Si hay foto -> súbela y actualiza
@@ -210,6 +270,14 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
         final url = await _uploadRecipeImage(recipeId);
         if (url != null) {
           await recipeController.updateRecipeImage(recipeId, url);
+        }
+      }
+
+      // 2️⃣-bis  Video (optional)
+      if (_video != null) {
+        final vUrl = await _uploadRecipeVideo(recipeId);
+        if (vUrl != null) {
+          await recipeController.updateRecipeVideo(recipeId, vUrl);
         }
       }
 
@@ -290,6 +358,14 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
     _authController.getKeycloakUserId().then((id) {
       keycloakUserId = id;
     });
+
+    if (widget.initialRecipe != null) {
+      final r = widget.initialRecipe!;
+      _imageUrl = r.imageUrl;
+      recipeTitle = r.title;
+      estimatedTime = "${r.cookingTime} min";
+      estimatedPortions = "${r.totalPortions} porciones";
+    }
 
     fetchIngredientsFromBackend();
     fetchCategoriesFromBackend();
@@ -394,7 +470,19 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
                       ],
                     ),
                     const SizedBox(height: 20),
-
+                    Card(
+                      color: Colors.grey[200],
+                      margin: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: ListTile(
+                        leading: const Icon(Icons.videocam),
+                        title: Text(_video != null
+                            ? 'Video seleccionado'
+                            : 'Seleccionar video'),
+                        trailing: const Icon(Icons.edit),
+                        onTap: _pickVideo,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                     // Tabs -------------------------------------------------------------------
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,

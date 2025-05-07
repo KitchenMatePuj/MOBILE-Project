@@ -10,20 +10,21 @@ class RecipeResponse {
   final String keycloakUserId;
   final double ratingAvg;
   final String? imageUrl;
+  final String? videoUrl;
 
-  RecipeResponse({
-    required this.recipeId,
-    required this.categoryId,
-    required this.title,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.cookingTime,
-    required this.foodType,
-    required this.totalPortions,
-    required this.keycloakUserId,
-    required this.ratingAvg,
-    this.imageUrl,
-  });
+  RecipeResponse(
+      {required this.recipeId,
+      required this.categoryId,
+      required this.title,
+      required this.createdAt,
+      required this.updatedAt,
+      required this.cookingTime,
+      required this.foodType,
+      required this.totalPortions,
+      required this.keycloakUserId,
+      required this.ratingAvg,
+      this.imageUrl,
+      this.videoUrl});
 
   factory RecipeResponse.fromJson(Map<String, dynamic> json) {
     return RecipeResponse(
@@ -38,6 +39,7 @@ class RecipeResponse {
       keycloakUserId: json['keycloak_user_id'],
       ratingAvg: json['rating_avg'].toDouble(),
       imageUrl: json['image_url'],
+      videoUrl: json['video_url'],
     );
   }
 }

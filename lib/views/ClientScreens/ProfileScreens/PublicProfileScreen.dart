@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '/controllers/Profiles/profile_controller.dart';
@@ -531,6 +533,16 @@ class ProfileBio extends StatelessWidget {
   }
 }
 
+String _fixEncoding(String? text) {
+  try {
+    final decoded = utf8.decode(latin1.encode(text ?? ''));
+    return decoded;
+  } catch (_) {
+    // Si algo falla, devuelve el original para no romper nada
+    return text ?? '';
+  }
+}
+
 class PublishedRecipesGrid extends StatelessWidget {
   final List<RecipeResponse> recipes;
   final ProfileResponse profile;
@@ -554,9 +566,9 @@ class PublishedRecipesGrid extends StatelessWidget {
             );
           },
           child: RecipeCard(
-            title: recipe.title,
+            title: _fixEncoding(recipe.title),
             chef:
-                'Chef: ${profile.firstName} ${profile.lastName}', // Placeholder for chef name
+                'Chef: ${_fixEncoding(profile.firstName)} ${_fixEncoding(profile.lastName)}', // Placeholder for chef name
             duration: recipe.cookingTime.toString(),
             imageUrl: profile.profilePhoto.toString(), // Default image
             rating: recipe.ratingAvg.toInt(),

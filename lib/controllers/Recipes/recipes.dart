@@ -13,7 +13,10 @@ class RecipeController {
 
   RecipeController({required this.baseUrl});
 
-  /// Función privada para agregar Headers con Authorization
+  /* ──────────────────────────────────────────────────────────── */
+  /*  Helpers                                                    */
+  /* ──────────────────────────────────────────────────────────── */
+
   Future<Map<String, String>> _getHeaders() async {
     final token = await _storage.read(key: 'jwt_token');
     if (token == null || token.isEmpty) {
@@ -21,62 +24,56 @@ class RecipeController {
     }
     return {
       'Authorization': 'Bearer $token',
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json; charset=UTF-8',
     };
   }
 
-  /// Crear una receta (POST /recipes)
+  /* ──────────────────────────────────────────────────────────── */
+  /*  CRUD                                                       */
+  /* ──────────────────────────────────────────────────────────── */
+
   Future<RecipeResponse> createRecipe(RecipeRequest request) async {
-    final headers = await _getHeaders();
     final response = await http.post(
       Uri.parse('$baseUrl/recipes/'),
-      headers: headers,
-      body: jsonEncode(request.toJson()),
+      headers: await _getHeaders(),
+      body: utf8.encode(jsonEncode(request.toJson())),
+      encoding: utf8,
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       return RecipeResponse.fromJson(jsonDecode(response.body));
-    } else {
-      throw Exception(
-          'Failed to create recipe: ${response.statusCode}, ${response.body}');
     }
+    throw Exception(
+        'Failed to create recipe: ${response.statusCode}, ${response.body}');
   }
 
-  /// Obtener una receta por ID (GET /recipes/{id})
   Future<RecipeResponse> getRecipeById(int id) async {
-    final headers = await _getHeaders();
     final response = await http.get(
       Uri.parse('$baseUrl/recipes/$id'),
-      headers: headers,
+      headers: await _getHeaders(),
     );
 
     if (response.statusCode == 200) {
       return RecipeResponse.fromJson(jsonDecode(response.body));
-    } else {
-      throw Exception('Recipe not found');
     }
+    throw Exception('Recipe not found');
   }
 
-  /// Listar todas las recetas (GET /recipes)
   Future<List<RecipeResponse>> fetchRecipes() async {
-    final headers = await _getHeaders();
     final response = await http.get(
       Uri.parse('$baseUrl/recipes/'),
-      headers: headers,
+      headers: await _getHeaders(),
     );
 
     if (response.statusCode == 200) {
       final List<dynamic> body = jsonDecode(response.body);
       return body.map((e) => RecipeResponse.fromJson(e)).toList();
-    } else {
-      throw Exception('Failed to load recipes');
     }
+    throw Exception('Failed to load recipes');
   }
 
-  /// Buscar recetas (GET /recipes/search?title=&cooking_time=&ingredient=)
   Future<List<RecipeResponse>> searchRecipes(
       {String? title, int? cookingTime, String? ingredient}) async {
-    final headers = await _getHeaders();
     final queryParams = {
       if (title != null) 'title': title,
       if (cookingTime != null) 'cooking_time': cookingTime.toString(),
@@ -85,111 +82,128 @@ class RecipeController {
 
     final uri = Uri.parse('$baseUrl/recipes/search')
         .replace(queryParameters: queryParams);
-    final response = await http.get(uri, headers: headers);
+
+    final response = await http.get(uri, headers: await _getHeaders());
 
     if (response.statusCode == 200) {
       final List<dynamic> body = jsonDecode(response.body);
       return body.map((e) => RecipeResponse.fromJson(e)).toList();
-    } else {
-      throw Exception('Failed to search recipes');
     }
+    throw Exception('Failed to search recipes');
   }
 
-  /// Actualizar receta (PUT /recipes/{id})
   Future<RecipeResponse> updateRecipe(int id, RecipeRequest request) async {
-    final headers = await _getHeaders();
     final response = await http.put(
       Uri.parse('$baseUrl/recipes/$id'),
-      headers: headers,
-      body: jsonEncode(request.toJson()),
+      headers: await _getHeaders(),
+      body: utf8.encode(jsonEncode(request.toJson())),
     );
 
     if (response.statusCode == 200) {
       return RecipeResponse.fromJson(jsonDecode(response.body));
-    } else {
-      throw Exception('Failed to update recipe');
     }
+    throw Exception('Failed to update recipe');
   }
 
-  /// Eliminar receta (DELETE /recipes/{id})
   Future<void> deleteRecipe(int id) async {
-    final headers = await _getHeaders();
-    final response = await http.delete(
+    final res = await http.delete(
       Uri.parse('$baseUrl/recipes/$id'),
-      headers: headers,
+      headers: await _getHeaders(),
     );
 
-    if (response.statusCode != 204) {
+    if (res.statusCode != 204) {
       throw Exception('Failed to delete recipe');
     }
   }
 
-  /// Obtener recetas por usuario (GET /recipes/user/{userId})
+  /* ──────────────────────────────────────────────────────────── */
+  /*  Queries / Stats                                            */
+  /* ──────────────────────────────────────────────────────────── */
+
   Future<List<RecipeResponse>> getRecipesByUser(String userId) async {
-    final headers = await _getHeaders();
     final response = await http.get(
       Uri.parse('$baseUrl/recipes/user/$userId'),
-      headers: headers,
+      headers: await _getHeaders(),
     );
 
     if (response.statusCode == 200) {
       final List<dynamic> body = jsonDecode(response.body);
       return body.map((e) => RecipeResponse.fromJson(e)).toList();
-    } else {
-      throw Exception('Failed to get recipes by user');
     }
+    throw Exception('Failed to get recipes by user');
   }
 
-  /// Filtrar recetas por rating (GET /recipes/ratings/filter?min_rating=x&max_rating=y)
   Future<List<RecipeResponse>> filterRecipesByRating(
       double minRating, double maxRating) async {
-    final headers = await _getHeaders();
     final uri = Uri.parse(
         '$baseUrl/recipes/ratings/filter?min_rating=$minRating&max_rating=$maxRating');
-    final response = await http.get(uri, headers: headers);
+    final response = await http.get(uri, headers: await _getHeaders());
 
     if (response.statusCode == 200) {
       final List<dynamic> body = jsonDecode(response.body);
       return body.map((e) => RecipeResponse.fromJson(e)).toList();
-    } else {
-      throw Exception('Failed to filter recipes by rating');
     }
+    throw Exception('Failed to filter recipes by rating');
   }
 
-  /// Obtener estadísticas por tiempo de cocción (GET /recipes/statistics/cooking-time)
   Future<List<Map<String, dynamic>>> getCookingTimeStats() async {
-    final headers = await _getHeaders();
     final response = await http.get(
       Uri.parse('$baseUrl/recipes/statistics/cooking-time'),
-      headers: headers,
+      headers: await _getHeaders(),
     );
 
     if (response.statusCode == 200) {
       return List<Map<String, dynamic>>.from(jsonDecode(response.body));
-    } else {
-      throw Exception('Failed to get cooking time statistics');
     }
+    throw Exception('Failed to get cooking time statistics');
   }
 
-  /// Obtener número total de recetas (GET /recipes/statistics/total)
   Future<int> getTotalRecipeCount() async {
-    final headers = await _getHeaders();
     final response = await http.get(
       Uri.parse('$baseUrl/recipes/statistics/total'),
-      headers: headers,
+      headers: await _getHeaders(),
     );
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> json = jsonDecode(response.body);
       return json['total_recipes'];
-    } else {
-      throw Exception('Failed to get total recipe count');
+    }
+    throw Exception('Failed to get total recipe count');
+  }
+
+  /* ──────────────────────────────────────────────────────────── */
+  /*  Partial updates (image / video)                            */
+  /* ──────────────────────────────────────────────────────────── */
+
+  Future<void> updateRecipeVideo(int recipeId, String videoUrl) async {
+    final actual = await getRecipeById(recipeId);
+
+    final body = {
+      'category_id': actual.categoryId,
+      'title': actual.title,
+      'created_at': actual.createdAt.toIso8601String(),
+      'updated_at': DateTime.now().toIso8601String(),
+      'cooking_time': actual.cookingTime,
+      'food_type': actual.foodType,
+      'total_portions': actual.totalPortions,
+      'keycloak_user_id': actual.keycloakUserId,
+      'rating_avg': actual.ratingAvg,
+      'image_url': actual.imageUrl,
+      'video_url': videoUrl, // NEW
+    };
+
+    final resp = await http.put(
+      Uri.parse('$baseUrl/recipes/$recipeId'),
+      headers: await _getHeaders(),
+      body: utf8.encode(jsonEncode(body)),
+    );
+
+    if (resp.statusCode != 200) {
+      throw Exception('PUT failed: ${resp.statusCode} ${resp.body}');
     }
   }
 
-  /// Actualizar imagen de una receta
   Future<void> updateRecipeImage(int recipeId, String imageUrl) async {
-    final headers = await _getHeaders();
     final actual = await getRecipeById(recipeId);
 
     final body = {
@@ -203,12 +217,13 @@ class RecipeController {
       'keycloak_user_id': actual.keycloakUserId,
       'rating_avg': actual.ratingAvg,
       'image_url': imageUrl,
+      'video_url': actual.videoUrl, // NEW: preserve video
     };
 
     final resp = await http.put(
       Uri.parse('$baseUrl/recipes/$recipeId'),
-      headers: headers,
-      body: jsonEncode(body),
+      headers: await _getHeaders(),
+      body: utf8.encode(jsonEncode(body)),
     );
 
     if (resp.statusCode != 200) {
@@ -216,9 +231,14 @@ class RecipeController {
     }
   }
 
+  /* ──────────────────────────────────────────────────────────── */
+  /*  Full recipe helper                                         */
+  /* ──────────────────────────────────────────────────────────── */
+
   Future<FullRecipeResponse> getFullRecipe(int id) async {
-    final url = Uri.parse('$baseUrl/recipes/$id/full');
-    final res = await http.get(url).timeout(const Duration(seconds: 6));
+    final res = await http
+        .get(Uri.parse('$baseUrl/recipes/$id/full'))
+        .timeout(const Duration(seconds: 6));
 
     if (res.statusCode != 200) {
       throw Exception('Error ${res.statusCode} al obtener receta completa');
