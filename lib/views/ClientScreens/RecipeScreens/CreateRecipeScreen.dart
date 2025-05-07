@@ -61,6 +61,9 @@ class CreateRecipeScreen extends StatefulWidget {
 
 class _CreateRecipeState extends State<CreateRecipeScreen>
     with SingleTickerProviderStateMixin {
+  final TextEditingController preparationTimeController =
+      TextEditingController();
+  final TextEditingController portionsController = TextEditingController();
   int selectedIndex = 0; // 0 = Detalles, 1 = Ingredientes, 2 = Procedimiento
   List<Ingredient> ingredients = [
     Ingredient(name: "", quantity: "", unit: ""),
@@ -80,6 +83,13 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
       CategoryController(baseUrl: recipeBaseUrl);
 
   late StrapiController _strapiCtl;
+
+  late TextEditingController _timeController;
+  late TextEditingController _portionController;
+
+  late TextEditingController servingsController;
+  late TextEditingController cookingTimeController;
+
   final AuthController _authController = AuthController(baseUrl: authbaseUrl);
   Uint8List? _imageBytes;
   Uint8List? _videoBytes;
@@ -369,6 +379,14 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
 
     fetchIngredientsFromBackend();
     fetchCategoriesFromBackend();
+
+    _timeController =
+        TextEditingController(text: estimatedTime.replaceAll(' min', ''));
+    _portionController = TextEditingController(
+        text: estimatedPortions.replaceAll(' porciones', ''));
+
+    servingsController = TextEditingController();
+    cookingTimeController = TextEditingController();
   }
 
   Future<void> fetchIngredientsFromBackend() async {
@@ -420,7 +438,8 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Scaffold(
-      resizeToAvoidBottomInset: false, // no empujar widgets a lo “bruto”
+      resizeToAvoidBottomInset:
+          true, // permitir que el teclado ajuste la pantalla
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Creación de Receta'),
@@ -428,163 +447,152 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
         foregroundColor: Colors.white,
         automaticallyImplyLeading: false,
       ),
-
       body: _isLoadingCategories
           ? const Center(
               child: CircularProgressIndicator(color: Color(0xFF129575)),
             )
-          : AnimatedPadding(
-              // 🎯 suaviza la transición
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOut,
-              padding: EdgeInsets.only(bottom: bottomInset),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Imagen de la receta ----------------------------------------------------
-                    Stack(
-                      children: [
-                        Container(
-                          width: double.infinity,
-                          height: 150,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10.0),
-                            color: Colors.grey[800],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(10.0),
-                            child: _imageBytes != null
-                                ? Image.memory(_imageBytes!,
-                                    fit: BoxFit.cover, width: double.infinity)
-                                : Center(
-                                    child: IconButton(
-                                      icon: const Icon(Icons.add,
-                                          color: Colors.white, size: 50),
-                                      onPressed: _pickImage,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Card(
-                      color: Colors.grey[200],
-                      margin: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: ListTile(
-                        leading: const Icon(Icons.videocam),
-                        title: Text(_video != null
-                            ? 'Video seleccionado'
-                            : 'Seleccionar video'),
-                        trailing: const Icon(Icons.edit),
-                        onTap: _pickVideo,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    // Tabs -------------------------------------------------------------------
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildTab('Detalles', 0),
-                        _buildTab('Ingredientes', 1),
-                        _buildTab('Procedimiento', 2),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-
-                    // Contenido por pestaña --------------------------------------------------
-                    Expanded(
-                      child: selectedIndex == 0
-                          ? _buildDetailsSection()
-                          : selectedIndex == 1
-                              ? CustomScrollView(
-                                  slivers: [
-                                    SliverList(
-                                      delegate: SliverChildBuilderDelegate(
-                                        (context, index) {
-                                          if (index == ingredients.length) {
-                                            return _buildAddIngredientButton();
-                                          }
-                                          final ing = ingredients[index];
-                                          return IngredientCard(
-                                            ingredient: ing,
-                                            index: index + 1,
-                                            onDelete: () {
-                                              setState(() {
-                                                ingredients.removeAt(index);
-                                              });
-                                            },
-                                            availableIngredients:
-                                                fetchedIngredients,
-                                          );
-                                        },
-                                        childCount: ingredients.length + 1,
+          : Stack(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Imagen de la receta ----------------------------------------------------
+                      Stack(
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            height: 150,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10.0),
+                              color: Colors.grey[800],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10.0),
+                              child: _imageBytes != null
+                                  ? Image.memory(_imageBytes!,
+                                      fit: BoxFit.cover, width: double.infinity)
+                                  : Center(
+                                      child: IconButton(
+                                        icon: const Icon(Icons.add,
+                                            color: Colors.white, size: 50),
+                                        onPressed: _pickImage,
                                       ),
                                     ),
-                                  ],
-                                )
-                              : ListView.builder(
-                                  keyboardDismissBehavior:
-                                      ScrollViewKeyboardDismissBehavior.onDrag,
-                                  itemCount: steps.length + 1,
-                                  itemBuilder: (context, index) {
-                                    if (index == steps.length) {
-                                      return _buildAddStepButton();
-                                    }
-                                    final step = steps[index];
-                                    return StepCard(
-                                      step: step,
-                                      stepNumber: index + 1,
-                                      onDelete: () {
-                                        setState(() {
-                                          steps.removeAt(index);
-                                        });
-                                      },
-                                    );
-                                  },
-                                ),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // Botón Confirmar --------------------------------------------------------
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isSubmitting ? null : _handleSubmit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF129575),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 12),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15)),
-                        ),
-                        child: _isSubmitting
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Text(
-                                "Confirmar Receta",
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white),
-                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+                      const SizedBox(height: 20),
 
-      // BottomNavigationBar queda igual ------------------------------------------
+                      // Tabs -------------------------------------------------------------------
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildTab('Detalles', 0),
+                          _buildTab('Ingredientes', 1),
+                          _buildTab('Procedimiento', 2),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+
+                      // Contenido por pestaña --------------------------------------------------
+                      Expanded(
+                        child: selectedIndex == 0
+                            ? _buildDetailsSection()
+                            : selectedIndex == 1
+                                ? CustomScrollView(
+                                    slivers: [
+                                      SliverList(
+                                        delegate: SliverChildBuilderDelegate(
+                                          (context, index) {
+                                            if (index == ingredients.length) {
+                                              return _buildAddIngredientButton();
+                                            }
+                                            final ing = ingredients[index];
+                                            return IngredientCard(
+                                              ingredient: ing,
+                                              index: index + 1,
+                                              onDelete: () {
+                                                setState(() {
+                                                  ingredients.removeAt(index);
+                                                });
+                                              },
+                                              availableIngredients:
+                                                  fetchedIngredients,
+                                              fetchedIngredients:
+                                                  fetchedIngredients,
+                                            );
+                                          },
+                                          childCount: ingredients.length + 1,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : ListView.builder(
+                                    keyboardDismissBehavior:
+                                        ScrollViewKeyboardDismissBehavior
+                                            .onDrag,
+                                    itemCount: steps.length + 1,
+                                    itemBuilder: (context, index) {
+                                      if (index == steps.length) {
+                                        return _buildAddStepButton();
+                                      }
+                                      final step = steps[index];
+                                      return StepCard(
+                                        step: step,
+                                        stepNumber: index + 1,
+                                        onDelete: () {
+                                          setState(() {
+                                            steps.removeAt(index);
+                                          });
+                                        },
+                                      );
+                                    },
+                                  ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Botón Confirmar Receta Fijo ------------------------------------------
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: 16,
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _isSubmitting ? null : _handleSubmit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF129575),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15)),
+                      ),
+                      child: _isSubmitting
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              "Confirmar Receta",
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white),
+                            ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
       bottomNavigationBar: _buildBottomNavBar(),
     );
   }
@@ -624,9 +632,17 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
           label: "Tiempo Estimado",
           value: estimatedTime,
           onTap: () async {
-            final controller = TextEditingController();
+            // Asegúrate de que el controlador tenga el valor actual
+            if (_timeController.text.isEmpty) {
+              _timeController.text = estimatedTime.replaceAll(' min', '');
+            }
+
             final result = await _showNumberInputDialog(
-                "Tiempo Estimado", controller, "Ingrese el tiempo en minutos");
+              "Tiempo Estimado",
+              _timeController,
+              "Ingrese el tiempo en minutos",
+            );
+
             if (result != null && result.isNotEmpty) {
               setState(() {
                 estimatedTime = "$result min";
@@ -638,9 +654,18 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
           label: "Porciones Estimadas",
           value: estimatedPortions,
           onTap: () async {
-            final controller = TextEditingController();
-            final result = await _showNumberInputDialog("Porciones Estimadas",
-                controller, "Ingrese el número de porciones");
+            // Asegúrate de que el controlador tenga el valor actual
+            if (_portionController.text.isEmpty) {
+              _portionController.text =
+                  estimatedPortions.replaceAll(' porciones', '');
+            }
+
+            final result = await _showNumberInputDialog(
+              "Porciones Estimadas",
+              _portionController,
+              "Ingrese el número de porciones",
+            );
+
             if (result != null && result.isNotEmpty) {
               setState(() {
                 estimatedPortions = "$result porciones";
@@ -709,7 +734,10 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
                   hintText: "Ingrese el texto",
                 ),
                 onTap: () {
-                  controller.clear();
+                  if (controller.text.isEmpty) {
+                    controller
+                        .clear(); // Mantiene el texto si ya se ha ingresado algo
+                  }
                 },
                 onChanged: (value) {
                   setState(() {});
@@ -753,7 +781,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
 
   Future<String?> _showNumberInputDialog(
       String title, TextEditingController controller, String hint) {
-    return showAnimatedDialog<String>(
+    return showDialog<String>(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
@@ -776,11 +804,8 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: InputDecoration(hintText: hint),
-                onTap: () {
-                  controller.clear();
-                },
                 onChanged: (value) {
-                  setState(() {});
+                  setState(() {}); // Refresca la UI interna
                 },
               ),
               actions: [
@@ -792,7 +817,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 238, 99, 89),
+                        backgroundColor: Colors.red,
                         foregroundColor: Colors.white,
                       ),
                       child: const Text('Cancelar'),
@@ -804,7 +829,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
                             }
                           : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF129575),
+                        backgroundColor: const Color(0xFF129575),
                         foregroundColor: Colors.white,
                       ),
                       child: const Text('Aceptar'),
@@ -844,6 +869,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
       barrierDismissible: false,
       builder: (BuildContext context) {
         return SimpleDialog(
+          backgroundColor: Colors.white,
           title: const Center(
             child: Text(
               "Selecciona una Categoría",
@@ -925,6 +951,13 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
       ),
     );
   }
+
+  @override
+  void dispose() {
+    preparationTimeController.dispose();
+    portionsController.dispose();
+    super.dispose();
+  }
 }
 
 class IngredientCard extends StatefulWidget {
@@ -932,12 +965,14 @@ class IngredientCard extends StatefulWidget {
   final int index;
   final VoidCallback onDelete;
   final List<IngredientResponse> availableIngredients;
+  final List<IngredientResponse> fetchedIngredients;
 
   const IngredientCard({
     required this.ingredient,
     required this.index,
     required this.onDelete,
     required this.availableIngredients,
+    required this.fetchedIngredients,
   });
 
   @override
@@ -986,6 +1021,8 @@ class _IngredientCardState extends State<IngredientCard> {
                       } else if (value != null) {
                         setState(() {
                           widget.ingredient.name = value;
+
+                          // Opcional: Actualiza la unidad de medida si es necesario
                           final selected =
                               widget.availableIngredients.firstWhere(
                             (i) => i.name == value,
@@ -1088,26 +1125,44 @@ class _IngredientCardState extends State<IngredientCard> {
           actions: [
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
               child: const Text('Cancelar'),
             ),
             ElevatedButton(
-              onPressed: () =>
-                  Navigator.pop(context, customIngredientController.text),
-              style:
-                  ElevatedButton.styleFrom(backgroundColor: Color(0xFF129575)),
+              onPressed: () {
+                final customIngredient = customIngredientController.text.trim();
+                if (customIngredient.isNotEmpty) {
+                  setState(() {
+                    // Añadir el nuevo ingrediente a la lista de ingredientes disponibles
+                    widget.fetchedIngredients.add(
+                      IngredientResponse(
+                        ingredientId:
+                            -1, // Usa un ID temporal o único si es necesario
+                        recipeId: -1,
+                        name: customIngredient,
+                        measurementUnit: '',
+                      ),
+                    );
+
+                    // Actualizar el ingrediente seleccionado
+                    widget.ingredient.name = customIngredient;
+                  });
+                }
+                Navigator.pop(context, customIngredient);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF129575),
+                foregroundColor: Colors.white,
+              ),
               child: const Text('Aceptar'),
             ),
           ],
         );
       },
-    ).then((result) {
-      if (result != null && result.isNotEmpty) {
-        setState(() {
-          widget.ingredient.name = result;
-        });
-      }
-    });
+    );
   }
 
   void _showQuantityDialog(BuildContext context) {
@@ -1119,7 +1174,17 @@ class _IngredientCardState extends State<IngredientCard> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Cantidad"),
+          backgroundColor: Colors.white,
+          title: const Center(
+            child: Text(
+              "Cantidad",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF129575),
+              ),
+            ),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1153,15 +1218,20 @@ class _IngredientCardState extends State<IngredientCard> {
           actions: [
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
               child: const Text('Cancelar'),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context, quantityController.text);
               },
-              style:
-                  ElevatedButton.styleFrom(backgroundColor: Color(0xFF129575)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF129575),
+                foregroundColor: Colors.white,
+              ),
               child: const Text('Aceptar'),
             ),
           ],
