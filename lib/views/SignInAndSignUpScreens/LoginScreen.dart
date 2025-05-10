@@ -1,7 +1,7 @@
 import 'dart:collection';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:developer';
 import '/controllers/authentication/auth_controller.dart';
 import '/models/authentication/login_request_advanced.dart' as advanced;
 import '/models/authentication/login_response.dart';
@@ -23,6 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   late AuthController authController;
 
   final authBaseUrl = dotenv.env['AUTH_URL'] ?? '';
+  final Stopwatch _stopwatch = Stopwatch();
 
   @override
   void dispose() {
@@ -35,10 +36,17 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     authController = AuthController(baseUrl: authBaseUrl);
+    _stopwatch.start();
   }
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_stopwatch.isRunning) {
+        _stopwatch.stop();
+        print('⏱ LoginScreen: ${_stopwatch.elapsedMilliseconds} ms');
+      }
+    });
     return Scaffold(
       appBar: AppBar(
         title: const Text('Iniciar Sesión'),

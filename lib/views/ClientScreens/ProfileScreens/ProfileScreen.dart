@@ -35,6 +35,8 @@ import '/controllers/authentication/auth_controller.dart';
 import '/models/authentication/login_request_advanced.dart' as advanced;
 import '/models/authentication/login_response.dart';
 
+import 'dart:developer';
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -71,6 +73,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _recipeBase = dotenv.env['RECIPE_URL'] ?? '';
   final _strapiBase = dotenv.env['STRAPI_URL'] ?? '';
   final _authBase = dotenv.env['AUTH_URL'] ?? '';
+  final Stopwatch _stopwatch = Stopwatch();
   late final AuthController _authController;
 
   // ⚠️ En una app real obtendrías esto del provider de autenticación.
@@ -82,6 +85,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+
+    _stopwatch.start();
 
     _summaryCtl = SumaryController(baseUrl: _profileBase);
     _followCtl = FollowController(baseUrl: _profileBase);
@@ -201,6 +206,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ---------------------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_stopwatch.isRunning) {
+        _stopwatch.stop();
+        print('⏱ ProfileScreen: ${_stopwatch.elapsedMilliseconds} ms');
+      }
+    });
     return Scaffold(
       appBar: _buildAppBar(),
       backgroundColor: Colors.white,

@@ -38,6 +38,8 @@ import 'package:mobile_kitchenmate/controllers/Recipes/ingredients.dart'
 import 'package:mobile_kitchenmate/models/Profiles/ingredient_request.dart'
     as profile_ingredient;
 
+import 'dart:developer';
+
 class RecipeScreen extends StatefulWidget {
   final int recipeId;
   const RecipeScreen({super.key, required this.recipeId});
@@ -73,6 +75,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
   final strapiBase = dotenv.env['STRAPI_URL'] ?? '';
   final String _authBase = dotenv.env['AUTH_URL'] ?? '';
   final String _reportBase = dotenv.env['REPORTS_URL'] ?? '';
+  final Stopwatch _stopwatch = Stopwatch();
 
   late RecipeController _recipeController;
   late recipe_ingredient.IngredientController
@@ -462,9 +465,9 @@ class _RecipeScreenState extends State<RecipeScreen> {
     _authController = AuthController(baseUrl: _authBase);
     _followController = FollowController(baseUrl: profileBaseUrl);
     _reportController = ReportsController(baseUrl: _reportBase);
-    _initStopwatch.stop();
-    print(
-        'Tiempo de carga en el initstate: ${_initStopwatch.elapsedMilliseconds} ms');
+    
+    _stopwatch.start();
+
     _initializeAuthUser();
   }
 
@@ -531,6 +534,12 @@ class _RecipeScreenState extends State<RecipeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_stopwatch.isRunning) {
+        _stopwatch.stop();
+        print('⏱ RecipeScreen: ${_stopwatch.elapsedMilliseconds} ms');
+      }
+    });
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(

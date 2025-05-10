@@ -6,7 +6,7 @@ import '/models/Recipes/recipes_response.dart';
 import '/models/Profiles/profile_response.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
-
+import 'dart:developer';
 import '/controllers/authentication/auth_controller.dart';
 import '/models/authentication/login_request_advanced.dart' as advanced;
 import '/models/authentication/login_response.dart';
@@ -39,6 +39,7 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
   final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
   final String _authBase = dotenv.env['AUTH_URL'] ?? '';
   final String strapiBaseUrl = dotenv.env['STRAPI_URL'] ?? '';
+  final Stopwatch _stopwatch = Stopwatch();
 
   @override
   void initState() {
@@ -46,6 +47,8 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
     _recipeController = RecipeController(baseUrl: recipeBaseUrl);
     _profileController = ProfileController(baseUrl: profileBaseUrl);
     _authController = AuthController(baseUrl: _authBase);
+
+    _stopwatch.start();
 
     _authController.getKeycloakUserId().then((id) {
       keycloakUserId = id;
@@ -182,6 +185,12 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_stopwatch.isRunning) {
+        _stopwatch.stop();
+        print('⏱ RecipeSearchScreen: ${_stopwatch.elapsedMilliseconds} ms');
+      }
+    });
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
