@@ -13,6 +13,7 @@ import '/models/Profiles/ingredient_response.dart';
 import '/models/Profiles/ingredient_request.dart';
 import '/models/Profiles/shopping_list_request.dart';
 import '/models/Profiles/shopping_list_response.dart';
+import 'dart:developer';
 
 class ShoppingListScreen extends StatefulWidget {
   const ShoppingListScreen({super.key});
@@ -32,6 +33,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   ShoppingListResponse? selectedShoppingList;
   List<ShoppingListResponse>? shoppingListsCache;
 
+  final Stopwatch _stopwatch = Stopwatch();
   final profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
   final recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
   final authBaseUrl = dotenv.env['AUTH_URL'] ?? '';
@@ -45,6 +47,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     ingredientController = IngredientController(baseUrl: profileBaseUrl);
     profileController = ProfileController(baseUrl: profileBaseUrl);
     _authController = AuthController(baseUrl: _authBase);
+
+    _stopwatch.start();
 
     _initializeProfile();
   }
@@ -81,6 +85,13 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_stopwatch.isRunning) {
+        _stopwatch.stop();
+        print('⏱ ShoppingListScreen: ${_stopwatch.elapsedMilliseconds} ms');
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Lista de Compras'),

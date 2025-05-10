@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:developer';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -9,6 +10,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = false;
+  final Stopwatch _stopwatch = Stopwatch();
+  
 
   @override
   void didChangeDependencies() {
@@ -16,6 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
     precacheImage(AssetImage('assets/icons/backgroundLanding2.png'), context);
     precacheImage(AssetImage('assets/icons/chefIcon.png'), context);
     precacheImage(AssetImage('assets/icons/arrow.png'), context);
+    _stopwatch.start();
   }
 
   void _navigateToLogin() async {
@@ -34,6 +38,13 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_stopwatch.isRunning) {
+        _stopwatch.stop();
+        print('⏱ HomeScreen: ${_stopwatch.elapsedMilliseconds} ms');
+      }
+    });
 
     return Scaffold(
       body: Stack(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '/controllers/authentication/auth_controller.dart';
 import '/models/authentication/reset_password_request.dart';
+import 'dart:developer';
 
 class EmailForgotPassScreen extends StatefulWidget {
   const EmailForgotPassScreen({super.key});
@@ -16,13 +17,15 @@ class _EmailForgotPassScreenState extends State<EmailForgotPassScreen> {
   bool _canSendEmail = false;
   bool _isLoading = false;
   final authBaseUrl = dotenv.env['AUTH_URL'] ?? '';
-
+  final Stopwatch _stopwatch = Stopwatch();
   late AuthController _authController;
 
   @override
   void initState() {
     super.initState();
     _authController = AuthController(baseUrl: authBaseUrl);
+
+    _stopwatch.start();
   }
 
   void _validateEmail() {
@@ -86,6 +89,12 @@ class _EmailForgotPassScreenState extends State<EmailForgotPassScreen> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_stopwatch.isRunning) {
+        _stopwatch.stop();
+        print('⏱ EmailForgotPassScreen: ${_stopwatch.elapsedMilliseconds} ms');
+      }
+    });
     return Scaffold(
       appBar: AppBar(
         title: const Text('Restaurar Contraseña'),

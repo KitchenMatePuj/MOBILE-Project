@@ -20,6 +20,7 @@ import 'package:mobile_kitchenmate/utils/image_utils.dart';
 import '/controllers/authentication/auth_controller.dart';
 import '/models/authentication/login_request_advanced.dart' as advanced;
 import '/models/authentication/login_response.dart';
+import 'dart:developer';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -35,6 +36,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
   final String authBaseUrl = dotenv.env['AUTH_URL'] ?? '';
   final String recomendationBaseUrl = dotenv.env['RECOMMENDATION_URL'] ?? '';
+  final Stopwatch _stopwatch = Stopwatch();
   late ProfileController _profileController;
   late SumaryController _summaryController;
   late RecipeController _recipeController;
@@ -73,6 +75,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _recommendationController =
         RecommendationsController(baseUrl: recomendationBaseUrl);
     _authController = AuthController(baseUrl: authBaseUrl);
+
+    _stopwatch.start();
 
     _loadUserData(); // llamamos la lógica aparte
   }
@@ -220,6 +224,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_stopwatch.isRunning) {
+        _stopwatch.stop();
+        print('⏱ DashboardScreen: ${_stopwatch.elapsedMilliseconds} ms');
+      }
+    });
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,

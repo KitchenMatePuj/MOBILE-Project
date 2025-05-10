@@ -7,7 +7,7 @@ import '/controllers/Reports/reports_controller.dart';
 import '/models/Profiles/profile_response.dart';
 import '/models/Reports/report_response.dart';
 import '/providers/user_provider.dart';
-
+import 'dart:developer';
 import '/controllers/authentication/auth_controller.dart';
 
 class ReportsScreen extends StatefulWidget {
@@ -22,6 +22,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
   final String _reportBase = dotenv.env['REPORTS_URL'] ?? '';
   final String _profileBase = dotenv.env['PROFILE_URL'] ?? '';
   final List<int> _expandedReports = [];
+  final Stopwatch _stopwatch = Stopwatch();
   late ReportsController _reportsController;
   late AuthController _authController;
   late ProfileController _profileController;
@@ -35,6 +36,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
     _authController = AuthController(baseUrl: _authBase);
     _profileController = ProfileController(baseUrl: _profileBase);
     _reportsController = ReportsController(baseUrl: _reportBase);
+
+    _stopwatch.start();
 
     // Inicializar _reportsFuture con un Future vacío para evitar errores.
     _reportsFuture = Future.value([]);
@@ -67,6 +70,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_stopwatch.isRunning) {
+        _stopwatch.stop();
+        print('⏱ ReportsScreen: ${_stopwatch.elapsedMilliseconds} ms');
+      }
+    });
     return Scaffold(
       appBar: AppBar(
         title: const Text('Reportes'),

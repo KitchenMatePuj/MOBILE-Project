@@ -23,6 +23,8 @@ import '../../../controllers/Profiles/ingredient_allergy_controller.dart';
 import '../../../models/Profiles/ingredientAllery_request.dart';
 import '../../../models/Profiles/ingredientAllery_response.dart';
 
+import 'dart:developer';
+
 class EditprofileScreen extends StatefulWidget {
   const EditprofileScreen({super.key});
 
@@ -34,6 +36,7 @@ class _EditprofileState extends State<EditprofileScreen> {
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
   final _authBase = dotenv.env['AUTH_URL'] ?? '';
   final String strapiBaseUrl = dotenv.env['STRAPI_URL'] ?? '';
+  final Stopwatch _stopwatch = Stopwatch();
 
   // A FUTURO TOCA QUE RECONOZCA POR DEFECTO EL PROFILE ID Y EL EMAIL.
   late ProfileResponse? profile =
@@ -60,6 +63,9 @@ class _EditprofileState extends State<EditprofileScreen> {
   void initState() {
     super.initState();
     _authController = AuthController(baseUrl: _authBase);
+
+    _stopwatch.start();
+
     _initializeProfile();
   }
 
@@ -144,6 +150,12 @@ class _EditprofileState extends State<EditprofileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_stopwatch.isRunning) {
+        _stopwatch.stop();
+        print('⏱ EditProfileScreen: ${_stopwatch.elapsedMilliseconds} ms');
+      }
+    });
     return Scaffold(
       appBar: AppBar(
         title: const Text('Editar Perfil'),

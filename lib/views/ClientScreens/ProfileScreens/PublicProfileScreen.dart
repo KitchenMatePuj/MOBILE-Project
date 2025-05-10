@@ -15,6 +15,8 @@ import '/controllers/authentication/auth_controller.dart';
 import 'package:mobile_kitchenmate/models/Reports/report_request.dart';
 import 'package:mobile_kitchenmate/controllers/Reports/reports_controller.dart';
 
+import 'dart:developer';
+
 class PublicProfileScreen extends StatefulWidget {
   final int profileId;
 
@@ -29,6 +31,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
   final _authBase = dotenv.env['AUTH_URL'] ?? '';
   final String _reportBase = dotenv.env['REPORTS_URL'] ?? '';
+  final Stopwatch _stopwatch = Stopwatch();
 
   late ReportsController _reportController;
   late ProfileController _profileController;
@@ -53,6 +56,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     _recipeController = RecipeController(baseUrl: recipeBaseUrl);
     _authController = AuthController(baseUrl: _authBase);
     _reportController = ReportsController(baseUrl: _reportBase);
+
+    _stopwatch.start();
 
     _authController.getKeycloakUserId().then((id) async {
       keycloakUserId = id;
@@ -247,6 +252,12 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_stopwatch.isRunning) {
+        _stopwatch.stop();
+        print('⏱ PublicProfileScreen: ${_stopwatch.elapsedMilliseconds} ms');
+      }
+    });
     return Scaffold(
       appBar: AppBar(
         title: const Text('Perfil Público'),

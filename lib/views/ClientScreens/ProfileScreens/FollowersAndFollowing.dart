@@ -10,6 +10,8 @@ import '/models/authentication/login_request_advanced.dart' as advanced;
 import '/models/authentication/login_response.dart';
 import '/utils/image_utils.dart';
 
+import 'dart:developer';
+
 class FollowersAndFollowingScreen extends StatefulWidget {
   final int profileId;
   final String type;
@@ -26,6 +28,7 @@ class _FollowersAndFollowingScreenState
     extends State<FollowersAndFollowingScreen> {
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
   final String authbaseUrl = dotenv.env['AUTH_URL'] ?? '';
+  final Stopwatch _stopwatch = Stopwatch();
   late int selectedIndex;
   late FollowController _followController;
   late ProfileController _profileController;
@@ -40,6 +43,8 @@ class _FollowersAndFollowingScreenState
     _followController = FollowController(baseUrl: profileBaseUrl);
     _profileController = ProfileController(baseUrl: profileBaseUrl);
     _authController = AuthController(baseUrl: authbaseUrl);
+
+    _stopwatch.start();
 
     _authController.getKeycloakUserId().then((id) {
       keycloakUserId = id;
@@ -74,6 +79,12 @@ class _FollowersAndFollowingScreenState
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_stopwatch.isRunning) {
+        _stopwatch.stop();
+        print('⏱ FollowersAndFollowingScreen: ${_stopwatch.elapsedMilliseconds} ms');
+      }
+    });
     return Scaffold(
       appBar: AppBar(
         title: const Text('Seguidos y Seguidores'),
