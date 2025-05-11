@@ -1,10 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mobile_kitchenmate/controllers/Profiles/follow_controller.dart';
 import 'dart:math' as math;
 
 import 'package:mobile_kitchenmate/controllers/Recipes/comments.dart';
-import 'package:mobile_kitchenmate/controllers/Recipes/recipes.dart';
+import 'package:mobile_kitchenmate/controllers/Recipes/recipes_controller.dart';
 import 'package:mobile_kitchenmate/controllers/Recipes/recipe_steps.dart';
 
 import 'package:mobile_kitchenmate/controllers/Profiles/profile_controller.dart';
@@ -63,6 +65,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
   List<Map<String, String>> ingredients = [];
   bool isFollowing = false;
   bool _isAddingToShoppingList = false;
+  bool _isMuted = false;
 
   String? _videoUrl; // url que llega del backend
   VideoPlayerController? _vpController; // controller del plugin
@@ -93,6 +96,14 @@ class _RecipeScreenState extends State<RecipeScreen> {
 
   Stopwatch _initStopwatch = Stopwatch();
   Stopwatch _loadRecipeDatapwatch = Stopwatch();
+
+  String _fixEncoding(String text) {
+    try {
+      return utf8.decode(latin1.encode(text));
+    } catch (_) {
+      return text;
+    }
+  }
 
   Future<void> _loadRecipeData(int recipeId) async {
     _loadRecipeDatapwatch.start();
@@ -170,7 +181,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
       if (!mounted) return;
 
       setState(() {
-        recipeTitle = recipe.title ?? '';
+        recipeTitle = _fixEncoding(recipe.title ?? '');
         duration = recipe.cookingTime ?? 0;
         totalServings = recipe.totalPortions ?? 0;
         chefName = chef.firstName ?? 'Chef sin nombre';
@@ -180,7 +191,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
                 : '$strapiBase${chef.profilePhoto!}')
             : 'assets/chefs/default_user.png';
 
-        steps = stepRes.map((e) => e.description ?? '').toList();
+        steps = stepRes.map((e) => _fixEncoding(e.description ?? '')).toList();
         ingredients = ingOfRecipe
             .map((i) => {
                   'name': i.name ?? '',
@@ -343,6 +354,53 @@ class _RecipeScreenState extends State<RecipeScreen> {
     }
   }
 
+  void _toggleMute() {
+    if (_vpController == null) return;
+    _isMuted = !_isMuted;
+    _vpController!.setVolume(_isMuted ? 0 : 1);
+    setState(() {}); // refresh the icon
+  }
+
+  Future<void> _enterFullScreen(BuildContext context) async {
+    if (_vpController == null) return;
+
+    final wasPlaying = _vpController!.value.isPlaying;
+    // keep it playing; you decide if you prefer to pause:
+    // if (wasPlaying) _vpController!.pause();
+
+    final isLandscape =
+        _vpController!.value.size.width > _vpController!.value.size.height;
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          backgroundColor: Colors.black,
+          body: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Center(
+              child: isLandscape
+                  ? RotatedBox(
+                      quarterTurns: 1, // gira 90 grados
+                      child: AspectRatio(
+                        aspectRatio: _vpController!.value.aspectRatio,
+                        child: VideoPlayer(_vpController!),
+                      ),
+                    )
+                  : AspectRatio(
+                      aspectRatio: _vpController!.value.aspectRatio,
+                      child: VideoPlayer(_vpController!),
+                    ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // on pop: resume if it was playing
+    if (wasPlaying) _vpController!.play();
+  }
+
   Future<void> _submitReport(String description) async {
     try {
       // Obtén el perfil del usuario logueado
@@ -475,6 +533,58 @@ class _RecipeScreenState extends State<RecipeScreen> {
     super.dispose();
   }
 
+  // Devuelve una lista de widgets con los overlays
+  List<Widget> _buildHeaderOverlays() {
+    return [
+      // Botones arriba-derecha (mute y fullscreen)
+      Positioned(
+        top: 8,
+        right: 8,
+        child: Row(
+          children: [
+            IconButton(
+              icon: Icon(
+                _isMuted ? Icons.volume_off : Icons.volume_up,
+                color: Colors.white,
+              ),
+              onPressed: _toggleMute,
+            ),
+            IconButton(
+              icon: const Icon(Icons.fullscreen, color: Colors.white),
+              onPressed: () => _enterFullScreen(context),
+            ),
+          ],
+        ),
+      ),
+
+      // Duración abajo-izquierda
+      Positioned(
+        bottom: 8,
+        left: 8,
+        child: Row(
+          children: [
+            const Icon(Icons.access_time, color: Colors.white),
+            const SizedBox(width: 4),
+            Text('$duration mins', style: const TextStyle(color: Colors.white)),
+          ],
+        ),
+      ),
+
+      // Bookmark abajo-derecha
+      Positioned(
+        bottom: 8,
+        right: 8,
+        child: IconButton(
+          icon: Icon(
+            isSaved ? Icons.bookmark : Icons.bookmark_border,
+            color: isSaved ? Colors.yellow : Colors.white,
+          ),
+          onPressed: _toggleSavedState,
+        ),
+      ),
+    ];
+  }
+
   Future<void> _initializeAuthUser() async {
     keycloakUserId = await _authController.getKeycloakUserId();
     _authUserId = keycloakUserId;
@@ -576,91 +686,58 @@ class _RecipeScreenState extends State<RecipeScreen> {
   }
 
   Widget _buildImageHeader() {
-    const double kHeaderHeight = 200; // ⬅️ Ajusta a tu gusto
+    const double kHeaderHeight = 200; // desired header height
+    final bool hasVideo = _videoUrl != null && _videoUrl!.isNotEmpty;
 
+    // 1️⃣  Build the actual media (video if ready, else image/loader)
     Widget media;
 
-    // 1️⃣  Vídeo listo ➜ lo mostramos (sin invertir; si te sigue saliendo
-    //     boca-abajo, prueba a descomentar el Transform.rotate):
     if (_vpController != null && _vpReady) {
       media = Transform.rotate(
-        angle: math.pi, // prueba: ½ vuelta
-        child: VideoPlayer(_vpController!),
+        angle: math.pi,
+        child: AspectRatio(
+          aspectRatio: _vpController!.value.aspectRatio,
+          child: VideoPlayer(_vpController!),
+        ),
       );
-    }
-
-    // 2️⃣  Imagen normal
-    else if (imageUrl.isNotEmpty) {
-      media = Image.network(
-        imageUrl,
-        fit: BoxFit.cover,
-        loadingBuilder: (_, child, loading) => loading == null
-            ? child
-            : const Center(child: CircularProgressIndicator()),
-        errorBuilder: (_, __, ___) => Image.asset(
-            'assets/recipes/recipe_placeholder.jpg',
-            fit: BoxFit.cover),
+    } else if (imageUrl.isNotEmpty) {
+      media = Transform.rotate(
+        angle: math.pi, // 180°; usa math.pi / 2 para 90°, etc.
+        child: Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          loadingBuilder: (_, child, loading) => loading == null
+              ? child
+              : const Center(child: CircularProgressIndicator()),
+          errorBuilder: (_, __, ___) =>
+              Image.asset('assets/recipes/platovacio.png', fit: BoxFit.cover),
+        ),
       );
-    }
-
-    // 3️⃣  Loader genérico
-    else {
+    } else {
       media = const Center(child: CircularProgressIndicator());
     }
 
-    // ── ENVOLTORIO QUE EVITA EL OVERFLOW ────────────────────────────────
+    // 2️⃣  If the recipe has video, keep everything upright by rotating BOTH
+    //     the provisional image and the final video once (π radians)
+    if (hasVideo) media = Transform.rotate(angle: 0, child: media);
+
+    // 3️⃣  Wrap to avoid overflow and keep the overlays unchanged
     return Stack(
       children: [
-        SizedBox(
+        Container(
           height: kHeaderHeight,
           width: double.infinity,
+          color: Colors.black, // fondo negro para las bandas
           child: ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: ColorFiltered(
               colorFilter: ColorFilter.mode(
                   Colors.black.withOpacity(0.25), BlendMode.darken),
-              child: FittedBox(
-                // ← recorta / ajusta
-                fit: BoxFit.cover,
-                child: SizedBox(
-                  // mantiene el tamaño real del vídeo
-                  width: _vpController != null && _vpReady
-                      ? _vpController!.value.size.width
-                      : kHeaderHeight,
-                  height: _vpController != null && _vpReady
-                      ? _vpController!.value.size.height
-                      : kHeaderHeight,
-                  child: media,
-                ),
-              ),
+              child: media,
             ),
           ),
         ),
-
-        // ── Tus overlays (duración, bookmark, etc.) SIN CAMBIOS───────────
-        Positioned(
-          bottom: 8,
-          left: 8,
-          child: Row(
-            children: [
-              const Icon(Icons.access_time, color: Colors.white),
-              const SizedBox(width: 4),
-              Text('$duration mins',
-                  style: const TextStyle(color: Colors.white)),
-            ],
-          ),
-        ),
-        Positioned(
-          bottom: 8,
-          right: 8,
-          child: IconButton(
-            icon: Icon(
-              isSaved ? Icons.bookmark : Icons.bookmark_border,
-              color: isSaved ? Colors.yellow : Colors.white,
-            ),
-            onPressed: _toggleSavedState,
-          ),
-        ),
+        ..._buildHeaderOverlays(), // duración, mute, bookmark, etc.
       ],
     );
   }

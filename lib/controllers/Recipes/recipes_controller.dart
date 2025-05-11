@@ -33,18 +33,32 @@ class RecipeController {
   /* ──────────────────────────────────────────────────────────── */
 
   Future<RecipeResponse> createRecipe(RecipeRequest request) async {
+    final jsonBody = jsonEncode(request.toJson());
+
+    // 🔎 print de entrada
+    debugPrint('📤 CREATE[REQ]  title="${request.title}" '
+        'codeUnits=${request.title.codeUnits}');
+    debugPrint('📤 CREATE[REQ]  raw = $jsonBody');
+
     final response = await http.post(
       Uri.parse('$baseUrl/recipes/'),
       headers: await _getHeaders(),
-      body: utf8.encode(jsonEncode(request.toJson())),
-      encoding: utf8,
+      body: jsonBody,
     );
+    debugPrint('📥 CREATE ← status ${response.statusCode}');
+    debugPrint('📥 CREATE ← body        = ${response.body}'); // 🎯 1B
+
+    debugPrint('📥 CREATE[RES]  status=${response.statusCode}');
+    debugPrint('📥 CREATE[RES]  body  = ${response.body}');
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-      return RecipeResponse.fromJson(jsonDecode(response.body));
+      final parsed = RecipeResponse.fromJson(jsonDecode(response.body));
+      debugPrint('📥 CREATE[RES]  title="${parsed.title}" '
+          'codeUnits=${parsed.title.codeUnits}');
+      return parsed;
     }
-    throw Exception(
-        'Failed to create recipe: ${response.statusCode}, ${response.body}');
+    throw Exception('Failed to create recipe '
+        '${response.statusCode} ${response.body}');
   }
 
   Future<RecipeResponse> getRecipeById(int id) async {
@@ -93,10 +107,12 @@ class RecipeController {
   }
 
   Future<RecipeResponse> updateRecipe(int id, RecipeRequest request) async {
+    final jsonBody = jsonEncode(request.toJson());
+    debugPrint('📤 [Flutter→API] body = $jsonBody');
     final response = await http.put(
       Uri.parse('$baseUrl/recipes/$id'),
       headers: await _getHeaders(),
-      body: utf8.encode(jsonEncode(request.toJson())),
+      body: jsonBody,
     );
 
     if (response.statusCode == 200) {
@@ -177,6 +193,7 @@ class RecipeController {
 
   Future<void> updateRecipeVideo(int recipeId, String videoUrl) async {
     final actual = await getRecipeById(recipeId);
+    debugPrint('👁️ VIDEO  pre-title  = ${actual.title}');
 
     final body = {
       'category_id': actual.categoryId,
@@ -195,8 +212,10 @@ class RecipeController {
     final resp = await http.put(
       Uri.parse('$baseUrl/recipes/$recipeId'),
       headers: await _getHeaders(),
-      body: utf8.encode(jsonEncode(body)),
+      body: jsonEncode(body),
     );
+
+    debugPrint('📥 VIDEO ← status ${resp.statusCode}');
 
     if (resp.statusCode != 200) {
       throw Exception('PUT failed: ${resp.statusCode} ${resp.body}');
@@ -205,6 +224,8 @@ class RecipeController {
 
   Future<void> updateRecipeImage(int recipeId, String imageUrl) async {
     final actual = await getRecipeById(recipeId);
+
+    debugPrint('👁️ IMAGE pre-title  = ${actual.title}');
 
     final body = {
       'category_id': actual.categoryId,
@@ -220,11 +241,15 @@ class RecipeController {
       'video_url': actual.videoUrl, // NEW: preserve video
     };
 
+    debugPrint('📤 IMAGE → body  = ${jsonEncode(body)}');
+
     final resp = await http.put(
       Uri.parse('$baseUrl/recipes/$recipeId'),
       headers: await _getHeaders(),
-      body: utf8.encode(jsonEncode(body)),
+      body: jsonEncode(body),
     );
+
+    debugPrint('📥 IMAGE ← status ${resp.statusCode}');
 
     if (resp.statusCode != 200) {
       throw Exception('PUT failed: ${resp.statusCode} ${resp.body}');

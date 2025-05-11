@@ -20,7 +20,7 @@ import 'package:mobile_kitchenmate/controllers/Profiles/sumary_controller.dart';
 import 'package:mobile_kitchenmate/controllers/Profiles/profile_controller.dart';
 import 'package:mobile_kitchenmate/controllers/Profiles/follow_controller.dart';
 import 'package:mobile_kitchenmate/controllers/Profiles/saved_recipe_controller.dart';
-import 'package:mobile_kitchenmate/controllers/Recipes/recipes.dart';
+import 'package:mobile_kitchenmate/controllers/Recipes/recipes_controller.dart';
 
 // Modelos ---------------------------------------------------------------------
 import 'package:mobile_kitchenmate/models/Profiles/summary_response.dart';

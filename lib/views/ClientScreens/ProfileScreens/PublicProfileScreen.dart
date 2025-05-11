@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '/controllers/Profiles/profile_controller.dart';
 import '/controllers/Profiles/follow_controller.dart';
-import '/controllers/Recipes/recipes.dart';
+import '../../../controllers/Recipes/recipes_controller.dart';
 import '/models/Profiles/profile_response.dart';
 import '/models/Profiles/follow_response.dart';
 import '/models/Profiles/follow_request.dart';

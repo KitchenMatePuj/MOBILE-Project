@@ -1,8 +1,9 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 
 import 'package:mobile_kitchenmate/controllers/Recipes/recipe_steps.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:mobile_kitchenmate/controllers/Recipes/recipes.dart';
+import 'package:mobile_kitchenmate/controllers/Recipes/recipes_controller.dart';
 import 'package:mobile_kitchenmate/models/Recipes/recipe_steps_request.dart';
 import 'package:mobile_kitchenmate/models/Recipes/recipes_request.dart';
 import 'package:mobile_kitchenmate/models/Recipes/recipes_response.dart';
@@ -21,6 +22,7 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart'; // Import the services package for input formatters
+import 'package:video_player/video_player.dart';
 
 import '/controllers/authentication/auth_controller.dart';
 import '/models/authentication/login_request_advanced.dart' as advanced;
@@ -108,6 +110,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
   String estimatedPortions = "";
   String category = '';
   String recipeTitle = "";
+  VideoPlayerController? _videoController;
 
   String keycloakUserId = '';
   bool _isSubmitting = false;
@@ -260,6 +263,8 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
       }
 
       // 1️⃣  Crear receta (sin imagen todavía)
+      debugPrint('🟢 Flutter va a enviar title="$recipeTitle" '
+          'codeUnits=${recipeTitle.codeUnits}');
       final newRecipe = await recipeController.createRecipe(RecipeRequest(
         title: recipeTitle, // << AQUI
         categoryId: selectedCategory?.categoryId ?? 1,
@@ -273,21 +278,27 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
         imageUrl: null,
         videoUrl: null,
       ));
+      debugPrint('✅  DEVUELTO  title = ${newRecipe.title} '
+          '(len=${newRecipe.title.codeUnits})');
       final recipeId = newRecipe.recipeId;
 
       // 2️⃣  Si hay foto -> súbela y actualiza
       if (_image != null) {
         final url = await _uploadRecipeImage(recipeId);
+        debugPrint('🟡  BEFORE  uploadImage  title = ${newRecipe.title}');
         if (url != null) {
           await recipeController.updateRecipeImage(recipeId, url);
+          debugPrint('🟡  BEFORE  updateImage  title = ${newRecipe.title}');
         }
       }
 
       // 2️⃣-bis  Video (optional)
       if (_video != null) {
         final vUrl = await _uploadRecipeVideo(recipeId);
+        debugPrint('🟡  BEFORE  uploadVideo  title = ${newRecipe.title}');
         if (vUrl != null) {
           await recipeController.updateRecipeVideo(recipeId, vUrl);
+          debugPrint('🟡  BEFORE  updateVideo  title = ${newRecipe.title}');
         }
       }
 
@@ -439,7 +450,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
 
     return Scaffold(
       resizeToAvoidBottomInset:
-          true, // permitir que el teclado ajuste la pantalla
+          false, // permitir que el teclado ajuste la pantalla
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Creación de Receta'),
@@ -485,7 +496,19 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
                         ],
                       ),
                       const SizedBox(height: 20),
-
+                      Card(
+                        color: Colors.grey[200],
+                        margin: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: ListTile(
+                          leading: const Icon(Icons.videocam),
+                          title: Text(_video != null
+                              ? 'Video seleccionado'
+                              : 'Seleccionar video'),
+                          trailing: const Icon(Icons.edit),
+                          onTap: _pickVideo,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
                       // Tabs -------------------------------------------------------------------
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -557,10 +580,8 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
                 ),
 
                 // Botón Confirmar Receta Fijo ------------------------------------------
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: 16,
+                Align(
+                  alignment: Alignment.bottomCenter,
                   child: SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -708,75 +729,71 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
   }
 
   Future<String?> _showTextInputDialog(
-      String title, TextEditingController controller) {
-    return showAnimatedDialog<String>(
+    String title,
+    TextEditingController controller,
+  ) async {
+    final result = await showInstantDialog<String>(
       context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              backgroundColor: Colors.white,
-              title: Center(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    color: Color(0xFF129575),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+      builder: (ctx) {
+        final okEnabled =
+            ValueNotifier<bool>(controller.text.trim().isNotEmpty);
+
+        return AlertDialog(
+          title: Center(
+            child: Text(
+              title,
+              style: const TextStyle(
+                color: Color(0xFF129575),
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(hintText: 'Ingrese el texto'),
+            onChanged: (txt) => okEnabled.value = txt.trim().isNotEmpty,
+          ),
+          actions: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                // ───── Botón Cancelar ─────
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 238, 99, 89),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Cancelar'),
+                ),
+                // ───── Botón Aceptar reactivo ─────
+                ValueListenableBuilder<bool>(
+                  valueListenable: okEnabled,
+                  builder: (_, enabled, __) => ElevatedButton(
+                    onPressed: enabled
+                        ? () async {
+                            FocusScope.of(ctx).unfocus(); // cierra teclado
+                            await Future.delayed(
+                                const Duration(milliseconds: 60));
+                            Navigator.pop(ctx, controller.text.trim());
+                          }
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF129575),
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Aceptar'),
                   ),
                 ),
-              ),
-              content: TextField(
-                controller: controller,
-                keyboardType: TextInputType.text,
-                decoration: const InputDecoration(
-                  hintText: "Ingrese el texto",
-                ),
-                onTap: () {
-                  if (controller.text.isEmpty) {
-                    controller
-                        .clear(); // Mantiene el texto si ya se ha ingresado algo
-                  }
-                },
-                onChanged: (value) {
-                  setState(() {});
-                },
-              ),
-              actions: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 238, 99, 89),
-                        foregroundColor: Colors.white,
-                      ),
-                      child: const Text('Cancelar'),
-                    ),
-                    ElevatedButton(
-                      onPressed: controller.text.isNotEmpty
-                          ? () {
-                              Navigator.pop(context, controller.text);
-                            }
-                          : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF129575),
-                        foregroundColor: Colors.white,
-                      ),
-                      child: const Text('Aceptar'),
-                    ),
-                  ],
-                ),
               ],
-            );
-          },
+            ),
+          ],
         );
       },
     );
+
+    return result;
   }
 
   Future<String?> _showNumberInputDialog(
@@ -824,7 +841,9 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
                     ),
                     ElevatedButton(
                       onPressed: controller.text.isNotEmpty
-                          ? () {
+                          ? () async {
+                              FocusScope.of(context).unfocus();
+                              await Future.delayed(Duration(milliseconds: 100));
                               Navigator.pop(context, controller.text);
                             }
                           : null,

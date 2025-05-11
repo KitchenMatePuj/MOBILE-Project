@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mobile_kitchenmate/controllers/Recipes/categories.dart';
-import 'package:mobile_kitchenmate/controllers/Recipes/recipes.dart';
+import 'package:mobile_kitchenmate/controllers/Recipes/recipes_controller.dart';
 import 'package:mobile_kitchenmate/models/Recipes/categories_response.dart';
 import 'package:mobile_kitchenmate/models/Recipes/recipes_response.dart';
 
