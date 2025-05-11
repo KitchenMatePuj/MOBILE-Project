@@ -32,6 +32,8 @@ import 'package:mobile_kitchenmate/controllers/Recipes/categories.dart';
 import 'package:mobile_kitchenmate/models/Recipes/categories_response.dart';
 import 'package:mobile_kitchenmate/models/Recipes/categories_request.dart';
 
+import 'dart:developer';
+
 // Default lists for ingredients and units
 const List<String> defaultUnits = [
   'Otro',
@@ -66,6 +68,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
   final TextEditingController preparationTimeController =
       TextEditingController();
   final TextEditingController portionsController = TextEditingController();
+  final Stopwatch _stopwatch = Stopwatch();
   int selectedIndex = 0; // 0 = Detalles, 1 = Ingredientes, 2 = Procedimiento
   List<Ingredient> ingredients = [
     Ingredient(name: "", quantity: "", unit: ""),
@@ -376,6 +379,8 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
     super.initState();
     _strapiCtl = StrapiController(baseUrl: strapiBaseUrl);
 
+    _stopwatch.start();
+
     _authController.getKeycloakUserId().then((id) {
       keycloakUserId = id;
     });
@@ -447,6 +452,13 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
   Widget build(BuildContext context) {
     // ⬇️ cuánto ocupa el teclado en este frame
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_stopwatch.isRunning) {
+        _stopwatch.stop();
+        print('⏱ CreateRecipeScreen: ${_stopwatch.elapsedMilliseconds} ms');
+      }
+    });
 
     return Scaffold(
       resizeToAvoidBottomInset:

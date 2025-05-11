@@ -16,6 +16,8 @@ import '/controllers/authentication/auth_controller.dart';
 import 'package:mobile_kitchenmate/models/Reports/report_request.dart';
 import 'package:mobile_kitchenmate/controllers/Reports/reports_controller.dart';
 
+import 'dart:developer';
+
 class CommentsScreen extends StatefulWidget {
   const CommentsScreen({super.key});
 
@@ -29,6 +31,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
   final String _authBase = dotenv.env['AUTH_URL'] ?? '';
   final String _reportBase = dotenv.env['REPORTS_URL'] ?? '';
+  final Stopwatch _stopwatch = Stopwatch();
 
   late final CommentController _commentCtl;
   late final ProfileController _profileCtl;
@@ -55,6 +58,8 @@ class _CommentsScreenState extends State<CommentsScreen> {
     _profileCtl = ProfileController(baseUrl: profileBaseUrl);
     _authController = AuthController(baseUrl: _authBase);
     _reportController = ReportsController(baseUrl: _reportBase);
+
+    _stopwatch.start();
 
     _authController.getKeycloakUserId().then((id) {
       keycloakUserId = id;
@@ -219,6 +224,12 @@ class _CommentsScreenState extends State<CommentsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_stopwatch.isRunning) {
+        _stopwatch.stop();
+        print('⏱ CommentsScreen: ${_stopwatch.elapsedMilliseconds} ms');
+      }
+    });
     return Scaffold(
       appBar: AppBar(
         title: const Text('Comentarios'),

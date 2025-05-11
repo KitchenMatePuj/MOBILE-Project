@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'providers/user_provider.dart';
 import 'views/SignInAndSignUpScreens/HomeScreen.dart';
 import 'views/SignInAndSignUpScreens/LoginScreen.dart';
-import 'views/SignInAndSignUpScreens/ForgotPasswordScreens/ForgotPasswordScreen.dart';
 import 'views/SignInAndSignUpScreens/SignUpScreen.dart';
 import 'views/ClientScreens/DashboardScreen.dart';
 import 'views/ClientScreens/RecipeScreens/RecipeSearchScreen.dart';
@@ -118,11 +117,9 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => const HomeScreen(),
         '/login': (context) => const LoginScreen(),
-        // '/forgot_password': (context) => const ForgotPasswordScreen(),
         '/sign_up': (context) => const SignUpScreen(),
         '/dashboard': (context) => const DashboardScreen(),
         '/recipe_search': (context) => const RecipeSearchScreen(),
-        //'/recipe_search': (context) => const RecipeSearchScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/email_forgot_pass': (context) => const EmailForgotPassScreen(),
         '/shopping_list': (context) => const ShoppingListScreen(),

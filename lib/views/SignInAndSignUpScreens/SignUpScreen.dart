@@ -17,9 +17,11 @@ import '../../controllers/Recipes/ingredients.dart';
 import '../../models/Recipes/ingredients_response.dart';
 import '../../models/Profiles/ingredientAllery_response.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'dart:developer';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
+  
 
   @override
   SignUpScreenState createState() => SignUpScreenState();
@@ -33,6 +35,7 @@ class SignUpScreenState extends State<SignUpScreen> {
   final _confirmPasswordController = TextEditingController();
   final _phoneController = TextEditingController();
   final _cookingTimeController = TextEditingController();
+  final Stopwatch _stopwatch = Stopwatch();
 
   bool _isFirstNameValid = true;
   bool _isLastNameValid = true;
@@ -69,6 +72,7 @@ class SignUpScreenState extends State<SignUpScreen> {
     _ingredientController = IngredientController(baseUrl: recipesBaseUrl);
     _ingredientAllergyController =
         IngredientAllergyController(baseUrl: profileBaseUrl);
+    _stopwatch.start();
     _fetchIngredients();
   }
 
@@ -215,6 +219,12 @@ class SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_stopwatch.isRunning) {
+        _stopwatch.stop();
+        print('⏱ SignUpScreen: ${_stopwatch.elapsedMilliseconds} ms');
+      }
+    });
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
