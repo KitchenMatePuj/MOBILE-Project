@@ -78,7 +78,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ⚠️ En una app real obtendrías esto del provider de autenticación.
   String _keycloakId = '';
-
+  Map<int, bool> _deletingSaved = {};
   // ---------------------------------------------------------------------------
   // Ciclo de vida – instanciamos controladores y disparamos la carga inicial
   // ---------------------------------------------------------------------------
@@ -131,15 +131,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // Carga las recetas guardadas
     final savedList = await _savedCtl.getSavedRecipesByKeycloak(_keycloakId);
 
-    _savedF = Future.wait(savedList.map((savedRecipe) async {
-      try {
-        return await _recipeCtl.getRecipeById(savedRecipe.recipeId);
-      } catch (_) {
-        return null;
-      }
-    })).then((resolvedList) {
-      return resolvedList.whereType<RecipeResponse>().toList();
-    });
+    _savedF = _loadSavedRecipes();
 
     // Fuerza un rebuild cuando todos los futuros están listos
     setState(() {});
@@ -158,6 +150,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al eliminar la receta: $e')),
       );
+    }
+  }
+
+  Future<List<RecipeResponse>> _loadSavedRecipes() async {
+    final savedList = await _savedCtl.getSavedRecipesByKeycloak(_keycloakId);
+    return Future.wait(savedList.map((saved) async {
+      try {
+        return await _recipeCtl.getRecipeById(saved.recipeId);
+      } catch (_) {
+        return null;
+      }
+    })).then((list) => list.whereType<RecipeResponse>().toList());
+  }
+
+  Future<void> _deleteSavedRecipe(int recipeId) async {
+    setState(() {
+      _deletingSaved[recipeId] = true;
+    });
+
+    try {
+      final savedList = await _savedCtl.getSavedRecipesByKeycloak(_keycloakId);
+      final saved = savedList.firstWhere((s) => s.recipeId == recipeId);
+      await _savedCtl.deleteSavedRecipe(saved.savedRecipeId);
+      setState(() {
+        _savedF = _loadSavedRecipes();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Receta guardada eliminada')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al eliminar guardada: $e')),
+      );
+    } finally {
+      setState(() {
+        _deletingSaved.remove(recipeId);
+      });
     }
   }
 
@@ -475,7 +504,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     imageUrl: imageUrl,
                     avatarUrl: avatar,
                     rating: recipe.ratingAvg.round(),
-                    onDelete: () => _showDeleteConfirmation(recipe.recipeId),
+                    onDelete: () {
+                      if (_tabIndex == 0) {
+                        _showDeleteConfirmation(recipe.recipeId);
+                      } else {
+                        _deleteSavedRecipe(recipe.recipeId);
+                      }
+                    },
+                    isDeleting: _deletingSaved[recipe.recipeId] == true,
                   ),
                 );
               },
@@ -588,6 +624,7 @@ class RecipeCard extends StatelessWidget {
   final int? rating;
   final String avatarUrl;
   final VoidCallback onDelete;
+  final bool isDeleting;
 
   const RecipeCard({
     super.key,
@@ -598,6 +635,7 @@ class RecipeCard extends StatelessWidget {
     required this.avatarUrl,
     this.rating,
     required this.onDelete,
+    this.isDeleting = false,
   });
 
   @override
@@ -692,15 +730,27 @@ class RecipeCard extends StatelessWidget {
           Positioned(
             top: 8,
             right: 8,
-            child: GestureDetector(
-              onTap: onDelete,
-              child: const CircleAvatar(
-                backgroundColor: Colors.white,
-                radius: 16,
-                child: Icon(Icons.delete, size: 18, color: Colors.red),
-              ),
-            ),
-          ),
+            child: isDeleting
+                ? const CircleAvatar(
+                    radius: 16,
+                    backgroundColor: Colors.white,
+                    child: Padding(
+                      padding: EdgeInsets.all(4),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                      ),
+                    ),
+                  )
+                : GestureDetector(
+                    onTap: onDelete,
+                    child: const CircleAvatar(
+                      backgroundColor: Colors.white,
+                      radius: 16,
+                      child: Icon(Icons.delete, size: 18, color: Colors.red),
+                    ),
+                  ),
+          )
         ],
       ),
     );

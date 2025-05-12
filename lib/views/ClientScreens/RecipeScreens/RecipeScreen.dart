@@ -593,9 +593,13 @@ class _RecipeScreenState extends State<RecipeScreen> with RouteAware {
         await _savedController.createSavedRecipe(newSavedRecipe);
       }
 
-      // Actualiza el estado del icono
+      final savedRecipes =
+          await _savedController.getSavedRecipesByKeycloak(keycloakUserId);
+      final isRecipeStillSaved =
+          savedRecipes.any((saved) => saved.recipeId == recipeId);
+
       setState(() {
-        isSaved = !isSaved;
+        isSaved = isRecipeStillSaved;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(

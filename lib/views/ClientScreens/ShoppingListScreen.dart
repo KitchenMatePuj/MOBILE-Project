@@ -416,7 +416,13 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                           );
 
                           // Refresca la vista al eliminar
-                          setState(() {}); // Fuerza el rebuild para recargar
+                          setState(() {
+                            shoppingListsCache?.removeWhere(
+                              (list) =>
+                                  list.shoppingListId ==
+                                  shoppingList.shoppingListId,
+                            );
+                          }); // Fuerza el rebuild para recargar
                         } catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
