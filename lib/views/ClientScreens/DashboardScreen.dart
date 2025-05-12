@@ -44,7 +44,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late RecommendationsController _recommendationController;
   late AuthController _authController;
   ImageProvider _profileImage =
-      const AssetImage('assets/recipes/platovacio.png');
+      const AssetImage('assets/chefs/default_user.png');
   bool _profileImageLoaded = false;
   bool _recommendationsLoaded = false;
   bool _publishedRecipesLoaded = false;
@@ -91,7 +91,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         // Imagen (igual que antes)
         if ((profile.profilePhoto ?? '').isNotEmpty) {
           final fullImageUrl = getFullImageUrl(profile.profilePhoto!,
-              placeholder: 'assets/recipes/platovacio.png');
+              placeholder: 'assets/chefs/default_user.png');
 
           final imageProvider = NetworkImage(fullImageUrl);
           await precacheImage(imageProvider, context);
@@ -103,7 +103,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             });
           }
         } else {
-          _profileImage = const AssetImage('assets/recipes/platovacio.png');
+          _profileImage = const AssetImage('assets/chefs/default_user.png');
           _profileImageLoaded = true;
         }
 
@@ -344,7 +344,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     final img = getFullImageUrl(
                                       rec.imageUrl,
                                       placeholder:
-                                          'assets/recipes/platovacio.png',
+                                          'assets/chefs/default_user.png',
                                     );
 
                                     return Padding(
@@ -393,7 +393,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     final img = getFullImageUrl(
                                       recipe.imageUrl,
                                       placeholder:
-                                          'assets/recipes/platovacio.png',
+                                          'assets/chefs/default_user.png',
                                     );
 
                                     return Padding(

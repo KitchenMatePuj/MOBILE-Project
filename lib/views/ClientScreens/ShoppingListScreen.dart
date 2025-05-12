@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '/controllers/Profiles/shopping_list_controller.dart';
@@ -139,12 +141,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                       _buildSelectionOption(
                         'Por Receta',
                         !isIngredientSelected,
-                        () {
+                        () async {
                           setState(() {
                             isIngredientSelected = false;
                             selectedShoppingList = null;
                             searchTerm = '';
+                            shoppingListsCache = null;
                           });
+                          await _fetchShoppingLists();
                         },
                       ),
                     ],
@@ -161,7 +165,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                                 ? 'Ingredientes Pendientes'
                                 : selectedShoppingList == null
                                     ? 'Recetas en Lista de Compras'
-                                    : selectedShoppingList!.recipeName,
+                                    : _fixEncoding(
+                                        selectedShoppingList!.recipeName),
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -185,52 +190,55 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                   ),
                   Expanded(
                     child: isIngredientSelected
-                        ? FutureBuilder<List<IngredientResponse>>(
-                            future: _fetchAllIngredients(),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const Center(
-                                    child: CircularProgressIndicator());
-                              } else if (snapshot.hasError) {
-                                WidgetsBinding.instance
-                                    .addPostFrameCallback((_) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                          'Error al obtener los ingredientes: ${snapshot.error}'),
-                                    ),
-                                  );
-                                });
+                        ? profileId == null
+                            ? const Center(child: CircularProgressIndicator())
+                            : FutureBuilder<List<IngredientResponse>>(
+                                future: _fetchAllIngredients(),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState ==
+                                      ConnectionState.waiting) {
+                                    return const Center(
+                                        child: CircularProgressIndicator());
+                                  } else if (snapshot.hasError) {
+                                    WidgetsBinding.instance
+                                        .addPostFrameCallback((_) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                              'Error al obtener los ingredientes: ${snapshot.error}'),
+                                        ),
+                                      );
+                                    });
 
-                                return const Center(
-                                    child: Text(
-                                        'Ocurrió un error al cargar los ingredientes.'));
-                              } else if (!snapshot.hasData ||
-                                  snapshot.data!.isEmpty) {
-                                return const Center(
-                                    child:
-                                        Text('No se encontraron ingredientes'));
-                              }
+                                    return const Center(
+                                        child: Text(
+                                            'Ocurrió un error al cargar los ingredientes.'));
+                                  } else if (!snapshot.hasData ||
+                                      snapshot.data!.isEmpty) {
+                                    return const Center(
+                                        child: Text(
+                                            'No se encontraron ingredientes'));
+                                  }
 
-                              final ingredients = snapshot.data!
-                                  .where((ingredient) => ingredient
-                                      .ingredientName
-                                      .toLowerCase()
-                                      .contains(searchTerm.toLowerCase()))
-                                  .toList();
+                                  final ingredients = snapshot.data!
+                                      .where((ingredient) => ingredient
+                                          .ingredientName
+                                          .toLowerCase()
+                                          .contains(searchTerm.toLowerCase()))
+                                      .toList();
 
-                              return ListView.builder(
-                                itemCount: ingredients.length,
-                                itemBuilder: (context, index) {
-                                  final ingredient = ingredients[index];
-                                  return IngredientCard(
-                                    ingredient: ingredient,
+                                  return ListView.builder(
+                                    itemCount: ingredients.length,
+                                    itemBuilder: (context, index) {
+                                      final ingredient = ingredients[index];
+                                      return IngredientCard(
+                                        ingredient: ingredient,
+                                      );
+                                    },
                                   );
                                 },
-                              );
-                            },
-                          )
+                              )
                         : _buildRecipeContent(),
                   ),
                 ],
@@ -245,7 +253,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       await shoppingListController.deleteShoppingList(shoppingListId);
       setState(() {}); // Fuerza la recarga de las listas
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lista de compras eliminada exitosamente')),
+        const SnackBar(
+            content: Text('Lista de compras eliminada exitosamente')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -259,7 +268,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Eliminar receta de lista de compras'),
-        content: const Text('¿Está seguro que desea eliminar esta receta de la lista de compras?'),
+        content: const Text(
+            '¿Está seguro que desea eliminar esta receta de la lista de compras?'),
         actionsAlignment: MainAxisAlignment.center, // Centra los botones
         actions: [
           ElevatedButton(
@@ -294,10 +304,22 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       final shoppingLists =
           await shoppingListController.listShoppingListsByProfile(profileId!);
 
+      for (final list in shoppingLists) {
+        print('🛒 Lista: ID=${list.shoppingListId}, '
+            'Name="${list.recipeName}", '
+            'Photo="${list.recipePhoto}"');
+      }
+
       List<IngredientResponse> allIngredients = [];
       for (var shoppingList in shoppingLists) {
+        print(
+            '📋 Revisando lista ID: ${shoppingList.shoppingListId} - ${shoppingList.recipeName}');
         final listIngredients = await ingredientController
             .listIngredientsByShoppingList(shoppingList.shoppingListId);
+        print('➡️ Ingredientes recibidos: ${listIngredients.length}');
+        for (var ing in listIngredients) {
+          print('   - ${ing.ingredientName}');
+        }
         allIngredients.addAll(listIngredients);
       }
       return allIngredients;
@@ -358,7 +380,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                   return RecipeShoppingListCard(
                     shoppingList: shoppingList,
                     onTap: () {
-                      // Cuando se toque la tarjeta
                       setState(() {
                         selectedShoppingList = shoppingList;
                       });
@@ -394,9 +415,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                                 content: Text('Lista eliminada exitosamente')),
                           );
 
-                          // Limpiar la caché y recargar
-                          setState(() => shoppingListsCache = null);
-                          await _fetchShoppingLists();
+                          // Refresca la vista al eliminar
+                          setState(() {}); // Fuerza el rebuild para recargar
                         } catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
@@ -563,6 +583,14 @@ class IngredientsPendingList extends StatelessWidget {
   }
 }
 
+String _fixEncoding(String text) {
+  try {
+    return utf8.decode(latin1.encode(text));
+  } catch (_) {
+    return text;
+  }
+}
+
 class RecipeShoppingListCard extends StatefulWidget {
   final ShoppingListResponse shoppingList;
   final Future<void> Function() onDelete;
@@ -619,13 +647,21 @@ class _RecipeShoppingListCardState extends State<RecipeShoppingListCard> {
               child: widget.shoppingList.recipePhoto != null &&
                       widget.shoppingList.recipePhoto!.isNotEmpty
                   ? Image.network(
-                      widget.shoppingList.recipePhoto!,
+                      widget.shoppingList.recipePhoto ?? '',
                       width: 100,
                       height: 100,
                       fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Image.asset(
+                          'assets/recipes/platovacio.png',
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.cover,
+                        );
+                      },
                     )
                   : Image.asset(
-                      'assets/recipes/recipe_placeholder.jpg',
+                      'assets/recipes/platovacio.png',
                       width: 100,
                       height: 100,
                       fit: BoxFit.cover,
@@ -633,17 +669,14 @@ class _RecipeShoppingListCardState extends State<RecipeShoppingListCard> {
             ),
             Expanded(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                child: Text(
-                  widget.shoppingList.recipeName,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                  child: Text(
+                    _fixEncoding(widget.shoppingList.recipeName),
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                  )),
             ),
             Padding(
               padding: const EdgeInsets.only(right: 8),
@@ -726,7 +759,7 @@ class IngredientCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              ingredient.ingredientName,
+              _fixEncoding(ingredient.ingredientName),
               style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -743,6 +776,7 @@ class IngredientCard extends StatelessWidget {
     );
   }
 }
+
 class ShoppingListCard extends StatelessWidget {
   final ShoppingListResponse shoppingList;
   final VoidCallback onDelete;
@@ -769,7 +803,8 @@ class ShoppingListCard extends StatelessWidget {
             children: [
               // Imagen de la receta
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(12)),
                 child: Image.network(
                   recipePhotoUrl,
                   height: 150,

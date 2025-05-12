@@ -58,6 +58,7 @@ class _EditprofileState extends State<EditprofileScreen> {
   final TextEditingController cookingTimeController = TextEditingController();
   late StrapiController strapiController =
       StrapiController(baseUrl: strapiBaseUrl);
+  final TextEditingController descriptionController = TextEditingController();
 
   @override
   void initState() {
@@ -93,6 +94,7 @@ class _EditprofileState extends State<EditprofileScreen> {
         emailController.text = profile?.email ?? '';
         phoneController.text = profile?.phone ?? '';
         cookingTimeController.text = profile?.cookingTime?.toString() ?? '';
+        descriptionController.text = profile?.description ?? '';
       });
     } catch (e) {
       print('Error al cargar perfil o alergias: $e');
@@ -320,6 +322,17 @@ class _EditprofileState extends State<EditprofileScreen> {
                       const SizedBox(height: 12),
 
                       TextFormField(
+                        controller: descriptionController,
+                        maxLines: 3,
+                        decoration: const InputDecoration(
+                          labelText: 'Descripción personal',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.info_outline),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      TextFormField(
                         controller: lastNameController,
                         decoration: const InputDecoration(
                           labelText: 'Apellido',
@@ -385,6 +398,7 @@ class _EditprofileState extends State<EditprofileScreen> {
                                   accountStatus: profile?.accountStatus,
                                   cookingTime:
                                       int.tryParse(cookingTimeController.text),
+                                  description: descriptionController.text,
                                 );
 
                                 try {

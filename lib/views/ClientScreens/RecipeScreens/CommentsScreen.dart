@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mobile_kitchenmate/controllers/Reports/reports_controller.dart';
@@ -130,6 +132,14 @@ class _CommentsScreenState extends State<CommentsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('No se pudo publicar: $e')),
       );
+    }
+  }
+
+  String _fixEncoding(String text) {
+    try {
+      return utf8.decode(latin1.encode(text));
+    } catch (_) {
+      return text;
     }
   }
 
@@ -283,7 +293,8 @@ class _CommentsScreenState extends State<CommentsScreen> {
                           leading: CircleAvatar(
                             backgroundImage: imageProvider,
                           ),
-                          title: Text(profile?.firstName ?? 'Chef'),
+                          title:
+                              Text(_fixEncoding(profile?.firstName ?? 'Chef')),
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -301,7 +312,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                   ),
                                 ),
                               const SizedBox(height: 4),
-                              Text(c.text),
+                              Text(_fixEncoding(c.text)),
                               Text(
                                 '${c.createdAt.toLocal()}'.split(' ')[0],
                                 style: const TextStyle(

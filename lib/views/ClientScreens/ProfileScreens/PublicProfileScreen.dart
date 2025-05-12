@@ -78,6 +78,14 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     });
   }
 
+  String _fixEncoding(String text) {
+    try {
+      return utf8.decode(latin1.encode(text));
+    } catch (_) {
+      return text;
+    }
+  }
+
   Future<void> _checkIfFollowing() async {
     if (loggedProfileId == null) return;
 
@@ -331,7 +339,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              profile.firstName ?? 'Nombre no disponible',
+                              _fixEncoding(profile.firstName!) ??
+                                  'Nombre no disponible',
                               style: const TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
@@ -341,8 +350,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           ),
                           const SizedBox(height: 8),
                           ProfileBio(
-                              description:
-                                  'Biografía del usuario'), // Biografía quemada
+                            description: profile.description?.isNotEmpty == true
+                                ? _fixEncoding(profile.description!)
+                                : 'Este usuario aún no ha escrito una biografía.',
+                          ), // Biografía quemada
                           const SizedBox(height: 16),
 
                           Row(

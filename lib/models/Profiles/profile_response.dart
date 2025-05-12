@@ -10,6 +10,7 @@ class ProfileResponse {
   final int? cookingTime;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final String? description;
 
   ProfileResponse({
     required this.profileId,
@@ -23,6 +24,7 @@ class ProfileResponse {
     this.cookingTime,
     this.createdAt,
     this.updatedAt,
+    this.description,
   });
 
   factory ProfileResponse.fromJson(Map<String, dynamic> json) {
@@ -42,6 +44,7 @@ class ProfileResponse {
       updatedAt: json['updated_at'] != null
           ? DateTime.parse(json['updated_at'])
           : null,
+      description: json['description'],
     );
   }
 }

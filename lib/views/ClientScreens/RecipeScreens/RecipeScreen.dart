@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:mobile_kitchenmate/main.dart'; // Asegúrate de importar bien la ruta
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -50,7 +51,7 @@ class RecipeScreen extends StatefulWidget {
   _RecipeScreenState createState() => _RecipeScreenState();
 }
 
-class _RecipeScreenState extends State<RecipeScreen> {
+class _RecipeScreenState extends State<RecipeScreen> with RouteAware {
   int selectedIndex = 0;
   bool isSaved = false;
 
@@ -68,7 +69,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
   bool isFollowing = false;
   bool _isAddingToShoppingList = false;
   bool _isMuted = false;
-
+  VoidCallback? _fullscreenListener;
   String? _videoUrl; // url que llega del backend
   VideoPlayerController? _vpController; // controller del plugin
   bool _vpReady = false;
@@ -92,10 +93,13 @@ class _RecipeScreenState extends State<RecipeScreen> {
   late AuthController _authController;
   late FollowController _followController;
   late ReportsController _reportController;
-
+  Duration _currentVideoPosition = Duration.zero;
   late String _authUserId = '';
   late String recipeUserId = '';
   late String recipeUserId1 = '';
+  int? chefProfileId;
+  bool _isRecipeLoaded = false;
+  bool _comingFromFullscreen = false;
 
   Stopwatch _initStopwatch = Stopwatch();
   Stopwatch _loadRecipeDatapwatch = Stopwatch();
@@ -106,6 +110,13 @@ class _RecipeScreenState extends State<RecipeScreen> {
     } catch (_) {
       return text;
     }
+  }
+
+  void _pauseVideoAndNavigate(String routeName) {
+    if (_vpController != null && _vpController!.value.isPlaying) {
+      _vpController!.pause();
+    }
+    Navigator.pushReplacementNamed(context, routeName);
   }
 
   Future<void> _loadRecipeData(int recipeId) async {
@@ -175,6 +186,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
       );
 
       _videoUrl = recipe.videoUrl;
+      chefProfileId = chef.profileId;
 
       if (_videoUrl != null && _videoUrl!.isNotEmpty) {
         // prepara el reproductor en segundo plano
@@ -187,7 +199,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
         recipeTitle = _fixEncoding(recipe.title ?? '');
         duration = recipe.cookingTime ?? 0;
         totalServings = recipe.totalPortions ?? 0;
-        chefName = chef.firstName ?? 'Chef sin nombre';
+        chefName = _fixEncoding(chef.firstName!) ?? 'Chef sin nombre';
         chefImage = (chef.profilePhoto != null && chef.profilePhoto!.isNotEmpty)
             ? (chef.profilePhoto!.startsWith('http')
                 ? chef.profilePhoto!
@@ -206,6 +218,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
         totalComments = comments.length;
         isSaved = isRecipeSaved;
         isFollowing = isUserFollowing;
+        _isRecipeLoaded = true;
       });
     } catch (e) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -231,6 +244,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
     _vpController!
       ..setLooping(true) // se repite en bucle
       ..setVolume(1.0) // volumen normal
+      ..seekTo(Duration.zero)
       ..play();
     if (mounted) setState(() => _vpReady = true);
   }
@@ -248,30 +262,25 @@ class _RecipeScreenState extends State<RecipeScreen> {
               backgroundColor: Colors.white, // Fondo blanco para todo el cuadro
               title: const Text('Estas a punto de reportar esta receta'),
               content: Column(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Por favor, escribe el motivo del reporte:'),
-                  const SizedBox(height: 10),
                   TextField(
                     controller: reportController,
                     maxLines: 3,
                     onChanged: (value) {
-                      // Actualiza el estado del botón cuando cambia el texto
-                      setState(() {
-                        isButtonEnabled = value.trim().isNotEmpty;
-                      });
+                      if (Navigator.of(context).canPop()) {
+                        setState(() {
+                          isButtonEnabled = value.trim().isNotEmpty;
+                        });
+                      }
                     },
-                    decoration: const InputDecoration(
-                      hintText: 'Escribe los detalles aquí...',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
+                  )
                 ],
               ),
               actions: [
                 ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context); // Cerrar el popup
+                    reportController.dispose();
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color.fromARGB(255, 238, 99, 89),
@@ -301,6 +310,76 @@ class _RecipeScreenState extends State<RecipeScreen> {
     );
   }
 
+  Widget _buildFullScreenPlayer(
+    void Function(void Function()) setModalState,
+    Duration position,
+    Duration duration,
+  ) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Expanded(
+          child: AspectRatio(
+            aspectRatio: _vpController!.value.aspectRatio,
+            child: VideoPlayer(_vpController!),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            children: [
+              Slider(
+                activeColor: Colors.white,
+                inactiveColor: Colors.white30,
+                min: 0,
+                max: duration.inMilliseconds.toDouble(),
+                value: math.min(position.inMilliseconds.toDouble(),
+                    duration.inMilliseconds.toDouble()),
+                onChanged: (value) {
+                  _vpController?.seekTo(Duration(milliseconds: value.toInt()));
+                  // Ya no hacemos pop aquí
+                },
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _formatDuration(position),
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  IconButton(
+                    iconSize: 40,
+                    icon: Icon(
+                      _vpController!.value.isPlaying
+                          ? Icons.pause
+                          : Icons.play_arrow,
+                      color: Colors.white,
+                    ),
+                    onPressed: () {
+                      _togglePlayPause();
+                      setModalState(() {});
+                    },
+                  ),
+                  Text(
+                    _formatDuration(duration),
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
   Future<void> _addToShoppingList() async {
     setState(() {
       _isAddingToShoppingList = true;
@@ -324,10 +403,8 @@ class _RecipeScreenState extends State<RecipeScreen> {
       final shoppingListId = shoppingListResponse.shoppingListId;
 
       // Obtén todos los ingredientes de la receta actual
-      final allIngredients = await _ingredientController.fetchIngredients();
-      final recipeIngredients = allIngredients
-          .where((ingredient) => ingredient.recipeId == recipeId)
-          .toList();
+      final recipeIngredients =
+          await _ingredientController.getIngredientsByRecipe(recipeId!);
 
       // Guarda todos los ingredientes en el backend de Profiles
       for (final ingredient in recipeIngredients) {
@@ -368,11 +445,15 @@ class _RecipeScreenState extends State<RecipeScreen> {
     if (_vpController == null) return;
 
     final wasPlaying = _vpController!.value.isPlaying;
-    // keep it playing; you decide if you prefer to pause:
-    // if (wasPlaying) _vpController!.pause();
+    _comingFromFullscreen = true;
 
     final isLandscape =
         _vpController!.value.size.width > _vpController!.value.size.height;
+
+    Duration position = _vpController?.value.position ?? Duration.zero;
+    Duration duration = _vpController?.value.duration ?? Duration.zero;
+
+    bool isDisposed = false;
 
     await Navigator.push(
       context,
@@ -381,26 +462,50 @@ class _RecipeScreenState extends State<RecipeScreen> {
           backgroundColor: Colors.black,
           body: GestureDetector(
             onTap: () => Navigator.pop(context),
-            child: Center(
-              child: isLandscape
-                  ? RotatedBox(
-                      quarterTurns: 1, // gira 90 grados
-                      child: AspectRatio(
-                        aspectRatio: _vpController!.value.aspectRatio,
-                        child: VideoPlayer(_vpController!),
-                      ),
-                    )
-                  : AspectRatio(
-                      aspectRatio: _vpController!.value.aspectRatio,
-                      child: VideoPlayer(_vpController!),
-                    ),
+            child: StatefulBuilder(
+              builder: (context, setModalState) {
+                // Agrega listener aquí
+                _fullscreenListener = () {
+                  if (isDisposed) return;
+
+                  final newPos = _vpController?.value.position ?? Duration.zero;
+                  setModalState(() {
+                    position = newPos;
+                  });
+                };
+
+                _vpController?.addListener(_fullscreenListener!);
+
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  // Asegurarse de que esté visible cuando inicie
+                  setModalState(() {});
+                });
+
+                return Center(
+                  child: isLandscape
+                      ? RotatedBox(
+                          quarterTurns: 1,
+                          child: _buildFullScreenPlayer(
+                              setModalState, position, duration),
+                        )
+                      : _buildFullScreenPlayer(
+                          setModalState, position, duration),
+                );
+              },
             ),
           ),
         ),
       ),
     );
 
-    // on pop: resume if it was playing
+    // Al cerrar la pantalla: remover listener y marcar como desmontado
+    isDisposed = true;
+    if (_fullscreenListener != null) {
+      _vpController?.removeListener(_fullscreenListener!);
+      _fullscreenListener = null;
+    }
+
+    if (mounted) setState(() {});
     if (wasPlaying) _vpController!.play();
   }
 
@@ -523,7 +628,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
     _authController = AuthController(baseUrl: _authBase);
     _followController = FollowController(baseUrl: profileBaseUrl);
     _reportController = ReportsController(baseUrl: _reportBase);
-    
+
     _stopwatch.start();
 
     _initializeAuthUser();
@@ -531,8 +636,13 @@ class _RecipeScreenState extends State<RecipeScreen> {
 
   @override
   void dispose() {
-    _vpController?..pause(); // ← por si seguía reproduciendo
-    _vpController?..dispose(); // ← libera el decoder y la textura
+    if (_fullscreenListener != null) {
+      _vpController?.removeListener(_fullscreenListener!);
+    }
+    _vpController?.pause();
+    _vpController?.dispose();
+    _fullscreenListener = null;
+    routeObserver.unsubscribe(this);
     super.dispose();
   }
 
@@ -585,6 +695,21 @@ class _RecipeScreenState extends State<RecipeScreen> {
           onPressed: _toggleSavedState,
         ),
       ),
+
+      if (_vpController != null && _vpReady)
+        Positioned.fill(
+          child: Align(
+            alignment: Alignment.center,
+            child: IconButton(
+              iconSize: 48,
+              icon: Icon(
+                _vpController!.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                color: Colors.white,
+              ),
+              onPressed: _togglePlayPause,
+            ),
+          ),
+        ),
     ];
   }
 
@@ -600,6 +725,11 @@ class _RecipeScreenState extends State<RecipeScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final modalRoute = ModalRoute.of(context);
+    if (modalRoute != null) {
+      routeObserver.subscribe(this, modalRoute);
+    }
+
     if (_loaded) return; // Evita recargas múltiples.
 
     final args = ModalRoute.of(context)!.settings.arguments as Map?;
@@ -623,6 +753,21 @@ class _RecipeScreenState extends State<RecipeScreen> {
     _ensureAuthAndLoad(); // ← Nuevo helper.
   }
 
+  @override
+  void didPopNext() {
+    super.didPopNext();
+
+    if (_comingFromFullscreen) {
+      _comingFromFullscreen = false;
+      return; // ✅ Salir sin refrescar ni hacer setState
+    }
+
+    // ← Vienes de otra pantalla como "comentarios" → recargar todo
+    if (recipeId != null) {
+      _loadRecipeData(recipeId!);
+    }
+  }
+
   /// Asegura que keycloakUserId esté cargado y luego llama a _loadRecipeData.
   Future<void> _ensureAuthAndLoad() async {
     if (keycloakUserId.isEmpty) {
@@ -638,8 +783,19 @@ class _RecipeScreenState extends State<RecipeScreen> {
       }
     }
 
-    // Ahora que ya tenemos el userId, hacemos la carga de la receta.
+    // Recarga completa
     await _loadRecipeData(recipeId!);
+  }
+
+  void _togglePlayPause() {
+    if (_vpController == null) return;
+    setState(() {
+      if (_vpController!.value.isPlaying) {
+        _vpController!.pause();
+      } else {
+        _vpController!.play();
+      }
+    });
   }
 
   @override
@@ -657,7 +813,12 @@ class _RecipeScreenState extends State<RecipeScreen> {
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (_vpController != null && _vpController!.value.isPlaying) {
+              _vpController!.pause();
+            }
+            Navigator.pop(context);
+          },
         ),
         actions: [
           IconButton(
@@ -695,48 +856,66 @@ class _RecipeScreenState extends State<RecipeScreen> {
   }
 
   Widget _buildImageHeader() {
-    const double kHeaderHeight = 200; // desired header height
+    const double kHeaderHeight = 200;
     final bool hasVideo = _videoUrl != null && _videoUrl!.isNotEmpty;
 
-    // 1️⃣  Build the actual media (video if ready, else image/loader)
     Widget media;
 
-    if (_vpController != null && _vpReady) {
-      media = Transform.rotate(
-        angle: math.pi,
-        child: AspectRatio(
-          aspectRatio: _vpController!.value.aspectRatio,
-          child: VideoPlayer(_vpController!),
-        ),
-      );
+    if (hasVideo) {
+      if (_vpController != null && _vpReady) {
+        final videoSize = _vpController!.value.size;
+        final shouldRotate = videoSize.height > videoSize.width;
+
+        media = Center(
+          child: SizedBox(
+            width: videoSize.width > MediaQuery.of(context).size.width
+                ? MediaQuery.of(context).size.width
+                : videoSize.width,
+            height: kHeaderHeight,
+            child: FittedBox(
+              fit: BoxFit.contain,
+              child: SizedBox(
+                width: videoSize.width,
+                height: videoSize.height,
+                child: shouldRotate
+                    ? Transform.rotate(
+                        angle: math.pi,
+                        child: VideoPlayer(_vpController!),
+                      )
+                    : VideoPlayer(_vpController!),
+              ),
+            ),
+          ),
+        );
+      } else {
+        // 👇 Aquí mostramos el spinner mientras el video se inicializa
+        media = const Center(
+          child: SizedBox(
+            height: 50,
+            width: 50,
+            child: CircularProgressIndicator(color: Colors.white),
+          ),
+        );
+      }
     } else if (imageUrl.isNotEmpty) {
-      media = Transform.rotate(
-        angle: math.pi, // 180°; usa math.pi / 2 para 90°, etc.
-        child: Image.network(
-          imageUrl,
-          fit: BoxFit.cover,
-          loadingBuilder: (_, child, loading) => loading == null
-              ? child
-              : const Center(child: CircularProgressIndicator()),
-          errorBuilder: (_, __, ___) =>
-              Image.asset('assets/recipes/platovacio.png', fit: BoxFit.cover),
-        ),
+      media = Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: kHeaderHeight,
+        errorBuilder: (_, __, ___) =>
+            Image.asset('assets/recipes/platovacio.png', fit: BoxFit.cover),
       );
     } else {
       media = const Center(child: CircularProgressIndicator());
     }
 
-    // 2️⃣  If the recipe has video, keep everything upright by rotating BOTH
-    //     the provisional image and the final video once (π radians)
-    if (hasVideo) media = Transform.rotate(angle: 0, child: media);
-
-    // 3️⃣  Wrap to avoid overflow and keep the overlays unchanged
     return Stack(
       children: [
         Container(
           height: kHeaderHeight,
           width: double.infinity,
-          color: Colors.black, // fondo negro para las bandas
+          color: Colors.black,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: ColorFiltered(
@@ -746,7 +925,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
             ),
           ),
         ),
-        ..._buildHeaderOverlays(), // duración, mute, bookmark, etc.
+        ..._buildHeaderOverlays(),
       ],
     );
   }
@@ -762,19 +941,31 @@ class _RecipeScreenState extends State<RecipeScreen> {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        GestureDetector(
-          onTap: () {
-            Navigator.pushNamed(
-              context,
-              '/comments',
-              arguments: {'recipeId': recipeId},
-            );
-          },
-          child: Text(
-            '$totalComments Comentarios',
-            style: const TextStyle(fontSize: 14, color: Colors.grey),
-          ),
-        ),
+        _isRecipeLoaded
+            ? GestureDetector(
+                onTap: () {
+                  if (_vpController != null && _vpController!.value.isPlaying) {
+                    _vpController!.pause();
+                  }
+                  Navigator.pushNamed(
+                    context,
+                    '/comments',
+                    arguments: {'recipeId': recipeId},
+                  );
+                },
+                child: Text(
+                  '$totalComments Comentarios',
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+              )
+            : const SizedBox(
+                width: 100,
+                child: Text(
+                  'Cargando...',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  textAlign: TextAlign.end,
+                ),
+              ),
       ],
     );
   }
@@ -787,10 +978,13 @@ class _RecipeScreenState extends State<RecipeScreen> {
           children: [
             GestureDetector(
               onTap: () {
+                if (_vpController != null && _vpController!.value.isPlaying) {
+                  _vpController!.pause();
+                }
                 Navigator.pushNamed(
                   context,
                   '/public_profile',
-                  arguments: {'profile_id': recipeUserId}, // Usa el profileId
+                  arguments: {'profile_id': chefProfileId},
                 );
               },
               child: CircleAvatar(
@@ -803,10 +997,13 @@ class _RecipeScreenState extends State<RecipeScreen> {
             const SizedBox(width: 10),
             GestureDetector(
               onTap: () {
+                if (_vpController != null && _vpController!.value.isPlaying) {
+                  _vpController!.pause();
+                }
                 Navigator.pushNamed(
                   context,
                   '/public_profile',
-                  arguments: {'profile_id': recipeUserId}, // Usa el profileId
+                  arguments: {'profile_id': chefProfileId},
                 );
               },
               child: Text(
@@ -822,7 +1019,9 @@ class _RecipeScreenState extends State<RecipeScreen> {
         Row(
           children: [
             ElevatedButton(
-              onPressed: _isAddingToShoppingList ? null : _addToShoppingList,
+              onPressed: (!_isRecipeLoaded || _isAddingToShoppingList)
+                  ? null
+                  : _addToShoppingList,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF129575),
               ),
@@ -917,7 +1116,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(ingredient['name']!,
+                Text(_fixEncoding(ingredient['name']!)!,
                     style: const TextStyle(fontWeight: FontWeight.bold)),
                 //${ingredient['quantity']}
                 Text('${ingredient['unit']}'),
@@ -963,19 +1162,19 @@ class _RecipeScreenState extends State<RecipeScreen> {
       onTap: (index) {
         switch (index) {
           case 0:
-            Navigator.pushNamed(context, '/dashboard');
+            _pauseVideoAndNavigate('/dashboard');
             break;
           case 1:
-            Navigator.pushNamed(context, '/recipe_search');
+            _pauseVideoAndNavigate('/recipe_search');
             break;
           case 2:
-            Navigator.pushNamed(context, '/create');
+            _pauseVideoAndNavigate('/create');
             break;
           case 3:
-            Navigator.pushNamed(context, '/shopping_list');
+            _pauseVideoAndNavigate('/shopping_list');
             break;
           case 4:
-            Navigator.pushNamed(context, '/profile');
+            _pauseVideoAndNavigate('/profile');
             break;
         }
       },

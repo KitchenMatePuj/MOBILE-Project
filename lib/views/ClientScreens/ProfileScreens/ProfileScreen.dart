@@ -236,7 +236,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              profile.firstName ?? 'Nombre no disponible',
+                              _fixEncoding(profile.firstName!) ??
+                                  'Nombre no disponible',
                               style: const TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
@@ -244,9 +245,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          const ProfileBio(
-                            description:
-                                'Aquí va una descripción genérica del usuario.',
+                          ProfileBio(
+                            description: profile.description?.isNotEmpty == true
+                                ? _fixEncoding(profile.description!)
+                                : 'Este usuario aún no ha escrito una descripción.',
                           ),
                           const SizedBox(height: 16),
                           ProfileTabs(
@@ -452,7 +454,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 final chefName = chef == null
                     ? 'Cargando chef...'
                     : (chef.firstName?.isNotEmpty == true
-                        ? chef.firstName!
+                        ? _fixEncoding(chef.firstName!)
                         : 'Chef desconocido');
 
                 final avatar = getFullImageUrl(

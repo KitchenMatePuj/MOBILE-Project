@@ -107,50 +107,57 @@ class _EmailForgotPassScreenState extends State<EmailForgotPassScreen> {
           },
         ),
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30),
-          color: Colors.white,
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Spacer(flex: 2),
-            const Text(
-              "¿Olvidaste tu\nContraseña?,",
-              style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height -
+                  MediaQuery.of(context).padding.top -
+                  kToolbarHeight,
+            ),
+            child: IntrinsicHeight(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Spacer(flex: 2),
+                  const Text(
+                    "¿Olvidaste tu\nContraseña?,",
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    "Restablecela rápidamente\nsin preocupaciones",
+                    style: TextStyle(
+                      fontSize: 20,
+                      color: Color(0xFF121212),
+                    ),
+                  ),
+                  const Spacer(flex: 2),
+                  _buildEmailInput(),
+                  if (_emailError != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Text(
+                        _emailError!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  _buildConfirmButton(context),
+                  if (_isLoading)
+                    const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  const SizedBox(height: 30),
+                  const Spacer(flex: 50),
+                ],
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              "Restablecela rápidamente\nsin preocupaciones",
-              style: TextStyle(
-                fontSize: 20,
-                color: Color(0xFF121212),
-              ),
-            ),
-            const Spacer(flex: 2),
-            _buildEmailInput(),
-            if (_emailError != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Text(
-                  _emailError!,
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ),
-            _buildConfirmButton(context),
-            if (_isLoading)
-              const Center(
-                child: CircularProgressIndicator(),
-              ),
-            const SizedBox(height: 30),
-            const Spacer(flex: 50),
-          ],
+          ),
         ),
       ),
     );
@@ -193,7 +200,7 @@ class _EmailForgotPassScreenState extends State<EmailForgotPassScreen> {
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 18),
           shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(10),
           ),
           backgroundColor: const Color(0xFF129575),
         ),
@@ -201,23 +208,23 @@ class _EmailForgotPassScreenState extends State<EmailForgotPassScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-        const Text(
-          "Enviar Correo",
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(width: 11),
-        const Icon(
-          Icons.arrow_forward,
-          size: 20,
-          color: Colors.white,
-        ),
+            const Text(
+              "Enviar Correo",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 11),
+            const Icon(
+              Icons.arrow_forward,
+              size: 20,
+              color: Colors.white,
+            ),
           ],
         ),
       ),
-        );
+    );
   }
 }

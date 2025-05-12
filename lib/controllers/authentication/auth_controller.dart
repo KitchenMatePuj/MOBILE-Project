@@ -66,7 +66,7 @@ class AuthController {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      return data['message'];
+      return data['message']; // <- asegúrate que el backend envía este campo
     } else {
       throw Exception('Reset password failed: ${response.body}');
     }
