@@ -23,6 +23,9 @@ import '../../../controllers/Profiles/ingredient_allergy_controller.dart';
 import '../../../models/Profiles/ingredientAllery_request.dart';
 import '../../../models/Profiles/ingredientAllery_response.dart';
 
+import '../../../controllers/Recipes/ingredients.dart';
+import '../../../models/Recipes/ingredients_response.dart';
+
 import 'dart:developer';
 
 class EditprofileScreen extends StatefulWidget {
@@ -36,9 +39,9 @@ class _EditprofileState extends State<EditprofileScreen> {
   final String profileBaseUrl = dotenv.env['PROFILE_URL'] ?? '';
   final _authBase = dotenv.env['AUTH_URL'] ?? '';
   final String strapiBaseUrl = dotenv.env['STRAPI_URL'] ?? '';
+  final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
   final Stopwatch _stopwatch = Stopwatch();
 
-  // A FUTURO TOCA QUE RECONOZCA POR DEFECTO EL PROFILE ID Y EL EMAIL.
   late ProfileResponse? profile =
       ProfileResponse(profileId: 0, keycloakUserId: '', email: '');
 
@@ -47,6 +50,7 @@ class _EditprofileState extends State<EditprofileScreen> {
   bool isProfileInfoSelected = true;
   File? _profileImage;
   List<IngredientAllergyResponse> allergies = [];
+  List<IngredientResponse> allIngredients = []; // <-- Para todas las opciones
 
   String keycloakUserId = '';
   String? uploadedImagePathFromStrapi;
@@ -59,6 +63,8 @@ class _EditprofileState extends State<EditprofileScreen> {
   late StrapiController strapiController =
       StrapiController(baseUrl: strapiBaseUrl);
   final TextEditingController descriptionController = TextEditingController();
+
+  Set<String> editingAllergies = {};
 
   @override
   void initState() {
@@ -86,18 +92,36 @@ class _EditprofileState extends State<EditprofileScreen> {
       setState(() {
         profile = fetchedProfile;
         allergies = fetchedAllergies;
-
-        print('profile name $profile.firstName');
-
         firstNameController.text = profile?.firstName ?? '';
         lastNameController.text = profile?.lastName ?? '';
         emailController.text = profile?.email ?? '';
         phoneController.text = profile?.phone ?? '';
         cookingTimeController.text = profile?.cookingTime?.toString() ?? '';
         descriptionController.text = profile?.description ?? '';
+        editingAllergies =
+            fetchedAllergies.map((a) => a.allergyName.toLowerCase()).toSet();
+        if (!isProfileInfoSelected) {
+          // Solo si estás en la pestaña de alergias, sincroniza
+          editingAllergies =
+              fetchedAllergies.map((a) => a.allergyName.toLowerCase()).toSet();
+        }
       });
     } catch (e) {
       print('Error al cargar perfil o alergias: $e');
+    }
+
+    // Carga de ingredientes en segundo plano, pero no afecta la info de perfil
+    try {
+      final ingredientController = IngredientController(baseUrl: recipeBaseUrl);
+      final fetchedIngredients = await ingredientController.fetchIngredients();
+      setState(() {
+        allIngredients = fetchedIngredients;
+      });
+    } catch (e) {
+      print('Error al cargar ingredientes: $e');
+      setState(() {
+        allIngredients = [];
+      });
     }
   }
 
@@ -112,9 +136,6 @@ class _EditprofileState extends State<EditprofileScreen> {
         profilePhoto:
             uploadedImagePathFromStrapi, // asegúrate de asignarlo si subes imagen
       );
-
-      print(
-          'PROFIIIIIIIIIIIIIIIIIIIIIIIIIIIIILE ID: ${profile!.keycloakUserId}'); // Imprimir el profile_id profile!.keycloakUserId);
 
       await ProfileController(baseUrl: profileBaseUrl)
           .updateProfile(profile!.keycloakUserId, updatedProfile);
@@ -147,7 +168,13 @@ class _EditprofileState extends State<EditprofileScreen> {
     final request = StrapiUploadRequest.fromFile(image);
     final response = await strapiController.uploadImage(request);
 
-    return response.url; // URL completa que puedes guardar como profilePhoto
+    return response.url;
+  }
+
+  // Saber si un ingrediente está dentro de las alergias del usuario
+  bool _isIngredientAllergic(String ingredientName) {
+    return allergies.any(
+        (a) => a.allergyName.toLowerCase() == ingredientName.toLowerCase());
   }
 
   @override
@@ -173,7 +200,7 @@ class _EditprofileState extends State<EditprofileScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Sección para alternar entre "Información de Perfil" y "Información Dietética"
+            // Tabs
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -223,6 +250,9 @@ class _EditprofileState extends State<EditprofileScreen> {
                     onTap: () {
                       setState(() {
                         isProfileInfoSelected = false;
+                        editingAllergies = allergies
+                            .map((a) => a.allergyName.toLowerCase())
+                            .toSet();
                       });
                     },
                     child: AnimatedContainer(
@@ -262,7 +292,6 @@ class _EditprofileState extends State<EditprofileScreen> {
             ),
             const SizedBox(height: 20),
 
-            // Contenido principal según la pestaña seleccionada
             if (isProfileInfoSelected) ...[
               Expanded(
                 child: SingleChildScrollView(
@@ -461,49 +490,240 @@ class _EditprofileState extends State<EditprofileScreen> {
                 ),
               ),
             ] else ...[
+              // ALERGIAS
               Expanded(
-                child: ListView.builder(
-                  itemCount: allergies.length,
-                  itemBuilder: (context, index) {
-                    final allergy = allergies[index];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 5),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF5F5F5),
-                          borderRadius: BorderRadius.circular(15),
-                          border: Border.all(
-                              color: const Color(0xFF129575), width: 1),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.warning, color: Colors.redAccent),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                allergy.allergyName,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xFF333333),
-                                  fontWeight: FontWeight.w500,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // TEXTO INFORMATIVO EN NEGRILLA
+                    // const Padding(
+                    //   padding: EdgeInsets.only(left: 4.0, bottom: 8.0, top: 2.0),
+                    //   child: Text(
+                    //     "Aquí puedes actualizar los ingredientes a los que eres alérgico",
+                    //     style: TextStyle(
+                    //       fontWeight: FontWeight.bold,
+                    //       fontSize: 15,
+                    //       color: Colors.black87,
+                    //     ),
+                    //     textAlign: TextAlign.left,
+                    //   ),
+                    // ),
+                    Expanded(
+                      child: allIngredients.isEmpty
+                          ? const Center(child: CircularProgressIndicator())
+                          : ListView.builder(
+                              itemCount: allIngredients.length,
+                              itemBuilder: (context, index) {
+                                final ingredient = allIngredients[index];
+                                final isAllergic = editingAllergies
+                                    .contains(ingredient.name.toLowerCase());
+
+                                return Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 5),
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(15),
+                                    onTap: () {
+                                      setState(() {
+                                        if (isAllergic) {
+                                          editingAllergies.remove(
+                                              ingredient.name.toLowerCase());
+                                        } else {
+                                          editingAllergies.add(
+                                              ingredient.name.toLowerCase());
+                                        }
+                                      });
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 12),
+                                      decoration: BoxDecoration(
+                                        color: isAllergic
+                                            ? const Color(
+                                                0xFFE8F5E9) // verde claro si es alergia del usuario
+                                            : const Color(
+                                                0xFFF5F5F5), // gris si no
+                                        borderRadius: BorderRadius.circular(15),
+                                        border: Border.all(
+                                            color: isAllergic
+                                                ? const Color(
+                                                    0xFF43A047) // verde si es alergia del usuario
+                                                : const Color(
+                                                    0xFF129575), // verde normal si no
+                                            width: 1.2),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            isAllergic
+                                                ? Icons
+                                                    .check_circle // ícono de chulo verde si es alergia seleccionada
+                                                : Icons
+                                                    .check_circle_outline, // outline si no
+                                            color: isAllergic
+                                                ? const Color(
+                                                    0xFF43A047) // verde
+                                                : Colors.grey,
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: Text(
+                                              ingredient.name,
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: isAllergic
+                                                    ? const Color(
+                                                        0xFF43A047) // verde si es alergia
+                                                    : const Color(0xFF333333),
+                                                fontWeight: isAllergic
+                                                    ? FontWeight.bold
+                                                    : FontWeight.w500,
+                                              ),
+                                            ),
+                                          ),
+                                          Checkbox(
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(4)),
+                                            value: isAllergic,
+                                            onChanged: (checked) {
+                                              setState(() {
+                                                if (checked == true) {
+                                                  editingAllergies.add(
+                                                      ingredient.name
+                                                          .toLowerCase());
+                                                } else {
+                                                  editingAllergies.remove(
+                                                      ingredient.name
+                                                          .toLowerCase());
+                                                }
+                                              });
+                                            },
+                                            activeColor: const Color(
+                                                0xFF43A047), // verde si está checkeado
+                                            checkColor: Colors.white,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }),
+                    ),
+                    // Botones Guardar / Cancelar
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0, bottom: 10.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                final allergyController =
+                                    IngredientAllergyController(
+                                        baseUrl: profileBaseUrl);
+                                final currentProfileId = profile?.profileId;
+
+                                if (currentProfileId == null) return;
+
+                                // 1. Set de las alergias actuales en el backend
+                                final Set<String> backendAllergies = allergies
+                                    .map((a) => a.allergyName.toLowerCase())
+                                    .toSet();
+
+                                // 2. Set de las alergias seleccionadas por el usuario (con el checkbox)
+                                final Set<String> selectedAllergies =
+                                    editingAllergies;
+
+                                // 3. Alergias a agregar (están en seleccionado pero no en el backend)
+                                final Set<String> toAdd = selectedAllergies
+                                    .difference(backendAllergies);
+
+                                // 4. Alergias a eliminar (están en el backend pero no en seleccionado)
+                                final Set<String> toDelete = backendAllergies
+                                    .difference(selectedAllergies);
+
+                                try {
+                                  // AGREGAR nuevas alergias
+                                  for (final allergyName in toAdd) {
+                                    await allergyController.createAllergy(
+                                      IngredientAllergyRequest(
+                                        profileId: currentProfileId,
+                                        allergyName: allergyName,
+                                      ),
+                                    );
+                                  }
+
+                                  // ELIMINAR alergias quitadas
+                                  for (final allergyName in toDelete) {
+                                    // Busca todas las coincidencias en allergies originales
+                                    final matches = allergies.where((a) =>
+                                        a.allergyName.toLowerCase() ==
+                                        allergyName);
+                                    for (final allergy in matches) {
+                                      await allergyController
+                                          .deleteAllergy(allergy.allergyId);
+                                    }
+                                  }
+
+                                  // Opcional: Muestra mensaje y recarga
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            'Alergias actualizadas correctamente')),
+                                  );
+                                  await _loadData(
+                                      keycloakUserId); // Recarga para refrescar la lista
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text(
+                                            'Error al actualizar alergias: $e')),
+                                  );
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF129575),
+                              ),
+                              child: const Text(
+                                'Guardar Cambios',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.pushNamed(context, '/profile');
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    const Color.fromARGB(255, 181, 108, 106),
+                              ),
+                              child: const Text(
+                                'Cancelar',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
-              )
+              ),
             ],
           ],
         ),
       ),
-
-      // BottomNavigationBar
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,

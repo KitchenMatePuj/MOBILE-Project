@@ -87,7 +87,7 @@ class IngredientAllergyController {
   Future<void> deleteAllergy(int allergyId) async {
     final headers = await _getHeaders();
     final response = await http.delete(
-      Uri.parse('$baseUrl/$allergyId'),
+      Uri.parse('$baseUrl/ingredient_allergies/$allergyId'),
       headers: headers,
     );
 
