@@ -58,7 +58,6 @@ class _EmailForgotPassScreenState extends State<EmailForgotPassScreen> {
         _isLoading = false;
       });
 
-      // Mostrar SnackBar de éxito
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Se ha enviado su correo correctamente: $message"),
@@ -66,7 +65,6 @@ class _EmailForgotPassScreenState extends State<EmailForgotPassScreen> {
         ),
       );
 
-      // Redirigir al login después de un breve retraso
       Future.delayed(const Duration(seconds: 2), () {
         Navigator.pushNamed(context, '/login');
       });
@@ -75,7 +73,6 @@ class _EmailForgotPassScreenState extends State<EmailForgotPassScreen> {
         _isLoading = false;
       });
 
-      // Mostrar SnackBar de error
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -92,7 +89,7 @@ class _EmailForgotPassScreenState extends State<EmailForgotPassScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_stopwatch.isRunning) {
         _stopwatch.stop();
-        print('⏱ EmailForgotPassScreen: ${_stopwatch.elapsedMilliseconds} ms');
+        print('EmailForgotPassScreen: ${_stopwatch.elapsedMilliseconds} ms');
       }
     });
     return Scaffold(
