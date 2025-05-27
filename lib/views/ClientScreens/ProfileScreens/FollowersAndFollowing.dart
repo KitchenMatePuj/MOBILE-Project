@@ -82,7 +82,7 @@ class _FollowersAndFollowingScreenState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_stopwatch.isRunning) {
         _stopwatch.stop();
-        print('⏱ FollowersAndFollowingScreen: ${_stopwatch.elapsedMilliseconds} ms');
+        print('FollowersAndFollowingScreen: ${_stopwatch.elapsedMilliseconds} ms');
       }
     });
     return Scaffold(
