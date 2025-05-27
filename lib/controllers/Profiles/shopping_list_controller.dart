@@ -89,12 +89,11 @@ class ShoppingListController {
   Future<void> deleteShoppingList(int listId) async {
     final headers = await _getHeaders();
     final response = await http.delete(
-      // ⬇️  agrega el segmento /shopping_lists
       Uri.parse('$baseUrl/shopping_lists/$listId'),
       headers: headers,
     );
 
-    if (response.statusCode == 204) return; // OK (sin body)
+    if (response.statusCode == 204) return;
     throw Exception(
         'Failed to delete shopping list: ${response.body} (code ${response.statusCode})');
   }
