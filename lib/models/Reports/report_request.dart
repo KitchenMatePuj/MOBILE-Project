@@ -1,5 +1,3 @@
-// lib/models/Reports/report_request.dart
-
 class ReportRequest {
   final String reporterUserId;
   final String resourceType;
