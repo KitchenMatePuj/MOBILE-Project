@@ -1,28 +1,13 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
-// ---------------------------------------------------------------
-// ProfileScreen.
-// ---------------------------------------------------------------
-// Pantalla que muestra el perfil del usuario junto con sus recetas
-// publicadas y guardadas.  Incluye:
-//   • carga perezosa de datos con FutureBuilder
-//   • tabs para alternar entre recetas publicadas / guardadas
-//   • cálculo del nombre del chef y las fotos – incluyendo la URL
-//     absoluta a Strapi cuando el backend devuelve una ruta relativa.
-//   • comentarios en línea para que el código sea más fácil de seguir.
-// ---------------------------------------------------------------
-
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
 
-// Controladores de negocio ----------------------------------------------------
 import 'package:mobile_kitchenmate/controllers/Profiles/sumary_controller.dart';
 import 'package:mobile_kitchenmate/controllers/Profiles/profile_controller.dart';
 import 'package:mobile_kitchenmate/controllers/Profiles/follow_controller.dart';
 import 'package:mobile_kitchenmate/controllers/Profiles/saved_recipe_controller.dart';
 import 'package:mobile_kitchenmate/controllers/Recipes/recipes_controller.dart';
 
-// Modelos ---------------------------------------------------------------------
 import 'package:mobile_kitchenmate/models/Profiles/summary_response.dart';
 import 'package:mobile_kitchenmate/models/Profiles/profile_response.dart';
 import 'package:mobile_kitchenmate/models/Profiles/follow_response.dart';
@@ -76,7 +61,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final Stopwatch _stopwatch = Stopwatch();
   late final AuthController _authController;
 
-  // ⚠️ En una app real obtendrías esto del provider de autenticación.
   String _keycloakId = '';
   Map<int, bool> _deletingSaved = {};
   // ---------------------------------------------------------------------------
@@ -288,7 +272,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                     Expanded(
-                      // Cambiamos el future según la pestaña seleccionada
                       child: _tabIndex == 0
                           ? _recipeList(_publishedF)
                           : _recipeList(_savedF),
@@ -340,12 +323,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
 
   void _logout() {
-    // Realiza cualquier lógica necesaria para limpiar los datos de sesión, como
-    // eliminar tokens almacenados o datos del usuario.
     Navigator.pushNamedAndRemoveUntil(
       context,
-      '/login', // Redirige a la ruta '/login'.
-      (Route<dynamic> route) => false, // Remueve todas las rutas anteriores.
+      '/login',
+      (Route<dynamic> route) => false,
     );
   }
 
@@ -474,8 +455,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               recipe.imageUrl,
               placeholder: 'assets/styles/recipe_placeholder.jpg',
             );
-
-            // Aquí viene la magia: obtenemos el perfil del chef
             return FutureBuilder<ProfileResponse>(
               future: _profileCtl.getProfile(recipe.keycloakUserId),
               builder: (context, chefSnap) {
@@ -669,13 +648,11 @@ class RecipeCard extends StatelessWidget {
                   fit: BoxFit.cover,
                 ),
               ),
-              // Detalles de la receta
               Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Título de la receta
                     Text(
                       title,
                       style: const TextStyle(
@@ -684,7 +661,6 @@ class RecipeCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    // Nombre del chef con avatar
                     Row(
                       children: [
                         CircleAvatar(
@@ -701,7 +677,6 @@ class RecipeCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    // Duración y rating
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
