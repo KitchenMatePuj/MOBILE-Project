@@ -21,7 +21,7 @@ import 'package:path/path.dart' as p;
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter/services.dart'; // Import the services package for input formatters
+import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 
 import '/controllers/authentication/auth_controller.dart';
@@ -45,8 +45,6 @@ const List<String> defaultUnits = [
   'Pizca'
 ];
 
-// const String keycloakUserId = 'user1234';
-
 final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
 final String strapiBaseUrl = dotenv.env['STRAPI_URL'] ?? '';
 final String authbaseUrl = dotenv.env['AUTH_URL'] ?? '';
@@ -56,7 +54,7 @@ class CreateRecipeScreen extends StatefulWidget {
   final RecipeResponse? initialRecipe;
   const CreateRecipeScreen({
     Key? key,
-    this.initialRecipe, // ← puede llegar null
+    this.initialRecipe,
   }) : super(key: key);
 
   @override
@@ -69,7 +67,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
       TextEditingController();
   final TextEditingController portionsController = TextEditingController();
   final Stopwatch _stopwatch = Stopwatch();
-  int selectedIndex = 0; // 0 = Detalles, 1 = Ingredientes, 2 = Procedimiento
+  int selectedIndex = 0;
   List<Ingredient> ingredients = [
     Ingredient(name: "", quantity: "", unit: ""),
     Ingredient(name: "", quantity: "", unit: ""),
@@ -121,7 +119,6 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
   String? _imageUrl;
 
   Future<void> _pickVideo() async {
-    // NEW
     final picker = ImagePicker();
     final pickedFile = await picker.pickVideo(source: ImageSource.gallery);
 
@@ -135,7 +132,6 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
   }
 
   Future<String?> _uploadRecipeVideo(int recipeId) async {
-    // ✔️ Validación rápida
     if ((!kIsWeb && _video == null) || (kIsWeb && _videoBytes == null)) {
       return null;
     }
@@ -265,8 +261,8 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
         return;
       }
 
-      // 1️⃣  Crear receta (sin imagen todavía)
-      debugPrint('🟢 Flutter va a enviar title="$recipeTitle" '
+      //Crear receta (sin imagen todavía)
+      debugPrint('Flutter va a enviar title="$recipeTitle" '
           'codeUnits=${recipeTitle.codeUnits}');
       final newRecipe = await recipeController.createRecipe(RecipeRequest(
         title: recipeTitle, // << AQUI
@@ -281,31 +277,31 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
         imageUrl: null,
         videoUrl: null,
       ));
-      debugPrint('✅  DEVUELTO  title = ${newRecipe.title} '
+      debugPrint('DEVUELTO  title = ${newRecipe.title} '
           '(len=${newRecipe.title.codeUnits})');
       final recipeId = newRecipe.recipeId;
 
-      // 2️⃣  Si hay foto -> súbela y actualiza
+      //Si hay foto -> súbela y actualiza
       if (_image != null) {
         final url = await _uploadRecipeImage(recipeId);
-        debugPrint('🟡  BEFORE  uploadImage  title = ${newRecipe.title}');
+        debugPrint('BEFORE  uploadImage  title = ${newRecipe.title}');
         if (url != null) {
           await recipeController.updateRecipeImage(recipeId, url);
-          debugPrint('🟡  BEFORE  updateImage  title = ${newRecipe.title}');
+          debugPrint('BEFORE  updateImage  title = ${newRecipe.title}');
         }
       }
 
-      // 2️⃣-bis  Video (optional)
+      //bis  Video (optional)
       if (_video != null) {
         final vUrl = await _uploadRecipeVideo(recipeId);
-        debugPrint('🟡  BEFORE  uploadVideo  title = ${newRecipe.title}');
+        debugPrint('BEFORE  uploadVideo  title = ${newRecipe.title}');
         if (vUrl != null) {
           await recipeController.updateRecipeVideo(recipeId, vUrl);
-          debugPrint('🟡  BEFORE  updateVideo  title = ${newRecipe.title}');
+          debugPrint('BEFORE  updateVideo  title = ${newRecipe.title}');
         }
       }
 
-      // 3️⃣  Crear pasos e ingredientes en paralelo
+      //Crear pasos e ingredientes en paralelo
       await Future.wait([
         ...steps.asMap().entries.map((e) {
           return stepController.createStep(
@@ -328,16 +324,16 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
         }),
       ]);
 
-      // 4️⃣  Todo OK
+      //Todo OK
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('✅ Receta creada exitosamente'),
+        content: Text('Receta creada exitosamente'),
         backgroundColor: Color(0xFF129575),
       ));
       await Future.delayed(const Duration(seconds: 1));
       if (mounted) Navigator.pushReplacementNamed(context, '/dashboard');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('❌ Error al crear la receta: $e'),
+        content: Text('Error al crear la receta: $e'),
         backgroundColor: Colors.red,
       ));
     } finally {
@@ -353,7 +349,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
         _isLoadingCategories = false;
       });
     } catch (e) {
-      print("❌ Error al cargar categorías: $e");
+      print("Error al cargar categorías: $e");
     }
   }
 
@@ -412,7 +408,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
         fetchedIngredients = ingredients;
       });
     } catch (e) {
-      print("❌ Error al cargar ingredientes: $e");
+      print("Error al cargar ingredientes: $e");
     }
   }
 
@@ -439,7 +435,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
     final req = kIsWeb
         ? StrapiUploadRequest.fromBytes(
             bytes: _imageBytes!,
-            filename: 'r$recipeId.jpg', // o usa extensión real
+            filename: 'r$recipeId.jpg',
             mimeType: 'image/jpeg',
           )
         : StrapiUploadRequest.fromFile(_image!);
@@ -450,7 +446,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
 
   @override
   Widget build(BuildContext context) {
-    // ⬇️ cuánto ocupa el teclado en este frame
+    //cuánto ocupa el teclado en este frame
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -462,7 +458,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
 
     return Scaffold(
       resizeToAvoidBottomInset:
-          false, // permitir que el teclado ajuste la pantalla
+          false,
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Creación de Receta'),
@@ -481,7 +477,6 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Imagen de la receta ----------------------------------------------------
                       Stack(
                         children: [
                           Container(
@@ -521,7 +516,6 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
                         ),
                       ),
                       const SizedBox(height: 20),
-                      // Tabs -------------------------------------------------------------------
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
@@ -531,8 +525,6 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
                         ],
                       ),
                       const SizedBox(height: 6),
-
-                      // Contenido por pestaña --------------------------------------------------
                       Expanded(
                         child: selectedIndex == 0
                             ? _buildDetailsSection()
@@ -590,8 +582,6 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
                     ],
                   ),
                 ),
-
-                // Botón Confirmar Receta Fijo ------------------------------------------
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: SizedBox(
@@ -665,7 +655,6 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
           label: "Tiempo Estimado",
           value: estimatedTime,
           onTap: () async {
-            // Asegúrate de que el controlador tenga el valor actual
             if (_timeController.text.isEmpty) {
               _timeController.text = estimatedTime.replaceAll(' min', '');
             }
@@ -687,7 +676,6 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
           label: "Porciones Estimadas",
           value: estimatedPortions,
           onTap: () async {
-            // Asegúrate de que el controlador tenga el valor actual
             if (_portionController.text.isEmpty) {
               _portionController.text =
                   estimatedPortions.replaceAll(' porciones', '');
@@ -779,13 +767,12 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
                   ),
                   child: const Text('Cancelar'),
                 ),
-                // ───── Botón Aceptar reactivo ─────
                 ValueListenableBuilder<bool>(
                   valueListenable: okEnabled,
                   builder: (_, enabled, __) => ElevatedButton(
                     onPressed: enabled
                         ? () async {
-                            FocusScope.of(ctx).unfocus(); // cierra teclado
+                            FocusScope.of(ctx).unfocus();
                             await Future.delayed(
                                 const Duration(milliseconds: 60));
                             Navigator.pop(ctx, controller.text.trim());
@@ -834,7 +821,7 @@ class _CreateRecipeState extends State<CreateRecipeScreen>
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: InputDecoration(hintText: hint),
                 onChanged: (value) {
-                  setState(() {}); // Refresca la UI interna
+                  setState(() {});
                 },
               ),
               actions: [
@@ -1052,8 +1039,6 @@ class _IngredientCardState extends State<IngredientCard> {
                       } else if (value != null) {
                         setState(() {
                           widget.ingredient.name = value;
-
-                          // Opcional: Actualiza la unidad de medida si es necesario
                           final selected =
                               widget.availableIngredients.firstWhere(
                             (i) => i.name == value,
@@ -1167,18 +1152,15 @@ class _IngredientCardState extends State<IngredientCard> {
                 final customIngredient = customIngredientController.text.trim();
                 if (customIngredient.isNotEmpty) {
                   setState(() {
-                    // Añadir el nuevo ingrediente a la lista de ingredientes disponibles
                     widget.fetchedIngredients.add(
                       IngredientResponse(
                         ingredientId:
-                            -1, // Usa un ID temporal o único si es necesario
+                            -1,
                         recipeId: -1,
                         name: customIngredient,
                         measurementUnit: '',
                       ),
                     );
-
-                    // Actualizar el ingrediente seleccionado
                     widget.ingredient.name = customIngredient;
                   });
                 }
