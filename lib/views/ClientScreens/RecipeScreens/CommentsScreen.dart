@@ -41,9 +41,9 @@ class _CommentsScreenState extends State<CommentsScreen> {
   late ReportsController _reportController;
 
   /* ---------- ids & estado ---------- */
-  late int recipeId; // llega por ruta
-  bool _loaded = false; // evita set‑state dobles
-  double _rating = 0; // ⭐ de 1‑5
+  late int recipeId;
+  bool _loaded = false;
+  double _rating = 0;
 
   String keycloakUserId = '';
 
@@ -92,12 +92,10 @@ class _CommentsScreenState extends State<CommentsScreen> {
   /* ---------- helpers ---------- */
 
   Future<ProfileResponse> _author(String id) async {
-    // Si ya está en cache, lo devolvemos
     if (_profileCache.containsKey(id)) {
       return _profileCache[id]!;
     }
 
-    // Si no, lo pedimos al backend y lo guardamos
     final profile = await _profileCtl.getProfile(id);
     _profileCache[id] = profile;
     return profile;
@@ -126,7 +124,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
       _newComment.clear();
       setState(() {
         _rating = 0;
-        _commentsF = _commentCtl.fetchComments(recipeId); // refresca
+        _commentsF = _commentCtl.fetchComments(recipeId);
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -213,7 +211,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
       final profile = await _profileCtl.getProfile(keycloakUserId);
 
       final reportRequest = ReportRequest(
-        reporterUserId: profile.profileId.toString(), // Usa el profileId
+        reporterUserId: profile.profileId.toString(),
         resourceType: "Comentario",
         description: description,
       );
@@ -237,7 +235,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_stopwatch.isRunning) {
         _stopwatch.stop();
-        print('⏱ CommentsScreen: ${_stopwatch.elapsedMilliseconds} ms');
+        print('CommentsScreen: ${_stopwatch.elapsedMilliseconds} ms');
       }
     });
     return Scaffold(
