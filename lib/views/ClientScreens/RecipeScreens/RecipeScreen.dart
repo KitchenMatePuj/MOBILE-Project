@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:mobile_kitchenmate/main.dart'; // Asegúrate de importar bien la ruta
+import 'package:mobile_kitchenmate/main.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
