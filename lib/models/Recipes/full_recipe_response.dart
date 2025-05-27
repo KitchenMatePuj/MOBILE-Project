@@ -1,10 +1,8 @@
-// models/Recipes/full_recipe_response.dart
 import 'package:mobile_kitchenmate/models/Profiles/ingredient_response.dart';
 import 'package:mobile_kitchenmate/models/Recipes/comments_response.dart';
 import 'package:mobile_kitchenmate/models/Recipes/recipe_steps_response.dart';
 import 'package:mobile_kitchenmate/models/Recipes/recipes_response.dart';
 
-// models/Recipes/full_recipe_response.dart
 class FullRecipeResponse {
   final RecipeResponse recipe;
   final List<RecipeStepResponse> steps;
