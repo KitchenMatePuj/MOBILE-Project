@@ -58,13 +58,11 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
     _searchController.addListener(_applyFilters);
   }
 
-  /// Corrige textos mal decodificados (ej. “LasaÃ±a” → “Lasaña”)
   String _fixEncoding(String text) {
     try {
       final decoded = utf8.decode(latin1.encode(text));
       return decoded;
     } catch (_) {
-      // Si algo falla, devuelve el original para no romper nada
       return text;
     }
   }
@@ -100,31 +98,24 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
       final query = _searchController.text.toLowerCase();
 
       filteredRecipes = _recipeController.allRecipes.where((recipe) {
-        // Búsqueda por título o ID de usuario
         final matchesQuery =
             _fixEncoding(recipe.title).toLowerCase().contains(query) ||
                 recipe.keycloakUserId.toLowerCase().contains(query);
 
-        // Filtro por tiempo de cocción
         final matchesDuration =
             selectedDuration == "Todos" || _matchesDuration(recipe.cookingTime);
 
-        // Filtro por rating
         final matchesRating = selectedRating == "Todas" ||
             recipe.ratingAvg.toInt().toString() == selectedRating;
 
-        // Filtro por tipo de comida (meal type)
         final matchesFoodType = selectedMealType == "Todos" ||
             recipe.foodType.toLowerCase() == selectedMealType.toLowerCase();
 
-        // Filtro por tipo de cocina (category -> ahora será totalPortions)
         final matchesPortions = selectedCategory == "Todos" ||
             recipe.totalPortions.toString() == selectedCategory;
 
-        // Filtro por cocina (placeholder - si agregas un nuevo campo más adelante)
         final matchesCuisine = selectedCuisine == "Todas";
 
-        // Filtro por rango de fechas
         bool matchesDate = true;
         if (selectedStartDate != null) {
           matchesDate = matchesDate &&
@@ -655,7 +646,7 @@ class SearchBar extends StatelessWidget {
                                           setState(() {
                                             if (isSelected) {
                                               onSelected(
-                                                  ""); // Deseleccionar si ya está seleccionado
+                                                  "");
                                             } else {
                                               onSelected(option);
                                             }
@@ -756,7 +747,6 @@ class SearchBar extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 8),
 
-// Fecha Inicio
                                   Row(
                                     children: [
                                       const Text("Desde: "),
@@ -774,14 +764,14 @@ class SearchBar extends StatelessWidget {
                                             onStartDateChanged(picked);
                                             setState(() {
                                               selectedStartDate =
-                                                  picked; // Actualiza la fecha seleccionada
+                                                  picked;
                                             });
                                           }
                                         },
                                         child: Text(
                                           selectedStartDate != null
                                               ? DateFormat('yyyy-MM-dd').format(
-                                                  selectedStartDate!) // Formato de fecha
+                                                  selectedStartDate!)
                                               : "Elegir fecha",
                                           style: const TextStyle(
                                               color: Color(0xFF129575)),
@@ -806,14 +796,14 @@ class SearchBar extends StatelessWidget {
                                             onEndDateChanged(picked);
                                             setState(() {
                                               selectedEndDate =
-                                                  picked; // Actualiza la fecha seleccionada
+                                                  picked;
                                             });
                                           }
                                         },
                                         child: Text(
                                           selectedEndDate != null
                                               ? DateFormat('yyyy-MM-dd').format(
-                                                  selectedEndDate!) // Formato de fecha
+                                                  selectedEndDate!)
                                               : "Elegir fecha",
                                           style: const TextStyle(
                                               color: Color(0xFF129575)),
