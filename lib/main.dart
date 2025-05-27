@@ -18,21 +18,6 @@ import 'views/ClientScreens/ProfileScreens/ReportScreen.dart';
 import 'views/ClientScreens/RecipeScreens/CommentsScreen.dart';
 import 'views/ClientScreens/ProfileScreens/FollowersAndFollowing.dart';
 
-// Future<void> main() async {
-//   await dotenv.load();
-//   runApp(
-//     MultiProvider(
-//       providers: [
-//         ChangeNotifierProvider(create: (_) => UserProvider()),
-//       ],
-//       child: const MyApp(),
-//     ),
-//   );
-// }
-
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
-
 final RouteObserver<ModalRoute<void>> routeObserver =
     RouteObserver<ModalRoute<void>>();
 Future<void> main() async {
@@ -57,9 +42,9 @@ class MyApp extends StatelessWidget {
       onGenerateRoute: (settings) {
         if (settings.name == '/followers_and_following') {
           final args = settings.arguments as Map<String, dynamic>;
-          final int profileId = args['profile_id'] ?? 0; // Default to 0 if null
+          final int profileId = args['profile_id'] ?? 0;
           final String type =
-              args['type'] ?? 'followers'; // Default to 'followers' if null
+              args['type'] ?? 'followers';
 
           return MaterialPageRoute(
             builder: (context) {
@@ -71,7 +56,7 @@ class MyApp extends StatelessWidget {
           );
         } else if (settings.name == '/public_profile') {
           final args = settings.arguments as Map<String, dynamic>;
-          final int profileId = args['profile_id'] ?? 3; // Default to 0 if null
+          final int profileId = args['profile_id'] ?? 3;
 
           return MaterialPageRoute(
             builder: (context) {
@@ -84,7 +69,7 @@ class MyApp extends StatelessWidget {
           if (args == null || args['recipeId'] == null) {
             return MaterialPageRoute(
               builder: (_) => const Scaffold(
-                body: Center(child: Text('⚠️ No se recibió recipeId')),
+                body: Center(child: Text('No se recibió recipeId')),
               ),
             );
           }
@@ -99,14 +84,13 @@ class MyApp extends StatelessWidget {
           if (args == null || args['recipeId'] == null) {
             return MaterialPageRoute(
               builder: (_) => const Scaffold(
-                body: Center(child: Text('⚠️ No se recibió recipeId')),
+                body: Center(child: Text('No se recibió recipeId')),
               ),
             );
           }
 
-          // 👉 Opción A – usaremos ModalRoute en la pantalla
           return MaterialPageRoute(
-            settings: settings, // ¡no olvides conservar los args!
+            settings: settings,
             builder: (_) => const CommentsScreen(),
           );
         }
