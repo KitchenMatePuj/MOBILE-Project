@@ -78,17 +78,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     _stopwatch.start();
 
-    _loadUserData(); // llamamos la lógica aparte
+    _loadUserData();
   }
 
   Future<void> _loadUserData() async {
     try {
       keycloakUserId = await _authController.getKeycloakUserId();
 
-      // 1. Perfil
       _profileFuture =
           _profileController.getProfile(keycloakUserId).then((profile) async {
-        // Imagen (igual que antes)
         if ((profile.profilePhoto ?? '').isNotEmpty) {
           final fullImageUrl = getFullImageUrl(profile.profilePhoto!,
               placeholder: 'assets/chefs/default_user.png');
@@ -110,15 +108,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return profile;
       });
 
-      // 2. Resumen
       final summary =
           await _summaryController.getProfileSummary(keycloakUserId);
 
-      // 3. Recetas guardadas y categorías
       await _loadSavedRecipes(summary.savedRecipes);
       await _loadCategoriesForRecipes(_savedRecipeDetails);
 
-      // 4. Preparar categorías favoritas
       final categoryNames = _savedRecipeDetails
           .map((r) => r.categoryId)
           .where((id) => _categoriesById.containsKey(id))
@@ -132,14 +127,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         cookingTime: summary.cookingTime,
       );
 
-      // 🚀 Lanzar las recomendaciones sin await (en paralelo)
+
       final recommendationsFuture =
           _recommendationController.fetchRecommendations(recommendationRequest);
 
-      // 🚀 Mientras tanto, cargar published recipes
       final publishedRecipes = await _loadPublishedRecipes(keycloakUserId);
 
-      // ✅ Finalmente esperamos a que terminen las recomendaciones
       final recs = await recommendationsFuture;
 
       if (mounted) {
@@ -151,7 +144,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         });
       }
     } catch (e) {
-      print('❌ Error al cargar usuario: $e');
+      print('Error al cargar usuario: $e');
     }
   }
 
@@ -187,38 +180,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<List<RecipeResponse>> _loadPublishedRecipes(String userId) async {
     if (_publishedRecipesLoaded)
-      return []; // ← evita recarga si ya están cargadas
+      return [];
     _publishedRecipesLoaded = true;
 
     try {
-      // Obtener perfil para obtener el profileId
       final profile = await _profileController.getProfile(userId);
 
-      // Instanciar FollowController SOLO aquí → optimizado
       final followController = FollowController(baseUrl: profileBaseUrl);
 
-      // Obtener Keycloak de los usuarios seguidos
       final followedKeycloaks =
           await followController.getFollowedKeycloakUserIds(profile.profileId);
 
       final List<RecipeResponse> allRecipes = [];
 
-      // Cargar recetas de cada seguido
       for (String followedUserId in followedKeycloaks) {
         try {
           final userRecipes =
               await _recipeController.getRecipesByUser(followedUserId);
           allRecipes.addAll(userRecipes);
         } catch (_) {
-          // Ignorar errores individuales
           continue;
         }
       }
 
-      return allRecipes; // ✅ retornar resultado
+      return allRecipes;
     } catch (e) {
-      print('❌ Error al cargar recetas publicadas: $e');
-      return []; // Si falla → regresar lista vacía
+      print('Error al cargar recetas publicadas: $e');
+      return [];
     }
   }
 
@@ -227,7 +215,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_stopwatch.isRunning) {
         _stopwatch.stop();
-        print('⏱ DashboardScreen: ${_stopwatch.elapsedMilliseconds} ms');
+        print('DashboardScreen: ${_stopwatch.elapsedMilliseconds} ms');
       }
     });
 
@@ -261,7 +249,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     } else if (snapshot.hasError) {
                       return Text('Error: ${snapshot.error}');
                     } else if (!snapshot.hasData || snapshot.data == null) {
-                      // TERMINO DE CARGAR PERO NO HAY DATOS -> no data found
                       return const SizedBox(
                         height: 100,
                         child: Center(
@@ -458,8 +445,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 }
-
-// Nota: Se mantuvieron las clases RecipeCard, UserHeader, ProfileCard y ProfileTabs sin cambios.
 
 class RecipeCard extends StatelessWidget {
   final String title;
