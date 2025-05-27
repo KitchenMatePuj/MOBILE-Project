@@ -131,7 +131,6 @@ class IngredientController {
           'Error ${res.statusCode} al obtener ingredientes de la receta');
     }
 
-    // 👉 parse en hilo aislado (compute)
     return compute(_parseIngredients, res.body);
   }
 
