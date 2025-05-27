@@ -70,8 +70,8 @@ class _RecipeScreenState extends State<RecipeScreen> with RouteAware {
   bool _isAddingToShoppingList = false;
   bool _isMuted = false;
   VoidCallback? _fullscreenListener;
-  String? _videoUrl; // url que llega del backend
-  VideoPlayerController? _vpController; // controller del plugin
+  String? _videoUrl;
+  VideoPlayerController? _vpController;
   bool _vpReady = false;
 
   final String recipeBaseUrl = dotenv.env['RECIPE_URL'] ?? '';
@@ -83,9 +83,9 @@ class _RecipeScreenState extends State<RecipeScreen> with RouteAware {
 
   late RecipeController _recipeController;
   late recipe_ingredient.IngredientController
-      _ingredientController; // Usamos el alias 'recipe_ingredient' para ingredientes de recetas
+      _ingredientController;
   late profile_ingredient.IngredientController
-      _profileIngredientController; // Usamos el alias 'profile_ingredient' para ingredientes de perfiles
+      _profileIngredientController;
   late RecipeStepController _stepController;
   late ProfileController _profileController;
   late SavedRecipeController _savedController;
@@ -123,8 +123,6 @@ class _RecipeScreenState extends State<RecipeScreen> with RouteAware {
     _loadRecipeDatapwatch.start();
     try {
       print('⏳ [Inicio] Cargando datos de la receta...');
-
-      // → PRIMER BLOQUE: Receta y Perfil en paralelo (deben estar antes que todo)
       final stopwatchFirstBlock = Stopwatch()..start();
       final recipeFuture = _recipeController.getRecipeById(recipeId);
       final profileFuture = _profileController.getProfile(keycloakUserId);
@@ -140,7 +138,6 @@ class _RecipeScreenState extends State<RecipeScreen> with RouteAware {
       recipeUserId = recipe.keycloakUserId;
       recipeUserId1 = recipe.keycloakUserId.toString();
 
-      // → SEGUNDO BLOQUE: Una vez tengo la receta → lanzar todo lo demás
       final stopwatchSecondBlock = Stopwatch()..start();
 
       final chefFuture = _profileController.getProfile(recipe.keycloakUserId);
@@ -164,9 +161,8 @@ class _RecipeScreenState extends State<RecipeScreen> with RouteAware {
 
       stopwatchSecondBlock.stop();
       print(
-          '✅ [Restantes en paralelo] -> ${stopwatchSecondBlock.elapsedMilliseconds} ms');
+          '[Restantes en paralelo] -> ${stopwatchSecondBlock.elapsedMilliseconds} ms');
 
-      // Extraer resultados
       final chef = results[0] as ProfileResponse;
       final followedKeycloakIds = results[1] as List<String>;
       final savedRecipes = results[2] as List<SavedRecipeResponse>;
@@ -189,7 +185,6 @@ class _RecipeScreenState extends State<RecipeScreen> with RouteAware {
       chefProfileId = chef.profileId;
 
       if (_videoUrl != null && _videoUrl!.isNotEmpty) {
-        // prepara el reproductor en segundo plano
         _initializeVideo(_videoUrl!);
       }
 
@@ -232,18 +227,17 @@ class _RecipeScreenState extends State<RecipeScreen> with RouteAware {
 
     _loadRecipeDatapwatch.stop();
     print(
-        '🏁 [Final] Tiempo total de _loadRecipeData -> ${_loadRecipeDatapwatch.elapsedMilliseconds} ms');
+        '[Final] Tiempo total de _loadRecipeData -> ${_loadRecipeDatapwatch.elapsedMilliseconds} ms');
   }
 
   Future<void> _initializeVideo(String url) async {
-    // cierra el controller anterior si existe
     await _vpController?.dispose();
 
     _vpController = VideoPlayerController.networkUrl(Uri.parse(url));
-    await _vpController!.initialize(); // espera a que cargue
+    await _vpController!.initialize();
     _vpController!
-      ..setLooping(true) // se repite en bucle
-      ..setVolume(1.0) // volumen normal
+      ..setLooping(true)
+      ..setVolume(1.0)
       ..seekTo(Duration.zero)
       ..play();
     if (mounted) setState(() => _vpReady = true);
@@ -251,7 +245,7 @@ class _RecipeScreenState extends State<RecipeScreen> with RouteAware {
 
   Future<void> _showReportDialog(BuildContext context) async {
     final TextEditingController reportController = TextEditingController();
-    bool isButtonEnabled = false; // Estado inicial del botón
+    bool isButtonEnabled = false;
 
     await showDialog(
       context: context,
@@ -259,7 +253,7 @@ class _RecipeScreenState extends State<RecipeScreen> with RouteAware {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
             return AlertDialog(
-              backgroundColor: Colors.white, // Fondo blanco para todo el cuadro
+              backgroundColor: Colors.white,
               title: const Text('Estas a punto de reportar esta receta'),
               content: Column(
                 children: [
@@ -279,7 +273,7 @@ class _RecipeScreenState extends State<RecipeScreen> with RouteAware {
               actions: [
                 ElevatedButton(
                   onPressed: () {
-                    Navigator.pop(context); // Cerrar el popup
+                    Navigator.pop(context);
                     reportController.dispose();
                   },
                   style: ElevatedButton.styleFrom(
@@ -292,10 +286,10 @@ class _RecipeScreenState extends State<RecipeScreen> with RouteAware {
                   onPressed: isButtonEnabled
                       ? () async {
                           await _submitReport(
-                              reportController.text); // Enviar reporte
-                          Navigator.pop(context); // Cerrar el popup
+                              reportController.text);
+                          Navigator.pop(context);
                         }
-                      : null, // Deshabilita el botón si no hay texto
+                      : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF129575),
                     foregroundColor: Colors.white,
@@ -337,7 +331,6 @@ class _RecipeScreenState extends State<RecipeScreen> with RouteAware {
                     duration.inMilliseconds.toDouble()),
                 onChanged: (value) {
                   _vpController?.seekTo(Duration(milliseconds: value.toInt()));
-                  // Ya no hacemos pop aquí
                 },
               ),
               Row(
@@ -763,7 +756,7 @@ class _RecipeScreenState extends State<RecipeScreen> with RouteAware {
 
     if (_comingFromFullscreen) {
       _comingFromFullscreen = false;
-      return; // ✅ Salir sin refrescar ni hacer setState
+      return;
     }
 
     // ← Vienes de otra pantalla como "comentarios" → recargar todo
@@ -807,7 +800,7 @@ class _RecipeScreenState extends State<RecipeScreen> with RouteAware {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_stopwatch.isRunning) {
         _stopwatch.stop();
-        print('⏱ RecipeScreen: ${_stopwatch.elapsedMilliseconds} ms');
+        print('RecipeScreen: ${_stopwatch.elapsedMilliseconds} ms');
       }
     });
     return Scaffold(
@@ -892,7 +885,6 @@ class _RecipeScreenState extends State<RecipeScreen> with RouteAware {
           ),
         );
       } else {
-        // 👇 Aquí mostramos el spinner mientras el video se inicializa
         media = const Center(
           child: SizedBox(
             height: 50,
