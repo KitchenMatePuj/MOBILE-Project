@@ -187,7 +187,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
 
   Future<void> _submitReport(String description) async {
     try {
-      // Obtén el profileId del usuario logueado
+      // Obtener el profileId del usuario logueado
       final profile = await _profileController.getProfile(keycloakUserId);
 
       final reportRequest = ReportRequest(
