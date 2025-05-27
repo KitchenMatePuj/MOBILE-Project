@@ -305,7 +305,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           await shoppingListController.listShoppingListsByProfile(profileId!);
 
       for (final list in shoppingLists) {
-        print('🛒 Lista: ID=${list.shoppingListId}, '
+        print('Lista: ID=${list.shoppingListId}, '
             'Name="${list.recipeName}", '
             'Photo="${list.recipePhoto}"');
       }
