@@ -37,8 +37,8 @@ class StrapiController {
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
 
-    print('📡 Strapi response status: ${response.statusCode}');
-    print('📡 Body: ${response.body}');
+    print('Strapi response status: ${response.statusCode}');
+    print('Body: ${response.body}');
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       final data = jsonDecode(response.body);
