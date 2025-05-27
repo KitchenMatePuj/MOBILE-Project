@@ -18,7 +18,7 @@ Future<T?> showAnimatedDialog<T>({
       return ScaleTransition(
         scale: CurvedAnimation(
           parent: animation,
-          curve: Curves.easeOutBack, // 👈 Suave y elegante
+          curve: Curves.easeOutBack,
         ),
         child: child,
       );
@@ -37,9 +37,8 @@ Future<T?> showInstantDialog<T>({
     barrierDismissible: barrierDismissible,
     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
     barrierColor: barrierColor,
-    transitionDuration: Duration.zero, // ← sin transición
+    transitionDuration: Duration.zero,
     pageBuilder: (ctx, _, __) {
-      // SafeArea opcional para evitar notch
       return SafeArea(child: Builder(builder: builder));
     },
   );
