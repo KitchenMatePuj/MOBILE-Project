@@ -49,7 +49,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background image
           Container(
             width: double.infinity,
             height: screenHeight,
@@ -60,7 +59,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          // Main content
           SingleChildScrollView(
             child: Center(
               child: Padding(
