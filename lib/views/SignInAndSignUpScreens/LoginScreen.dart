@@ -64,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 30),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment
-                  .start, // Mantiene textos alineados a la izquierda
+                  .start,
               children: [
                 const SizedBox(height: 40),
                 const Text(
@@ -104,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildEmailInput() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start, // Textos a la izquierda
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
           "Correo Electrónico",
@@ -135,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildPasswordInput() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start, // Textos a la izquierda
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
           "Contraseña",
@@ -227,14 +227,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 if (loginResponse.accessToken.isNotEmpty) {
                   await authController.saveToken(loginResponse.accessToken);
 
-                  // Restablecer el estado antes de navegar
                   if (mounted) {
                     setState(() {
                       _isLoading = false;
                     });
                   }
 
-                  // Reemplaza la pantalla de login para que no se pueda volver atrás
                   Navigator.pushReplacementNamed(context, '/dashboard');
                 } else {
                   if (mounted) {
@@ -257,7 +255,7 @@ class _LoginScreenState extends State<LoginScreen> {
               fit: BoxFit.scaleDown,
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 50), // Aumenta el ancho del botón
+                    horizontal: 50),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: const [
@@ -311,50 +309,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   endIndent: 12,
                 ),
               ),
-              //     Text(
-              //       "O inicia sesión mediante",
-              //       style: TextStyle(
-              //         color: Color(0xFFD9D9D9),
-              //         fontWeight: FontWeight.w500,
-              //       ),
-              //     ),
-              //     Flexible(
-              //       child: Divider(
-              //         color: Color(0xFFD9D9D9),
-              //         thickness: 1,
-              //         indent: 12,
-              //       ),
-              //     ),
-              //   ],
-              // ),
-              // const SizedBox(height: 20),
-              // Row(
-              //   mainAxisSize: MainAxisSize.min,
-              //   children: [
-              //     GestureDetector(
-              //       onTap: () {
-              //         Navigator.pushNamed(context, '/dashboard');
-              //       },
-              //       child: Image.asset(
-              //         'assets/icons/googleIcon.png',
-              //         width: 55,
-              //         fit: BoxFit.contain,
-              //       ),
-              //     ),
-              //     const SizedBox(width: 20),
-              //     GestureDetector(
-              //       onTap: () {
-              //         Navigator.pushNamed(context, '/dashboard');
-              //       },
-              //       child: Image.asset(
-              //         'assets/icons/facebookIcon.png',
-              //         width: 55,
-              //         fit: BoxFit.contain,
-              //       ),
-              //     ),
             ],
           ),
-          // const SizedBox(height: 15),
         ],
       ),
     );
