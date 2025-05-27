@@ -30,9 +30,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // ---------------------------------------------------------------------------
-  // Controladores (inyección manual – podrías migrar a Provider / Riverpod)
-  // ---------------------------------------------------------------------------
+
   late final SumaryController _summaryCtl;
   late final FollowController _followCtl;
   late final ProfileController _profileCtl;
