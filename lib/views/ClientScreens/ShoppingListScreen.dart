@@ -78,7 +78,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       final lists =
           await shoppingListController.listShoppingListsByProfile(profileId!);
       setState(() {
-        shoppingListsCache = lists; //  guarda la lista
+        shoppingListsCache = lists;
       });
     } catch (e) {
       debugPrint('Error al obtener listas de compras: $e');
@@ -90,7 +90,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_stopwatch.isRunning) {
         _stopwatch.stop();
-        print('⏱ ShoppingListScreen: ${_stopwatch.elapsedMilliseconds} ms');
+        print('ShoppingListScreen: ${_stopwatch.elapsedMilliseconds} ms');
       }
     });
 
@@ -251,7 +251,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   Future<void> _deleteShoppingList(int shoppingListId) async {
     try {
       await shoppingListController.deleteShoppingList(shoppingListId);
-      setState(() {}); // Fuerza la recarga de las listas
+      setState(() {});
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Lista de compras eliminada exitosamente')),
@@ -270,7 +270,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         title: const Text('Eliminar receta de lista de compras'),
         content: const Text(
             '¿Está seguro que desea eliminar esta receta de la lista de compras?'),
-        actionsAlignment: MainAxisAlignment.center, // Centra los botones
+        actionsAlignment: MainAxisAlignment.center,
         actions: [
           ElevatedButton(
             onPressed: () {
@@ -282,7 +282,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             ),
             child: const Text('Cancelar'),
           ),
-          const SizedBox(width: 8), // Espaciado entre los botones
+          const SizedBox(width: 8),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
@@ -313,10 +313,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       List<IngredientResponse> allIngredients = [];
       for (var shoppingList in shoppingLists) {
         print(
-            '📋 Revisando lista ID: ${shoppingList.shoppingListId} - ${shoppingList.recipeName}');
+            'Revisando lista ID: ${shoppingList.shoppingListId} - ${shoppingList.recipeName}');
         final listIngredients = await ingredientController
             .listIngredientsByShoppingList(shoppingList.shoppingListId);
-        print('➡️ Ingredientes recibidos: ${listIngredients.length}');
+        print('Ingredientes recibidos: ${listIngredients.length}');
         for (var ing in listIngredients) {
           print('   - ${ing.ingredientName}');
         }
@@ -415,14 +415,13 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                                 content: Text('Lista eliminada exitosamente')),
                           );
 
-                          // Refresca la vista al eliminar
                           setState(() {
                             shoppingListsCache?.removeWhere(
                               (list) =>
                                   list.shoppingListId ==
                                   shoppingList.shoppingListId,
                             );
-                          }); // Fuerza el rebuild para recargar
+                          });
                         } catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
@@ -446,21 +445,16 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   Future<List<IngredientResponse>> _fetchFilteredIngredients() async {
     try {
-      // Obtén las listas de compras del perfil
       final shoppingLists =
           await shoppingListController.listShoppingListsByProfile(profileId!);
-
-      // Extrae los recipe_id de las listas de compras
       final recipeIds =
           shoppingLists.map((list) => list.shoppingListId).toSet();
-      // Acumula ingredientes de todas las listas de compras
       List<IngredientResponse> allIngredients = [];
       for (var shoppingList in shoppingLists) {
         final listIngredients = await ingredientController
             .listIngredientsByShoppingList(shoppingList.shoppingListId);
         allIngredients.addAll(listIngredients);
       }
-      // Filtra ingredientes únicos y por recipe_id
       return allIngredients
           .where((ingredient) => recipeIds.contains(ingredient.shoppingListId))
           .toList();
@@ -522,16 +516,16 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
 class IngredientsPendingList extends StatelessWidget {
   final List<ShoppingListResponse> shoppingLists;
-  final ShoppingListController shoppingListController; // Añadido
-  final IngredientController ingredientController; // Añadido
-  final int profileId; // Añadido
+  final ShoppingListController shoppingListController;
+  final IngredientController ingredientController;
+  final int profileId;
   final String searchTerm;
 
   const IngredientsPendingList({
     required this.shoppingLists,
-    required this.shoppingListController, // Añadido
-    required this.ingredientController, // Añadido
-    required this.profileId, // Añadido
+    required this.shoppingListController,
+    required this.ingredientController,
+    required this.profileId,
     required this.searchTerm,
   });
 
@@ -548,7 +542,6 @@ class IngredientsPendingList extends StatelessWidget {
           return const Center(child: Text('No se encontraron ingredientes'));
         }
 
-        // Filtrar ingredientes por término de búsqueda
         final filteredIngredients = snapshot.data!.where((ingredient) {
           return ingredient.ingredientName
               .toLowerCase()
@@ -570,13 +563,11 @@ class IngredientsPendingList extends StatelessWidget {
 
   Future<List<IngredientResponse>> _fetchIngredients() async {
     try {
-      // Usa el controlador para obtener las listas de compras
       final shoppingLists =
           await shoppingListController.listShoppingListsByProfile(profileId);
 
       List<IngredientResponse> allIngredients = [];
       for (var shoppingList in shoppingLists) {
-        // Usa el controlador de ingredientes
         final listIngredients = await ingredientController
             .listIngredientsByShoppingList(shoppingList.shoppingListId);
         allIngredients.addAll(listIngredients);
@@ -728,7 +719,6 @@ class RecipeIngredientsList extends StatelessWidget {
           return const Center(child: Text('No se encontraron ingredientes'));
         }
 
-        // Filtrar ingredientes por término de búsqueda
         final filteredIngredients = snapshot.data!.where((ingredient) {
           return ingredient.ingredientName
               .toLowerCase()
@@ -827,7 +817,6 @@ class ShoppingListCard extends StatelessWidget {
                   },
                 ),
               ),
-              // Título de la receta
               Padding(
                 padding: const EdgeInsets.all(12.0),
                 child: Text(
@@ -842,7 +831,6 @@ class ShoppingListCard extends StatelessWidget {
               ),
             ],
           ),
-          // Ícono de eliminar
           Positioned(
             top: 8,
             right: 8,
