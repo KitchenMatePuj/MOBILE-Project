@@ -50,7 +50,7 @@ class _EditprofileState extends State<EditprofileScreen> {
   bool isProfileInfoSelected = true;
   File? _profileImage;
   List<IngredientAllergyResponse> allergies = [];
-  List<IngredientResponse> allIngredients = []; // <-- Para todas las opciones
+  List<IngredientResponse> allIngredients = [];
 
   String keycloakUserId = '';
   String? uploadedImagePathFromStrapi;
@@ -110,7 +110,6 @@ class _EditprofileState extends State<EditprofileScreen> {
       print('Error al cargar perfil o alergias: $e');
     }
 
-    // Carga de ingredientes en segundo plano, pero no afecta la info de perfil
     try {
       final ingredientController = IngredientController(baseUrl: recipeBaseUrl);
       final fetchedIngredients = await ingredientController.fetchIngredients();
@@ -134,7 +133,7 @@ class _EditprofileState extends State<EditprofileScreen> {
         phone: phoneController.text,
         cookingTime: int.tryParse(cookingTimeController.text) ?? 0,
         profilePhoto:
-            uploadedImagePathFromStrapi, // asegúrate de asignarlo si subes imagen
+            uploadedImagePathFromStrapi,
       );
 
       await ProfileController(baseUrl: profileBaseUrl)
@@ -171,7 +170,6 @@ class _EditprofileState extends State<EditprofileScreen> {
     return response.url;
   }
 
-  // Saber si un ingrediente está dentro de las alergias del usuario
   bool _isIngredientAllergic(String ingredientName) {
     return allergies.any(
         (a) => a.allergyName.toLowerCase() == ingredientName.toLowerCase());
@@ -200,7 +198,6 @@ class _EditprofileState extends State<EditprofileScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Tabs
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -297,7 +294,6 @@ class _EditprofileState extends State<EditprofileScreen> {
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
-                      // Parte de la foto de perfil
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -490,24 +486,10 @@ class _EditprofileState extends State<EditprofileScreen> {
                 ),
               ),
             ] else ...[
-              // ALERGIAS
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // TEXTO INFORMATIVO EN NEGRILLA
-                    // const Padding(
-                    //   padding: EdgeInsets.only(left: 4.0, bottom: 8.0, top: 2.0),
-                    //   child: Text(
-                    //     "Aquí puedes actualizar los ingredientes a los que eres alérgico",
-                    //     style: TextStyle(
-                    //       fontWeight: FontWeight.bold,
-                    //       fontSize: 15,
-                    //       color: Colors.black87,
-                    //     ),
-                    //     textAlign: TextAlign.left,
-                    //   ),
-                    // ),
                     Expanded(
                       child: allIngredients.isEmpty
                           ? const Center(child: CircularProgressIndicator())
@@ -540,16 +522,16 @@ class _EditprofileState extends State<EditprofileScreen> {
                                       decoration: BoxDecoration(
                                         color: isAllergic
                                             ? const Color(
-                                                0xFFE8F5E9) // verde claro si es alergia del usuario
+                                                0xFFE8F5E9)
                                             : const Color(
-                                                0xFFF5F5F5), // gris si no
+                                                0xFFF5F5F5),
                                         borderRadius: BorderRadius.circular(15),
                                         border: Border.all(
                                             color: isAllergic
                                                 ? const Color(
-                                                    0xFF43A047) // verde si es alergia del usuario
+                                                    0xFF43A047)
                                                 : const Color(
-                                                    0xFF129575), // verde normal si no
+                                                    0xFF129575),
                                             width: 1.2),
                                       ),
                                       child: Row(
@@ -557,12 +539,12 @@ class _EditprofileState extends State<EditprofileScreen> {
                                           Icon(
                                             isAllergic
                                                 ? Icons
-                                                    .check_circle // ícono de chulo verde si es alergia seleccionada
+                                                    .check_circle
                                                 : Icons
-                                                    .check_circle_outline, // outline si no
+                                                    .check_circle_outline,
                                             color: isAllergic
                                                 ? const Color(
-                                                    0xFF43A047) // verde
+                                                    0xFF43A047)
                                                 : Colors.grey,
                                           ),
                                           const SizedBox(width: 10),
@@ -573,7 +555,7 @@ class _EditprofileState extends State<EditprofileScreen> {
                                                 fontSize: 14,
                                                 color: isAllergic
                                                     ? const Color(
-                                                        0xFF43A047) // verde si es alergia
+                                                        0xFF43A047)
                                                     : const Color(0xFF333333),
                                                 fontWeight: isAllergic
                                                     ? FontWeight.bold
@@ -600,7 +582,7 @@ class _EditprofileState extends State<EditprofileScreen> {
                                               });
                                             },
                                             activeColor: const Color(
-                                                0xFF43A047), // verde si está checkeado
+                                                0xFF43A047),
                                             checkColor: Colors.white,
                                           ),
                                         ],
@@ -610,7 +592,6 @@ class _EditprofileState extends State<EditprofileScreen> {
                                 );
                               }),
                     ),
-                    // Botones Guardar / Cancelar
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0, bottom: 10.0),
                       child: Row(
@@ -625,25 +606,20 @@ class _EditprofileState extends State<EditprofileScreen> {
 
                                 if (currentProfileId == null) return;
 
-                                // 1. Set de las alergias actuales en el backend
                                 final Set<String> backendAllergies = allergies
                                     .map((a) => a.allergyName.toLowerCase())
                                     .toSet();
 
-                                // 2. Set de las alergias seleccionadas por el usuario (con el checkbox)
                                 final Set<String> selectedAllergies =
                                     editingAllergies;
 
-                                // 3. Alergias a agregar (están en seleccionado pero no en el backend)
                                 final Set<String> toAdd = selectedAllergies
                                     .difference(backendAllergies);
 
-                                // 4. Alergias a eliminar (están en el backend pero no en seleccionado)
                                 final Set<String> toDelete = backendAllergies
                                     .difference(selectedAllergies);
 
                                 try {
-                                  // AGREGAR nuevas alergias
                                   for (final allergyName in toAdd) {
                                     await allergyController.createAllergy(
                                       IngredientAllergyRequest(
@@ -653,9 +629,7 @@ class _EditprofileState extends State<EditprofileScreen> {
                                     );
                                   }
 
-                                  // ELIMINAR alergias quitadas
                                   for (final allergyName in toDelete) {
-                                    // Busca todas las coincidencias en allergies originales
                                     final matches = allergies.where((a) =>
                                         a.allergyName.toLowerCase() ==
                                         allergyName);
@@ -665,14 +639,13 @@ class _EditprofileState extends State<EditprofileScreen> {
                                     }
                                   }
 
-                                  // Opcional: Muestra mensaje y recarga
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                         content: Text(
                                             'Alergias actualizadas correctamente')),
                                   );
                                   await _loadData(
-                                      keycloakUserId); // Recarga para refrescar la lista
+                                      keycloakUserId);
                                 } catch (e) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
