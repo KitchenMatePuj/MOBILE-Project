@@ -1,7 +1,3 @@
-// ===========================
-// SignUpScreen.dart (flujo corregido sin nutritionController)
-// ===========================
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -104,7 +100,6 @@ class SignUpScreenState extends State<SignUpScreen> {
       final phone = _phoneController.text;
       final cookingTime = int.tryParse(_cookingTimeController.text) ?? 30;
 
-      // 1. Primero registramos el usuario en Keycloak
       final jwt = await _authController.registerUser(
         email: email,
         username: email,
@@ -113,11 +108,9 @@ class SignUpScreenState extends State<SignUpScreen> {
         lastName: lastName,
       );
 
-      // 2. Decodificamos el token para extraer el keycloakUserId
       final decodedToken = JwtDecoder.decode(jwt);
       final keycloakUserId = decodedToken['sub'];
 
-      // 3. Preparamos el request para el perfil
       final profileRequest = ProfileRequest(
         keycloakUserId: keycloakUserId,
         firstName: firstName,
@@ -128,11 +121,9 @@ class SignUpScreenState extends State<SignUpScreen> {
         cookingTime: cookingTime,
       );
 
-      // 4. Crear perfil usando PUBLIC create (sin autenticación)
       final profileResponse =
           await _profileController.createPublicProfile(profileRequest);
 
-      // 5. Crear las alergias seleccionadas (requiere ID del perfil)
       for (final ingredientName in _selectedIngredients) {
         final allergyRequest = IngredientAllergyRequest(
           profileId: profileResponse.profileId,
@@ -141,7 +132,6 @@ class SignUpScreenState extends State<SignUpScreen> {
         await _ingredientAllergyController.createAllergy(allergyRequest);
       }
 
-      // 6. Ir al login después de éxito
       Navigator.pushNamed(context, '/login');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -180,7 +170,6 @@ class SignUpScreenState extends State<SignUpScreen> {
           : null;
       _isConfirmPasswordValid = _confirmPasswordError == null;
 
-      // Nueva lógica para habilitar el botón
       _canContinue = _isFirstNameValid &&
           _isLastNameValid &&
           _isEmailValid &&
@@ -222,7 +211,7 @@ class SignUpScreenState extends State<SignUpScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_stopwatch.isRunning) {
         _stopwatch.stop();
-        print('⏱ SignUpScreen: ${_stopwatch.elapsedMilliseconds} ms');
+        print('SignUpScreen: ${_stopwatch.elapsedMilliseconds} ms');
       }
     });
     return Scaffold(
@@ -335,7 +324,7 @@ class SignUpScreenState extends State<SignUpScreen> {
           ),
         ),
         if (errorText !=
-            null) // <-- NUEVO: mostrar texto abajo en rojo si hay error
+            null)
           Padding(
             padding: const EdgeInsets.only(top: 5, left: 10),
             child: Text(
